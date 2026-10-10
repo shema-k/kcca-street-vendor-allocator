@@ -124,9 +124,7 @@ require __DIR__ . '/../layouts/header.php';
     <div class="eyebrow">Physical Planning · Multi-criteria matching</div>
     <h1>Relocation Engine</h1>
     <p>
-      Matches a surveyed vendor to gazetted trading space on six weighted criteria. The ranking is
-      accompanied by the reasoning behind it, because a relocation decision affects somebody's
-      livelihood and has to be explainable to them, to a Division Mayor, and to Internal Audit.
+      Vendor matched to gazetted space on six weighted criteria, with the reasoning behind every score.
     </p>
   </div>
   <div class="actions">

@@ -33,38 +33,95 @@ function facts(): array
 }
 
 /** The page's own navigation definition — also used to draw the sidebar. */
+/**
+ * Navigation catalogue.
+ *
+ * Every screen in the system, grouped. This is the full list; who sees what
+ * is decided by navigationFor(), below. Adding a screen means one entry
+ * here and a decision about its audience — not a change to every role.
+ */
 function navigation(): array
 {
     return [
-        ['group' => 'Dashboard', 'items' => [
-            ['id' => 'dashboard',    'file' => 'pages/dashboard.php',     'label' => 'Dashboard',           'icon' => 'gauge',   'permission' => 'view'],
-            ['id' => 'vendors',      'file' => 'pages/vendors.php',       'label' => 'Vendors',             'icon' => 'people',  'permission' => 'view'],
-            ['id' => 'locations',    'file' => 'pages/locations.php',     'label' => 'Trading Locations',   'icon' => 'store',   'permission' => 'view'],
-            ['id' => 'market-map',   'file' => 'pages/market_map.php',    'label' => 'Location &amp; Stall Map', 'icon' => 'map', 'permission' => null],
-            ['id' => 'recommendations', 'file' => 'pages/recommendations.php', 'label' => 'AI Recommendations', 'icon' => 'chart', 'permission' => 'view'],
-            ['id' => 'allocations',  'file' => 'pages/allocations.php',   'label' => 'Allocations &amp; Relocation', 'icon' => 'swap', 'permission' => 'view'],
-            ['id' => 'reports',      'file' => 'pages/reports.php',       'label' => 'Reports',             'icon' => 'download','permission' => 'view'],
+        ['group' => 'Work', 'items' => [
+            ['id' => 'dashboard',       'file' => 'pages/dashboard.php',       'label' => 'Dashboard',      'icon' => 'gauge',    'audience' => ['all']],
+            ['id' => 'vendors',         'file' => 'pages/vendors.php',         'label' => 'Vendors',        'icon' => 'people',   'audience' => ['all']],
+            ['id' => 'locations',       'file' => 'pages/locations.php',       'label' => 'Locations',      'icon' => 'store',    'audience' => ['all']],
+            ['id' => 'market-map',      'file' => 'pages/market_map.php',      'label' => 'Stall Map',      'icon' => 'map',      'audience' => ['all']],
+            ['id' => 'recommendations', 'file' => 'pages/recommendations.php', 'label' => 'Recommendations','icon' => 'chart',    'audience' => ['executive', 'planner', 'market-admin', 'administrator']],
+            ['id' => 'allocations',    'file' => 'pages/allocations.php',      'label' => 'Allocations',    'icon' => 'swap',     'audience' => ['executive', 'mayor', 'planner', 'market-admin', 'administrator']],
+            ['id' => 'reports',         'file' => 'pages/reports.php',         'label' => 'Reports',        'icon' => 'download', 'audience' => ['all']],
         ]],
         ['group' => 'Trade Order', 'items' => [
-            ['id' => 'city-map',     'file' => 'pages/city-map.php',      'label' => 'City Situation Map',  'icon' => 'map',     'permission' => 'view'],
-            ['id' => 'congestion',   'file' => 'pages/congestion.php',    'label' => 'Congestion Analysis', 'icon' => 'pulse',   'permission' => 'view'],
-            ['id' => 'vacancy',      'file' => 'pages/vacancy.php',       'label' => 'Vacant Space Finder', 'icon' => 'grid',    'permission' => 'view'],
-            ['id' => 'relocation',   'file' => 'pages/relocation.php',    'label' => 'Relocation Engine',   'icon' => 'list',    'permission' => 'view'],
-            ['id' => 'enforcement',  'file' => 'pages/enforcement.php',   'label' => 'Enforcement & Notices','icon' => 'shield',  'permission' => 'view'],
-            ['id' => 'licensing',    'file' => 'pages/licensing.php',     'label' => 'Trade Licensing',     'icon' => 'doc',     'permission' => 'view'],
-            ['id' => 'markets',      'file' => 'pages/markets.php',       'label' => 'Market Register',     'icon' => 'layers',  'permission' => 'view'],
+            ['id' => 'city-map',        'file' => 'pages/city-map.php',       'label' => 'City Map',       'icon' => 'map',      'audience' => ['all']],
+            ['id' => 'congestion',     'file' => 'pages/congestion.php',      'label' => 'Congestion',      'icon' => 'pulse',    'audience' => ['all']],
+            ['id' => 'vacancy',        'file' => 'pages/vacancy.php',         'label' => 'Vacancy',         'icon' => 'grid',     'audience' => ['all']],
+            ['id' => 'relocation',     'file' => 'pages/relocation.php',      'label' => 'Matching',        'icon' => 'list',     'audience' => ['executive', 'planner', 'market-admin', 'administrator']],
+            ['id' => 'enforcement',    'file' => 'pages/enforcement.php',     'label' => 'Enforcement',     'icon' => 'shield',   'audience' => ['executive', 'mayor', 'enforcement', 'administrator']],
+            ['id' => 'licensing',      'file' => 'pages/licensing.php',       'label' => 'Licensing',       'icon' => 'doc',      'audience' => ['executive', 'revenue', 'administrator']],
+            ['id' => 'markets',        'file' => 'pages/markets.php',         'label' => 'Markets',         'icon' => 'layers',   'audience' => ['all']],
         ]],
-        ['group' => 'Assurance', 'items' => [
-            ['id' => 'analytics',     'file' => 'pages/analytics.php',     'label' => 'Performance & KPIs',  'icon' => 'trend',   'permission' => 'view'],
-            ['id' => 'audit',         'file' => 'pages/audit.php',         'label' => 'Audit Trail',         'icon' => 'log',     'permission' => 'audit'],
-            ['id' => 'users',         'file' => 'pages/users.php',         'label' => 'Accounts',            'icon' => 'people',  'permission' => 'view'],
-            ['id' => 'resources',     'file' => 'pages/resources.php',     'label' => 'KCCA Online Services','icon' => 'link',    'permission' => 'view'],
-            ['id' => 'settings',      'file' => 'pages/settings.php',      'label' => 'Settings',            'icon' => 'cog',     'permission' => 'view'],
+        ['group' => 'Oversight', 'items' => [
+            ['id' => 'analytics',      'file' => 'pages/analytics.php',       'label' => 'Performance',     'icon' => 'trend',    'audience' => ['executive', 'auditor', 'administrator']],
+            ['id' => 'audit',          'file' => 'pages/audit.php',           'label' => 'Audit Trail',     'icon' => 'log',      'audience' => ['executive', 'auditor', 'administrator']],
+            ['id' => 'users',          'file' => 'pages/users.php',           'label' => 'Accounts',        'icon' => 'people',   'audience' => ['executive', 'administrator']],
+            ['id' => 'settings',       'file' => 'pages/settings.php',        'label' => 'Settings',        'icon' => 'cog',      'audience' => ['administrator']],
         ]],
         ['group' => 'Public', 'items' => [
-            ['id' => 'portal',         'file' => 'pages/portal.php',         'label' => 'Trader Portal',       'icon' => 'user',    'permission' => null],
+            ['id' => 'portal',         'file' => 'pages/portal.php',          'label' => 'Trader Portal',   'icon' => 'user',     'audience' => ['all']],
         ]],
     ];
+}
+
+/**
+ * Navigation for one officer.
+ *
+ * Each screen declares which roles need it, and this selects from that.
+ * "Need" follows two principles from the management of organisations, both
+ * aimed at the failure mode where an officer is handed screens they cannot
+ * act on:
+ *
+ *   Span of control. A manager sees their own directorate's work and the
+ *   decisions put to them — not the working screens of another
+ *   directorate. Legal Affairs does not operate the vendor-matching engine;
+ *   Revenue Collection does not serve notices. Those are somebody else's
+ *   line authority, and showing them is how a rail becomes a maze.
+ *
+ *   Altitude. Everyone sees the citywide position, because that is the
+ *   shared picture. As authority rises, the officer gains the screens that
+ *   summarise and decide; as it falls, they keep the screens they operate.
+ *   A Division Mayor sees enforcement because they act on it in their own
+ *   division. An auditor sees none of it — the audit trail is the
+ *   auditor's instrument, not a substitute for a management report.
+ *
+ * The result: no two roles see the same rail, and no role is shown a link
+ * to somewhere it has no standing to act.
+ */
+function navigationFor(string $role): array
+{
+    $out = [];
+
+    foreach (navigation() as $group) {
+        $kept = [];
+
+        foreach ($group['items'] as $item) {
+            $audience = $item['audience'] ?? ['all'];
+
+            $visible = in_array('all', $audience, true)
+                    || in_array($role, $audience, true);
+
+            if ($visible) {
+                unset($item['audience']);   // the template has no use for it
+                $kept[] = $item;
+            }
+        }
+
+        if ($kept !== []) {
+            $out[] = ['group' => $group['group'], 'items' => $kept];
+        }
+    }
+
+    return $out;
 }
 
 /**

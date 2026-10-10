@@ -241,10 +241,8 @@ require __DIR__ . '/../layouts/header.php';
     </div>
   </div>
   <div class="card-foot">
-    Baseline and target values are published by KCCA.
-    <a href="https://www.kcca.go.ug/KCCA_STRATEGIC_PLAN_2025.pdf" target="_blank" rel="noopener">
-      Open the full Strategic Plan</a>.
-    Current values for the vendor-relocation indicator are measured by this system.
+    Baselines and targets are published by KCCA. Current values are this
+    system's own measures.
   </div>
 </div>
 

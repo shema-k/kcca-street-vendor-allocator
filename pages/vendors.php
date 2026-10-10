@@ -120,8 +120,6 @@ require __DIR__ . '/../layouts/header.php';
     <h1>Vendor Register</h1>
     <p>
       Every surveyed trader, with the vulnerability factors that decide who is offered space first.
-      The register records a trader as a person, not as an obstruction: the relocation engine reads
-      household size, dependants, capital and years in trade before it reads anything else.
     </p>
   </div>
   <div class="actions">

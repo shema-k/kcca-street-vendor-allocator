@@ -212,8 +212,7 @@ require __DIR__ . '/../layouts/header.php';
         </div>
       </div>
       <div class="card-foot">
-        Auditing must never take the system down, so a failure to write an audit row does not block
-        the user's action — but it is a defect Internal Audit would rightly raise.
+        A failed audit write never blocks the action it describes.
       </div>
     </div>
 

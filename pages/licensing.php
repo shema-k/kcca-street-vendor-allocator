@@ -56,9 +56,7 @@ require __DIR__ . '/../layouts/header.php';
     <div class="eyebrow">Revenue Collection · Trade Licensing Act Cap 101</div>
     <h1>Trade Licensing</h1>
     <p>
-      A trading licence is a legal requirement for any person selling goods or services in KCCA's
-      jurisdiction. This page shows the licence position across the vendor register, and sets out
-      exactly what the Authority requires.
+      The licence position across the vendor register, and what the Authority requires.
     </p>
   </div>
   <div class="actions">
@@ -212,10 +210,7 @@ require __DIR__ . '/../layouts/header.php';
           </table>
         </div>
       </div>
-      <div class="card-foot">
-        Fees are set by the Authority and are reviewed from time to time. For the current fee band,
-        contact the Revenue Collection directorate or pay through eCitie.
-      </div>
+      <div class="card-foot">Fees are set by the Authority and reviewed from time to time.</div>
     </div>
 
     <!-- Unlicensed vendors -->
@@ -287,8 +282,7 @@ require __DIR__ . '/../layouts/header.php';
         </div>
       </div>
       <div class="card-foot">
-        Licence and occupation are separate questions. A licensed trader on a pavement is still
-        occupying public space unlawfully; an unlicensed trader in a market is still trading unlawfully.
+        Licence and occupation are separate questions.
       </div>
     </div>
 

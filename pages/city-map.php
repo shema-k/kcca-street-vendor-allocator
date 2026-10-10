@@ -153,9 +153,7 @@ require __DIR__ . '/../layouts/header.php';
     <div class="eyebrow">Kampala Capital City · Geospatial situation picture</div>
     <h1>City Situation Map</h1>
     <p>
-      Affected trading sites, markets holding vacant space, and the relocation links proposed between
-      them. The base map loads from OpenStreetMap; where tiles are unavailable the Authority’s own
-      vector outline of Kampala Capital City is drawn instead, so the map never appears empty.
+      Affected sites, markets with vacant space, and the relocation links proposed between them. Tiles fall back to a vector outline, so the map is never empty.
     </p>
   </div>
   <div class="actions">
@@ -282,11 +280,7 @@ require __DIR__ . '/../layouts/header.php';
       </div>
     </div>
   </div>
-  <div class="card-foot">
-    Circle size is proportional to the number of vendors trading at the site.
-    Base map &copy; OpenStreetMap contributors; KCCA GIS Portal at
-    <a href="https://gis.kcca.go.ug/portal" target="_blank" rel="noopener">gis.kcca.go.ug</a>.
-  </div>
+  <div class="card-foot">Circle size is proportional to the number of vendors at the site.</div>
 </div>
 
 <!-- ====================== SITE + MARKET TABLES ==================== -->

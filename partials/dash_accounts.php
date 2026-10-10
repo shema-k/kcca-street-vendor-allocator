@@ -82,8 +82,5 @@ foreach ($accounts as $a) {
       </table>
     </div>
   </div>
-  <div class="card-foot">
-    An officer never edits their own account here — that is what their profile is for — and nobody
-    edits an account at or above their own level of authority.
-  </div>
+  <div class="card-foot">Nobody edits an account at or above their own level, and nobody edits their own.</div>
 </div>

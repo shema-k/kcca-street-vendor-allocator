@@ -74,9 +74,7 @@ require __DIR__ . '/../layouts/header.php';
     <div class="eyebrow">Legal Affairs · Law enforcement</div>
     <h1>Enforcement &amp; Notices</h1>
     <p>
-      The full enforcement chain for each affected site: survey, notice, ultimatum, clear-up and
-      escalation. Every action is attributed and numbered, in line with the Authority's undertaking that
-      enforcement officers are identifiable on uniform and from cameras.
+      The enforcement chain for each affected site: survey, notice, ultimatum, clear-up, escalation. Every action is attributed.
     </p>
   </div>
   <div class="actions">

@@ -48,11 +48,10 @@ require __DIR__ . '/../layouts/header.php';
 <div class="portal-hero">
   <h1>Find gazetted space for your business</h1>
   <p>
-    The Kampala Capital City Authority is clearing streets, pavements and verandas of unlawful vending and
-    moving traders into gazetted market space. The Authority has already identified
+    The Authority is clearing streets, pavements and verandas of unlawful vending and moving traders
+    into gazetted market space. It has identified
     <strong><?= num($vac['public_vacant_spaces']) ?> spaces in <?= num($vac['public_markets']) ?> public markets</strong>
     and at least <strong><?= num($vac['private_vacant_spaces']) ?> in <?= num($vac['private_markets']) ?> private markets</strong>.
-    This page tells you what is available, what you need, and how to claim it.
   </p>
 
   <div class="facts">

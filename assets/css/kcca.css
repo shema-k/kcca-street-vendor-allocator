@@ -949,3 +949,28 @@ table.data.compact tbody td, table.data.compact thead th { padding: 7px 10px; }
 @media (max-width: 1024px) {
   .roledash-sheet { width: 100%; }
 }
+
+/* =====================================================================
+   Rail: authority level
+   ===================================================================== */
+.rail-level {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; margin: 0 10px 6px;
+  background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+.rail-level .lvl {
+  flex: none; width: 30px; height: 30px; border-radius: var(--radius-sm);
+  display: grid; place-items: center;
+  background: var(--kcca-red); color: #fff;
+  font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.rail-level .meta { min-width: 0; }
+.rail-level .meta b {
+  display: block; font-size: 12.5px; line-height: 1.25;
+  color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.rail-level .meta span {
+  display: block; font-size: 10.5px; color: var(--ink-4);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}

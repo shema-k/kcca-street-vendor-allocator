@@ -82,9 +82,7 @@ require __DIR__ . '/../layouts/header.php';
     <div class="eyebrow">Physical Planning · Trade order</div>
     <h1>Congestion Analysis</h1>
     <p>
-      Which places in Kampala suffer most from unlawful street vending, ranked by a seven-criterion
-      composite score. The score is not a judgement about the traders — it measures the harm the
-      occupation causes to public space, so the order of enforcement follows the harm.
+      Sites ranked by a seven-criterion composite score measuring the harm the occupation causes to public space. The order of enforcement follows the harm, not the traders.
     </p>
   </div>
   <div class="actions">
@@ -547,8 +545,8 @@ $criticalCount  = count($bandCounts['Critical'] ?? []);
     </div>
   </div>
   <div class="card-foot">
-    The score guides the order of work. It does not determine a vendor's fate — that is the relocation
-    engine's job, and it is <a href="relocation.php">computed per vendor</a> on six separate criteria.
+    The score orders the work. A vendor's fate is <a href="relocation.php">the relocation
+    engine's job</a>, on six separate criteria.
   </div>
 </div>
 

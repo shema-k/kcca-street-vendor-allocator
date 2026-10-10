@@ -82,7 +82,6 @@ usort($rows, static fn($a, $b) => $b['value'] <=> $a['value']);
     </div>
   </div>
   <div class="card-foot">
-    A market with no counts is projected from its division's population and the trading it does, at
-    low confidence. Counting footfall raises the confidence of every recommendation for it.
+    An uncounted market is projected from division population, at low confidence.
   </div>
 </div>

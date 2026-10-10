@@ -85,7 +85,6 @@ $turnover = (int) Database::value('SELECT COALESCE(SUM(monthly_turnover_ugx),0) 
     </div>
   </div>
   <div class="card-foot">
-    Licence class is recorded from the vendor's own answer at survey. The Authority's trading licence
-    fee bands and the eligibility test are published on kcca.go.ug.
+    Licence class is recorded from the vendor's own answer at survey.
   </div>
 </div>

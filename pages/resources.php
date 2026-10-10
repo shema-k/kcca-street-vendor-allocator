@@ -190,10 +190,7 @@ require __DIR__ . '/../layouts/header.php';
         <?php endforeach; ?>
       </div>
     </div>
-    <div class="card-foot">
-      Physical Planning's mandate covers “the zoning, land subdivision and demarcating areas for
-      development”, which is where gazetted trading space is defined.
-    </div>
+    <div class="card-foot">Physical Planning's mandate covers zoning, land subdivision and demarcation.</div>
   </div>
 </div>
 

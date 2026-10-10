@@ -89,8 +89,7 @@ require __DIR__ . '/../layouts/header.php';
     <div class="eyebrow">Market administration · Decision record</div>
     <h1>Allocation Register</h1>
     <p>
-      Every offer made, the score that justified it, and what happened next. The reasoning recorded
-      here is the same text the officer saw when the offer was issued, so the decision is auditable.
+      Every offer made, the score that justified it, and what happened next.
     </p>
   </div>
   <div class="actions">

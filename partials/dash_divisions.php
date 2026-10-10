@@ -94,7 +94,6 @@ unset($r);
     </div>
   </div>
   <div class="card-foot">
-    Populations are the UBOS 2024 figures KCCA publishes in the Strategic Plan. A division with high
-    clearance and little vacant space has finished its work — or run out of somewhere to put people.
+    UBOS 2024 populations from the KCCA Strategic Plan.
   </div>
 </div>

@@ -137,9 +137,7 @@ require __DIR__ . '/../layouts/header.php';
     <div class="eyebrow">Corporate Affairs · Accountability</div>
     <h1>Reports &amp; Downloads</h1>
     <p>
-      Every register in the system, exportable as CSV, plus the official KCCA documents the figures
-      are drawn from. Exports carry the source basis for each figure so a reader always knows what is
-      published and what is measured.
+      Every register, exportable as CSV, plus the official KCCA documents the figures are drawn from.
     </p>
   </div>
   <div class="actions">

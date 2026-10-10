@@ -94,9 +94,7 @@ require __DIR__ . '/../layouts/header.php';
     <div class="eyebrow">Market development · Markets Act 2023</div>
     <h1>Market Register</h1>
     <p>
-      The register of markets for Kampala Capital City kept under section 17 of the Markets Act 2023,
-      and the register of vendors under section 18. Where a market is privately operated the operator
-      keeps their own vendor register (s.17(2)); the Authority's role there is regulatory.
+      Markets registered under section 17 of the Markets Act 2023. Where a market is private, the operator keeps their own vendor register and the Authority's role is regulatory.
     </p>
   </div>
   <div class="actions">
@@ -410,9 +408,8 @@ require __DIR__ . '/../layouts/header.php';
     </div>
   </div>
   <div class="card-foot">
-    Public market vacancies reconcile exactly to the Authority's published
-    <?= num($vac['public_markets']) ?> public markets holding <?= num($vac['public_vacant_spaces']) ?> vacant spaces.
-    Usafi Market's capacity of 3,000 with 1,600 registered is confirmed by the Supervisor of Market Development.
+    Reconciles to the published KCCA figures. Usafi Market's capacity of 3,000
+    with 1,600 registered is confirmed by the Supervisor of Market Development.
   </div>
 </div>
 

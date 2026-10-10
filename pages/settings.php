@@ -116,9 +116,7 @@ require __DIR__ . '/../layouts/header.php';
     <div class="eyebrow">Administration</div>
     <h1>Settings</h1>
     <p>
-      The policy values behind the two engines and the reach model. Changing a weight changes how every
-      recommendation is scored from the next request onward — so each change is recorded in the audit
-      trail with the name of the officer who made it.
+      Policy values behind the engines and the reach model. Every change is recorded with the officer who made it.
     </p>
   </div>
   <div class="actions">

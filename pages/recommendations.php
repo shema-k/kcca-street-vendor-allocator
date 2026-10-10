@@ -153,10 +153,8 @@ require __DIR__ . '/../layouts/header.php';
     <div class="eyebrow">Reach &amp; trade viability model <?= e(ReachModel::VERSION) ?></div>
     <h1>AI Recommendations</h1>
     <p>
-      The model estimates, for a given trader and a given product, how many customers that trader
-      could realistically reach at each gazetted location — and how confident it is. Every score is
-      shown with the factors that produced it, and every recommendation can be approved or rejected
-      with a recorded reason.
+      How many customers each trader could reach at every location with space, and how confident the
+      model is. Every recommendation can be approved or rejected with a recorded reason.
     </p>
   </div>
   <div class="actions">

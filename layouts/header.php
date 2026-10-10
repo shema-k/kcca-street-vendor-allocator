@@ -167,18 +167,43 @@ $myDiv = (int) ($me['division_id'] ?? 0);
   <?php endif; ?>
 
   <!-- ============================ RAIL ============================= -->
-  <nav class="rail" aria-label="Main navigation">    <?php foreach (navigation() as $navGroup): ?>
+  <nav class="rail" aria-label="Main navigation">
+    <?php if (Auth::check()): ?>
       <?php
-      // Hide groups the signed-in role cannot reach at all.
-      /* Show an item when the role permits it. The public portal has no
-         permission requirement, so it is always listed. */
-      $navVisible = array_filter($navGroup['items'], static function (array $item): bool {
-          return $item['permission'] === null || (Auth::check() && Auth::can($item['permission']));
-      });
-      if (!$navVisible) {
-          continue;
-      }
+      /* The authority level is stated at the top of the rail because it is
+         the reason the rail looks the way it does: each role sees the
+         screens its span of control covers. Stating it once answers the
+         question before it is asked. */
+      $railRole   = Auth::remit()['label'];
+      $railRank   = Auth::rank();
+      $railScope  = Auth::remit()['scope'];
+      $railScopeText = match ($railScope) {
+          'system'      => 'Whole system',
+          'citywide'    => 'All five divisions',
+          'division'    => $myDiv > 0 ? (string) Database::value('SELECT name FROM divisions WHERE id = ?', [$myDiv]) . ' Division' : 'Own division',
+          'oversight'   => 'Oversight',
+          'directorate' => Auth::user()['directorate'] ? ucwords(str_replace(['-'], ' ', (string) Auth::user()['directorate'])) : 'Directorate',
+          default       => 'Read only',
+      };
       ?>
+      <div class="rail-level">
+        <span class="lvl" title="Level <?= $railRank ?> of 7 in the order of authority"><?= $railRank ?></span>
+        <span class="meta">
+          <b><?= e($railRole) ?></b>
+          <span><?= e($railScopeText) ?></span>
+        </span>
+      </div>
+    <?php endif; ?>
+    <?php
+    /* The rail is drawn from navigationFor(): the screens this officer's
+       role needs, and nothing else. A separate permission check is not
+       needed and would be wrong — the audience declared on each screen is
+       the decision, and a page still guards itself when it is opened. */
+    $navGroups = Auth::check() ? navigationFor(Auth::role()) : [];
+    foreach ($navGroups as $navGroup):
+      $navVisible = $navGroup['items'];
+      if (!$navVisible) { continue; }
+    ?>
       <div class="rail-group">
         <h4><?= e($navGroup['group']) ?></h4>
         <?php foreach ($navVisible as $navItem):

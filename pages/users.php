@@ -149,10 +149,9 @@ require __DIR__ . '/../layouts/header.php';
     <h1>Accounts</h1>
     <p>
       <?php if ($canEdit): ?>
-        You may change the details of the <?= num(count($editable)) ?> account(s) below your own
-        level of authority. Passwords are never shown; a reset issues a temporary one instead.
+        <?= num(count($editable)) ?> account(s) below your own level of authority.
       <?php else: ?>
-        Your role can see the accounts but not change them.
+        Read-only for your role.
       <?php endif; ?>
     </p>
   </div>
@@ -254,8 +253,8 @@ require __DIR__ . '/../layouts/header.php';
     </div>
   </div>
   <div class="card-foot">
-    An account at or above your own level is shown but locked. An officer never edits their own
-    account here, so no one can quietly widen their own permissions.
+    An account at or above your own level is locked. Nobody edits their own
+    account here.
   </div>
 </div>
 <?php elseif ($canEdit): ?>

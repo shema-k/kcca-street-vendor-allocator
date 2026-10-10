@@ -149,9 +149,7 @@ require __DIR__ . '/../layouts/header.php';
     <div class="eyebrow">Location &amp; space management</div>
     <h1>Trading Locations</h1>
     <p>
-      Every gazetted location in the register: its capacity and rent, the individual pitches inside it,
-      the footfall the Authority has counted there, and any land-use restriction limiting what may be
-      traded on the site.
+      Every location: capacity, rent, individual pitches, counted footfall, land-use restrictions.
     </p>
   </div>
   <div class="actions">
@@ -608,9 +606,8 @@ require __DIR__ . '/../layouts/header.php';
     </div>
   <?php endif; ?>
   <div class="card-foot">
-    Public market figures reconcile to the Authority’s published
-    <?= num($vac['public_markets']) ?> markets holding <?= num($vac['public_vacant_spaces']) ?> vacant spaces.
-    Footfall is counted, not estimated, wherever a <strong>confidence</strong> of 50% or more is shown.
+    Public market figures reconcile to the published KCCA figures. Footfall is
+    counted wherever <strong>confidence</strong> is 50% or more.
   </div>
 </div>
 
@@ -707,8 +704,7 @@ require __DIR__ . '/../layouts/header.php';
     </div>
   </div>
   <div class="card-foot">
-    A private market operator may impose their own trading rules under the Markets Act 2023; those are
-    not recorded here, because the Authority does not hold their registers.
+    Private operators keep their own registers under the Markets Act 2023.
   </div>
 </div>
 <?php endif; ?>

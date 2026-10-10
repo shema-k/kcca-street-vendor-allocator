@@ -121,10 +121,9 @@ require __DIR__ . '/../layouts/header.php';
     <div class="eyebrow">Market development · Gazetteed trading space</div>
     <h1>Vacant Space Finder</h1>
     <p>
-      Every market in the register, ranked by the space it has available. This is where street vendors
-      go — the Authority has already identified
-      <?= num($vac['public_vacant_spaces']) ?> spaces in <?= num($vac['public_markets']) ?> public markets and at
-      least <?= num($vac['private_vacant_spaces']) ?> in <?= num($vac['private_markets']) ?> private markets.
+      Markets ranked by the space they have available:
+      <?= num($vac['public_vacant_spaces']) ?> spaces in <?= num($vac['public_markets']) ?> public markets
+      and at least <?= num($vac['private_vacant_spaces']) ?> in <?= num($vac['private_markets']) ?> private markets.
     </p>
   </div>
   <div class="actions">
@@ -392,13 +391,7 @@ require __DIR__ . '/../layouts/header.php';
       <a class="btn btn-ghost" href="vacancy.php">Reset filters</a>
     </div>
   <?php endif; ?>
-  <div class="card-foot">
-    Public market totals reconcile to the published figures of
-    <?= num($vac['public_markets']) ?> markets holding <?= num($vac['public_vacant_spaces']) ?> vacant spaces.
-    Private market registers are kept by their operators under the Markets Act 2023, so their individual
-    figures are modelled; only the aggregate of <?= num($vac['private_markets']) ?> markets and
-    <?= num($vac['private_vacant_spaces']) ?> spaces is published.
-  </div>
+  <div class="card-foot">Public market totals reconcile to the published KCCA figures. Private registers are kept by their operators.</div>
 </div>
 
 <!-- ===================== FACILITY GUIDE ========================== -->
@@ -451,10 +444,7 @@ require __DIR__ . '/../layouts/header.php';
       </table>
     </div>
   </div>
-  <div class="card-foot">
-    “Paying a trading licence or taxes does not mean you don’t have a responsibility to manage waste.”
-    <b>Benon Kigenyi</b>, Deputy Executive Director, KCCA, 29 September 2026.
-  </div>
+  <div class="card-foot">“A trading licence does not remove the responsibility to manage your business.” — Benon Kigenyi, Senior Physical Planner</div>
 </div>
 
 <?php require __DIR__ . '/../layouts/footer.php';

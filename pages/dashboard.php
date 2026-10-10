@@ -52,7 +52,7 @@ require __DIR__ . '/../layouts/header.php';
 <div class="page-head">
   <div class="grow">
     <div class="breadcrumb"><?= e($remit['label']) ?></div>
-    <h1><?= e($remit['label']) ?> dashboard</h1>
+    <h1>Dashboard</h1>
     <p><?= e($remit['blurb']) ?></p>
   </div>
   <div class="actions">
