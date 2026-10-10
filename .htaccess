@@ -1,0 +1,28 @@
+# KCCA Vendor Relocation & Space Allocation System
+# Apache configuration
+
+Options -Indexes
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Block direct access to configuration, lib and database source.
+  RewriteRule ^(config|lib|database)/ - [F,L]
+
+  # Serve real files and directories untouched.
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set Referrer-Policy "same-origin"
+</IfModule>
+
+# Do not serve dotfiles.
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>

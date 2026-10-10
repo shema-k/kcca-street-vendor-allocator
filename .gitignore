@@ -1,0 +1,23 @@
+# Local overrides of database credentials
+config/config.local.php
+.env
+
+# Editor and OS noise
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# Logs and dumps
+*.log
+*.sql.gz
+error_log
+# Backups contain personal data: names, national IDs, telephone numbers
+backups/
+*.sql.bak
+
+# Local database and PHP artefacts
+*.pid
+*.sock

@@ -1,0 +1,331 @@
+<?php
+/**
+ * Common bootstrap for every page and endpoint.
+ */
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/Database.php';
+require_once __DIR__ . '/Helpers.php';
+require_once __DIR__ . '/Auth.php';
+require_once __DIR__ . '/Engines.php';
+require_once __DIR__ . '/ReachModel.php';
+require_once __DIR__ . '/Recommendations.php';
+require_once __DIR__ . '/Validator.php';
+require_once __DIR__ . '/Settings.php';
+require_once __DIR__ . '/VendorService.php';
+require_once __DIR__ . '/RoleDashboard.php';
+require_once __DIR__ . '/Backup.php';
+require_once __DIR__ . '/ErrorHandler.php';
+
+Auth::startSession();
+ErrorHandler::register();
+
+/** Official KCCA facts, loaded once per request. */
+function facts(): array
+{
+    static $facts = null;
+    if ($facts === null) {
+        $facts = require __DIR__ . '/../config/kcca_facts.php';
+    }
+    return $facts;
+}
+
+/** The page's own navigation definition — also used to draw the sidebar. */
+function navigation(): array
+{
+    return [
+        ['group' => 'Dashboard', 'items' => [
+            ['id' => 'dashboard',    'file' => 'pages/dashboard.php',     'label' => 'Dashboard',           'icon' => 'gauge',   'permission' => 'view'],
+            ['id' => 'vendors',      'file' => 'pages/vendors.php',       'label' => 'Vendors',             'icon' => 'people',  'permission' => 'view'],
+            ['id' => 'locations',    'file' => 'pages/locations.php',     'label' => 'Trading Locations',   'icon' => 'store',   'permission' => 'view'],
+            ['id' => 'market-map',   'file' => 'pages/market_map.php',    'label' => 'Location &amp; Stall Map', 'icon' => 'map', 'permission' => null],
+            ['id' => 'recommendations', 'file' => 'pages/recommendations.php', 'label' => 'AI Recommendations', 'icon' => 'chart', 'permission' => 'view'],
+            ['id' => 'allocations',  'file' => 'pages/allocations.php',   'label' => 'Allocations &amp; Relocation', 'icon' => 'swap', 'permission' => 'view'],
+            ['id' => 'reports',      'file' => 'pages/reports.php',       'label' => 'Reports',             'icon' => 'download','permission' => 'view'],
+        ]],
+        ['group' => 'Trade Order', 'items' => [
+            ['id' => 'city-map',     'file' => 'pages/city-map.php',      'label' => 'City Situation Map',  'icon' => 'map',     'permission' => 'view'],
+            ['id' => 'congestion',   'file' => 'pages/congestion.php',    'label' => 'Congestion Analysis', 'icon' => 'pulse',   'permission' => 'view'],
+            ['id' => 'vacancy',      'file' => 'pages/vacancy.php',       'label' => 'Vacant Space Finder', 'icon' => 'grid',    'permission' => 'view'],
+            ['id' => 'relocation',   'file' => 'pages/relocation.php',    'label' => 'Relocation Engine',   'icon' => 'list',    'permission' => 'view'],
+            ['id' => 'enforcement',  'file' => 'pages/enforcement.php',   'label' => 'Enforcement & Notices','icon' => 'shield',  'permission' => 'view'],
+            ['id' => 'licensing',    'file' => 'pages/licensing.php',     'label' => 'Trade Licensing',     'icon' => 'doc',     'permission' => 'view'],
+            ['id' => 'markets',      'file' => 'pages/markets.php',       'label' => 'Market Register',     'icon' => 'layers',  'permission' => 'view'],
+        ]],
+        ['group' => 'Assurance', 'items' => [
+            ['id' => 'analytics',     'file' => 'pages/analytics.php',     'label' => 'Performance & KPIs',  'icon' => 'trend',   'permission' => 'view'],
+            ['id' => 'audit',         'file' => 'pages/audit.php',         'label' => 'Audit Trail',         'icon' => 'log',     'permission' => 'audit'],
+            ['id' => 'users',         'file' => 'pages/users.php',         'label' => 'Accounts',            'icon' => 'people',  'permission' => 'view'],
+            ['id' => 'resources',     'file' => 'pages/resources.php',     'label' => 'KCCA Online Services','icon' => 'link',    'permission' => 'view'],
+            ['id' => 'settings',      'file' => 'pages/settings.php',      'label' => 'Settings',            'icon' => 'cog',     'permission' => 'view'],
+        ]],
+        ['group' => 'Public', 'items' => [
+            ['id' => 'portal',         'file' => 'pages/portal.php',         'label' => 'Trader Portal',       'icon' => 'user',    'permission' => null],
+        ]],
+    ];
+}
+
+/**
+ * Citywide totals used in the page headers. Cached per request.
+ */
+function headlineStats(): array
+{
+    static $s = null;
+    if ($s !== null) {
+        return $s;
+    }
+
+    $facts = facts();
+    $v = $facts['vacancy'];
+
+    $db = Database::one(
+        "SELECT
+            (SELECT COUNT(*) FROM trade_zones)                                   AS zones_total,
+            (SELECT COALESCE(SUM(estimated_vendors),0) FROM trade_zones)        AS vendors_in_zones,
+            (SELECT COUNT(*) FROM vendors)                                      AS vendors_registered,
+            (SELECT COUNT(*) FROM markets WHERE category='public')              AS public_markets,
+            (SELECT COUNT(*) FROM markets WHERE category='private')             AS private_markets,
+            (SELECT COALESCE(SUM(vacant_spaces),0) FROM markets WHERE category='public')  AS public_vacant,
+            (SELECT COALESCE(SUM(vacant_spaces),0) FROM markets WHERE category='private') AS private_vacant,
+            (SELECT COUNT(*) FROM market_spaces WHERE status='vacant')          AS vacant_pitches,
+            (SELECT COUNT(*) FROM market_spaces WHERE status='occupied')        AS occupied_pitches,
+            (SELECT COUNT(*) FROM allocations WHERE status IN ('accepted','occupied')) AS completed_relocations,
+            (SELECT COUNT(*) FROM vendors WHERE status='relocated')             AS relocated_vendors
+    ");
+
+    $db['official_public_vacant']  = (int) $v['public_vacant_spaces'];
+    $db['official_private_vacant'] = (int) $v['private_vacant_spaces'];
+    $db['official_total_vacant']   = (int) $v['total_vacant'];
+    $db['official_public_markets'] = (int) $v['public_markets'];
+    $db['official_private_markets']= (int) $v['private_markets'];
+    $db['zones_cleared'] = (int) Database::value("SELECT COUNT(*) FROM trade_zones WHERE status='cleared'");
+    $db['zones_pending'] = (int) Database::value("SELECT COUNT(*) FROM trade_zones WHERE status NOT IN ('cleared')");
+
+    return $s = $db;
+}
+
+/* =====================================================================
+ * Shared query helpers
+ *
+ * These live here rather than in the API layer because pages need them
+ * too — the dashboards and the JSON endpoints must compute congestion
+ * scores and candidate markets the same way.
+ * ===================================================================== */
+
+/**
+ * Score every trade zone with the congestion engine.
+ *
+ * @return array<int,array> zone rows each carrying score/band/tone/reasons
+ */
+function scoredZones(string $divisionCode = '', int $limit = 0): array
+{
+    $sql = "SELECT z.*, d.code AS div_code, d.name AS division_name
+              FROM trade_zones z
+              JOIN divisions d ON d.id = z.division_id
+             WHERE 1 = 1";
+    $params = [];
+    if ($divisionCode !== '') {
+        $sql .= " AND d.code = :div";
+        $params['div'] = $divisionCode;
+    }
+    $sql .= " ORDER BY z.id";
+    if ($limit > 0) {
+        $sql .= " LIMIT " . $limit;
+    }
+
+    $out = [];
+    foreach (Database::all($sql, $params) as $z) {
+        $s = ZoneScoringEngine::score($z);
+        $z['score']   = $s['score'];
+        $z['band']    = $s['band'];
+        $z['tone']    = $s['tone'];
+        $z['reasons'] = $s['reasons'];
+        $out[] = $z;
+    }
+    return $out;
+}
+
+/**
+ * Candidate markets for relocation, with the average rent of their vacant
+ * pitches so the affordability criterion has something to test against.
+ *
+ * @return array<int,array>
+ */
+function candidateMarkets(int $limit = 400): array
+{
+    return Database::all(
+        "SELECT m.*, d.code AS div_code, d.name AS division_name,
+                (SELECT COALESCE(AVG(monthly_rent_ugx), 0) FROM market_spaces s
+                  WHERE s.market_id = m.id AND s.status = 'vacant') AS avg_rent_ugx
+           FROM markets m
+           JOIN divisions d ON d.id = m.division_id
+          WHERE m.vacant_spaces > 0 AND m.status IN ('operational','upgrading')
+          ORDER BY m.vacant_spaces DESC
+          LIMIT " . (int) $limit
+    );
+}
+
+/** Vendor row plus the coordinates of the zone they currently trade in. */
+function vendorForMatching(int $vendorId): ?array
+{
+    return Database::one(
+        "SELECT v.*, z.lat AS current_lat, z.lng AS current_lng, z.name AS zone_name,
+                d.code AS div_code, d.name AS division_name
+           FROM vendors v
+           LEFT JOIN trade_zones z ON z.id = v.current_zone_id
+           LEFT JOIN divisions d ON d.id = v.division_id
+          WHERE v.id = ? LIMIT 1",
+        [$vendorId]
+    );
+}
+
+/** Count of vendors by register status, for header pills. */
+function vendorStatusCounts(): array
+{
+    $out = [];
+    foreach (Database::all('SELECT status, COUNT(*) AS n FROM vendors GROUP BY status') as $r) {
+        $out[$r['status']] = (int) $r['n'];
+    }
+    return $out;
+}
+
+/**
+ * Approximate boundary of a Division Urban Council as [lat,lng] pairs.
+ * Traced from the real division limits. Both map engines need this shape,
+ * so it lives here rather than being written twice.
+ *
+ * @return array<int,array{0:float,1:float}>
+ */
+function divisionOutline(string $code, float $lat, float $lng): array
+{
+    static $outline = [
+        'CTR' => [[0.2965,32.5700],[0.2965,32.5955],[0.3025,32.6030],[0.3140,32.6030],
+                  [0.3230,32.5965],[0.3290,32.5890],[0.3300,32.5760],[0.3230,32.5670],
+                  [0.3120,32.5630],[0.3030,32.5660]],
+        'KWM' => [[0.3290,32.5250],[0.3290,32.5580],[0.3230,32.5670],[0.3120,32.5630],
+                  [0.3030,32.5660],[0.2965,32.5700],[0.2965,32.5400],[0.3100,32.5280],
+                  [0.3220,32.5220]],
+        'RBG' => [[0.2965,32.5220],[0.2965,32.5400],[0.2965,32.5700],[0.2880,32.5680],
+                  [0.2800,32.5560],[0.2790,32.5320],[0.2860,32.5200],[0.2900,32.5160],
+                  [0.2930,32.5180]],
+        'MKY' => [[0.2790,32.5560],[0.2880,32.5680],[0.2965,32.5700],[0.3030,32.5660],
+                  [0.3030,32.5900],[0.2965,32.6000],[0.2880,32.6070],[0.2790,32.6060],
+                  [0.2740,32.5900],[0.2745,32.5680]],
+        'NKW' => [[0.3230,32.5670],[0.3300,32.5760],[0.3290,32.5890],[0.3230,32.5965],
+                  [0.3140,32.6030],[0.3025,32.6030],[0.2965,32.5955],[0.2965,32.5900],
+                  [0.3030,32.5900],[0.3120,32.5980],[0.3200,32.5990],[0.3280,32.5900],
+                  [0.3360,32.5960],[0.3450,32.6050],[0.3500,32.6200],[0.3480,32.6400],
+                  [0.3350,32.6480],[0.3220,32.6420],[0.3160,32.6280],[0.3100,32.6150],
+                  [0.3020,32.6100],[0.3030,32.6000],[0.3100,32.5980],[0.3180,32.5900],
+                  [0.3230,32.5850],[0.3180,32.5760]],
+    ];
+
+    if (isset($outline[$code])) {
+        return $outline[$code];
+    }
+
+    // Unknown division: a small box around its centre so the map still draws.
+    $d = 0.012;
+    return [
+        [$lat - $d, $lng - $d * 1.2], [$lat - $d, $lng + $d * 1.2],
+        [$lat + $d, $lng + $d * 1.2], [$lat + $d, $lng - $d * 1.2],
+    ];
+}
+
+/**
+ * Division lock for Division-level roles.
+ *
+ * A Mayor has no authority outside their own division, so the filter must be
+ * applied to the query rather than after it — otherwise the sidebar and the
+ * counters leak another division's figures.
+ *
+ * Returns null for roles that may see the whole city; those callers fall back
+ * to the requested ?division= value.
+ *
+ * @return array{id:int,code:string,name:string}|null
+ */
+function divisionLock(): ?array
+{
+    $myId = Auth::scopeDivision();
+    if ($myId === null) {
+        return null;
+    }
+
+    $mine = Database::one('SELECT id, code, name FROM divisions WHERE id = ?', [$myId]);
+    if (!$mine) {
+        return null;
+    }
+
+    return [
+        'id'   => (int) $mine['id'],
+        'code' => (string) $mine['code'],
+        'name' => (string) $mine['name'],
+    ];
+}
+
+/**
+ * Render the division filter control for a filter bar.
+ * For a Division-level role it shows the locked division instead of a select,
+ * so the scoping is visible rather than implicit.
+ *
+ * @var string      $fieldId  element id, must be unique on the page
+ * @var string      $selected currently selected division code
+ */
+function renderDivisionFilter(string $fieldId, string $selected): void
+{
+    $lock = divisionLock();
+
+    if ($lock !== null) {
+        echo '<div class="field">';
+        echo '  <label for="' . e($fieldId) . 'Locked">Division</label>';
+        echo '  <input type="text" id="' . e($fieldId) . 'Locked" value="'
+            . e($lock['name'] . ' Division') . '" disabled>';
+        echo '  <input type="hidden" name="division" value="' . e($lock['code']) . '">';
+        echo '  <span class="hint">Scoped to your division.</span>';
+        echo '</div>';
+        return;
+    }
+
+    echo '<div class="field">';
+    echo '  <label for="' . e($fieldId) . '">Division</label>';
+    echo '  <select name="division" id="' . e($fieldId) . '" data-autosubmit>';
+    echo '    <option value="">All five divisions</option>';
+    foreach (Database::all('SELECT code, name FROM divisions ORDER BY name') as $d) {
+        echo '      <option value="' . e($d['code']) . '"'
+            . ($selected === $d['code'] ? ' selected' : '') . '>'
+            . e($d['name']) . '</option>';
+    }
+    echo '  </select>';
+    echo '</div>';
+}
+
+/** Distinct colour per division, used consistently across every map. */
+function divisionColor(string $code): string
+{
+    return match ($code) {
+        'CTR' => '#DC351D',
+        'KWM' => '#EAA515',
+        'RBG' => '#0A6339',
+        'MKY' => '#1D6FA5',
+        'NKW' => '#8E44AD',
+        default => '#6B7280',
+    };
+}
+
+/** Read a GET parameter as a trimmed string. */
+function q(string $key, string $default = ''): string
+{
+    return trim((string) ($_GET[$key] ?? $default));
+}
+
+/** Read a GET parameter as an int clamped to a range. */
+function qInt(string $key, int $default, int $min = PHP_INT_MIN, int $max = PHP_INT_MAX): int
+{
+    $v = $_GET[$key] ?? null;
+    if ($v === null || $v === '') {
+        return $default;
+    }
+    return (int) clamp((int) $v, $min, $max);
+}
