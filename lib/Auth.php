@@ -175,6 +175,18 @@ final class Auth
         return self::$user;
     }
 
+    /**
+     * Drop the memoised account row.
+     *
+     * Auth::user() caches for the life of the request, which is right until
+     * the request itself changes the row — a profile edit, or a password
+     * change. Without this the page would go on displaying the old values.
+     */
+    public static function clearUserCache(): void
+    {
+        self::$user = null;
+    }
+
     public static function id(): int
     {
         return (int) ($_SESSION['user_id'] ?? 0);

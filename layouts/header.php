@@ -27,7 +27,7 @@ $myDiv = (int) ($me['division_id'] ?? 0);
 <meta name="theme-color" content="#DC351D">
 <title><?= e($pageTitle ?? 'Dashboard') ?> · <?= e(APP_SHORT) ?></title>
 <link rel="icon" type="image/png" href="../assets/brand/kcca-favicon.png">
-<link rel="stylesheet" href="../assets/css/kcca.css">
+<link rel="stylesheet" href="<?= e(APP_REL) ?>assets/css/kcca.css?v=<?= e(APP_VERSION) ?>">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body>
@@ -209,6 +209,15 @@ $myDiv = (int) ($me['division_id'] ?? 0);
                 }
             }
         ?>
+          <?php
+             /* The rail's file paths are written relative to the site root
+                ("pages/vendors.php"), which is correct from a page at the
+                root but not from a page inside pages/ — where the browser
+                would resolve it to /pages/pages/vendors.php and 404. APP_REL
+                walks back from wherever this page happens to live, so one
+                navigation list works from every depth. */
+             $navHref = APP_REL . ltrim((string) $navItem['file'], '/');
+          ?>
           <a href="<?= e($navHref) ?>" class="<?= $navIsActive ? 'active' : '' ?>"
              <?= $navIsActive ? 'aria-current="page"' : '' ?><?= $isPortal ? ' target="_blank" rel="noopener"' : '' ?>>
             <?= KCCA_icon($navItem['icon'], 17) ?>

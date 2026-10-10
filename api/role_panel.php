@@ -25,13 +25,6 @@ $f     = facts();
 $me    = Auth::user();
 $remit = Auth::remit();
 
-$funnel = [
-    ['label' => 'To relocate',   'value' => (int) Database::value("SELECT COALESCE(SUM(estimated_vendors),0) FROM trade_zones WHERE 1=1" . RoleDashboard::scopeSql($scope)), 'color' => '#464646'],
-    ['label' => 'Offered space', 'value' => (int) Database::value("SELECT COUNT(*) FROM vendors WHERE status = 'offered-space'" . RoleDashboard::scopeSql($scope)), 'color' => '#EAA515'],
-    ['label' => 'Relocated',     'value' => (int) Database::value("SELECT COUNT(*) FROM vendors WHERE status = 'relocated'" . RoleDashboard::scopeSql($scope)), 'color' => '#1B7F4D'],
-    ['label' => 'Declined',      'value' => (int) Database::value("SELECT COUNT(*) FROM vendors WHERE status = 'declined'" . RoleDashboard::scopeSql($scope)), 'color' => '#C0261A'],
-];
-
 /* The section partials share a small set of variables, which the dashboard
    page also supplies. Duplicating the list here rather than inventing a
    context object keeps the partials plain PHP includes, which is what makes
