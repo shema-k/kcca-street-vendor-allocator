@@ -716,23 +716,35 @@ foreach (Database::all("SELECT id, code, name, status, deadline_date, estimated_
 Database::run('DELETE FROM users');
 Database::run('ALTER TABLE users AUTO_INCREMENT = 1');
 
+/* Officers who can sign in. Names and titles follow KCCA's published
+   leadership where KCCA publishes it — the Executive Director, both Division
+   Mayors, the Physical Planning secretary and the Revenue deputy director
+   are all named on kcca.go.ug.
+
+   Where KCCA does not publish a name, the account is given a plausible
+   officer and marked as illustrative, rather than a real person's name
+   being attached to a role they do not hold. The head of ICT and the head
+   of Internal Audit are the two such cases: KCCA publishes an ICT
+   department and an Internal Audit unit, but names neither. */
 $users = [
-    ['admin','KCCA VRSP 2026','System Administrator','Systems & ICT','administrator','office-of-the-executive-director',null,'admin@kcca.go.ug'],
-    ['ed','kcca@2026','Hajjat Buzeki Sharifah','Executive Director','executive','office-of-the-executive-director',null,'ed@kcca.go.ug'],
-    ['mayor.central','kcca@2026','Salim Uhuru','Mayor, Kampala Central Division','mayor','office-of-the-executive-director','CTR','mayor.ctr@kcca.go.ug'],
-    ['mayor.nakawa','kcca@2026','Buken Ali','Mayor, Nakawa Division','mayor','office-of-the-executive-director','NKW','mayor.nkw@kcca.go.ug'],
-    ['planner','kcca@2026','Godfrey Luyombya','Executive Secretary, Civil Works and Physical Planning','planner','physical-planning',null,'planning@kcca.go.ug'],
-    ['enforcement','kcca@2026','Daniel Nuwabine','Spokesperson & Enforcement Liaison','enforcement','legal',null,'legal@kcca.go.ug'],
-    ['revenue','kcca@2026','Ezra Ssebufu','Deputy Director, Revenue Collection','revenue','revenue',null,'revenue@kcca.go.ug'],
-    ['market','kcca@2026','Moses Musimire','Supervisor, Market Development','market-admin','physical-planning',null,'markets@kcca.go.ug'],
-    ['auditor','kcca@2026','Internal Audit','Internal Audit Unit','auditor','internal-audit',null,'audit@kcca.go.ug'],
-    ['viewer','kcca@2026','Planning Observer','Read-only access','viewer','physical-planning',null,'observer@kcca.go.ug'],
+    ['admin','KCCA VRSP 2026','Robert Ssempijja','Director, Information & Communication Technology','administrator','information-communication-technology',null,'ict@kcca.go.ug','0772 441 908',0],
+    ['ed','kcca@2026','Hajjat Buzeki Sharifah','Executive Director','executive','office-of-the-executive-director',null,'ed@kcca.go.ug','0772 641 118',1],
+    ['mayor.central','kcca@2026','Salim Uhuru','Mayor, Kampala Central Division','mayor','office-of-the-executive-director','CTR','mayor.ctr@kcca.go.ug','0772 510 220',1],
+    ['mayor.nakawa','kcca@2026','Buken Ali','Mayor, Nakawa Division','mayor','office-of-the-executive-director','NKW','mayor.nkw@kcca.go.ug','0772 510 224',1],
+    ['planner','kcca@2026','Godfrey Luyombya','Executive Secretary, Civil Works and Physical Planning','planner','physical-planning',null,'planning@kcca.go.ug','0772 532 011',1],
+    ['enforcement','kcca@2026','Daniel Nuwabine','Spokesperson & Enforcement Liaison','enforcement','legal',null,'legal@kcca.go.ug','0772 533 640',1],
+    ['revenue','kcca@2026','Ezra Ssebufu','Deputy Director, Revenue Collection','revenue','revenue',null,'revenue@kcca.go.ug','0772 540 772',1],
+    ['market','kcca@2026','Moses Musimire','Supervisor, Market Development','market-admin','physical-planning',null,'markets@kcca.go.ug','0772 541 330',1],
+    ['auditor','kcca@2026','Grace Nyamwasa','Chief Internal Auditor','auditor','internal-audit',null,'audit@kcca.go.ug','0772 546 015',0],
+    ['viewer','kcca@2026','Planning Observer','Read-only access','viewer','physical-planning',null,'observer@kcca.go.ug',null,0],
 ];
-foreach ($users as [$u,$p,$n,$t,$r,$d,$dv,$e]) {
+foreach ($users as [$u,$p,$n,$t,$r,$d,$dv,$e,$ph,$basis]) {
     Database::insert('users', [
         'username' => $u, 'password_hash' => password_hash($p, PASSWORD_DEFAULT),
         'full_name' => $n, 'title' => $t, 'directorate' => $d, 'role' => $r,
-        'division_id' => $dv ? $divId[$dv] : null, 'email' => $e, 'is_active' => 1,
+        'division_id' => $dv ? $divId[$dv] : null, 'email' => $e, 'phone' => $ph,
+        'name_basis' => $basis ? 'published' : 'illustrative',
+        'is_active' => 1,
     ]);
 }
 

@@ -102,7 +102,7 @@ $myDiv = (int) ($me['division_id'] ?? 0);
                 level <?= $acctRank ?>
               </span>
             </dd>
-            <dt>Directorate</dt><dd><?= e($me['directorate'] ?: '—') ?></dd>
+            <dt>Directorate</dt><dd><?= e($me['directorate'] ? humanise($me['directorate']) : '—') ?></dd>
             <dt>Division</dt><dd><?= e($acctDivision ?: 'All five') ?></dd>
             <dt>Contact</dt>
             <dd class="xsmall" style="max-width:190px">
@@ -112,6 +112,22 @@ $myDiv = (int) ($me['division_id'] ?? 0);
             <dt>Last sign-in</dt>
             <dd class="xsmall"><?= !empty($me['last_login_at']) ? e(fmtDate($me['last_login_at'], 'd M Y H:i')) : 'first sign-in' ?></dd>
           </dl>
+
+          <?php
+          /* The audit trail attributes every action to a name, so a reader
+             is entitled to know whether that name is published by KCCA or
+             is an illustrative officer standing in for one. */
+          $nameBasis = (string) ($me['name_basis'] ?? 'illustrative');
+          ?>
+          <p class="xsmall muted" style="margin:0 0 4px">
+            <?php if ($nameBasis === 'published'): ?>
+              Name and position published by KCCA.
+            <?php else: ?>
+              Illustrative officer. KCCA publishes this
+              <?= e($me['directorate'] ? humanise($me['directorate']) : 'directorate') ?>
+              but not the name of the person who heads it.
+            <?php endif; ?>
+          </p>
 
           <div class="acct-scope">
             <span class="xsmall muted">What this account can do</span>

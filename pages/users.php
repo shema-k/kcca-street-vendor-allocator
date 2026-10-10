@@ -20,7 +20,7 @@ $canEdit = Auth::can('manage');
 /* Who this officer may edit. */
 $all = Database::all(
     'SELECT u.id, u.username, u.full_name, u.title, u.directorate, u.role, u.division_id,
-            u.email, u.phone, u.is_active, u.last_login_at, d.name AS division_name
+            u.email, u.phone, u.name_basis, u.is_active, u.last_login_at, d.name AS division_name
        FROM users u LEFT JOIN divisions d ON d.id = u.division_id
       ORDER BY u.id'
 );
@@ -195,7 +195,7 @@ require __DIR__ . '/../layouts/header.php';
       <div class="stat info">
         <div class="label">Division</div>
         <div class="value" style="font-size:18px"><?= e($mine['division_name'] ?: 'All five') ?></div>
-        <div class="meta"><?= e($mine['directorate'] ?: '—') ?></div>
+        <div class="meta"><?= e($mine['directorate'] ? humanise($mine['directorate']) : '—') ?></div>
       </div>
       <div class="stat gold">
         <div class="label">Last sign-in</div>
@@ -231,7 +231,12 @@ require __DIR__ . '/../layouts/header.php';
             <tr>
               <td>
                 <strong><?= e($u['full_name']) ?></strong>
-                <div class="xsmall muted"><?= e($u['username']) ?><?= $u['title'] ? ' · ' . e($u['title']) : '' ?></div>
+                <div class="xsmall muted">
+                  <?= e($u['username']) ?><?= $u['title'] ? ' · ' . e($u['title']) : '' ?>
+                </div>
+                <?php if (($u['name_basis'] ?? 'illustrative') !== 'published'): ?>
+                  <div class="xsmall" style="color:var(--ink-4)">illustrative officer</div>
+                <?php endif; ?>
               </td>
               <td class="xsmall"><?= e(Auth::remit((string) $u['role'])['label']) ?></td>
               <td class="center"><span class="badge <?= $level >= 6 ? 'bad' : ($level >= 5 ? 'warn' : 'muted') ?>"><?= $level ?></span></td>

@@ -306,6 +306,14 @@ function humanise(?string $v): string
         'market-admin'        => 'Market Administration',
         'auditor'             => 'Internal Audit',
         'viewer'              => 'Viewer (read only)',
+        /* Directorates, as KCCA names them. */
+        'office-of-the-executive-director'     => 'Office of the Executive Director',
+        'information-communication-technology' => 'Information & Communication Technology',
+        'physical-planning'                    => 'Physical Planning',
+        'internal-audit'                       => 'Internal Audit',
+        'revenue'                              => 'Revenue Collection',
+        'legal'                                => 'Legal Affairs',
+        'systems-ict'                          => 'Systems & ICT',
     ];
     if (isset($map[$v])) {
         return $map[$v];

@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 $accounts = Database::all(
     'SELECT u.id, u.username, u.full_name, u.title, u.role, u.division_id,
-            u.email, u.phone, u.is_active, u.last_login_at, d.name AS division_name
+            u.email, u.phone, u.name_basis, u.is_active, u.last_login_at, d.name AS division_name
        FROM users u LEFT JOIN divisions d ON d.id = u.division_id
       ORDER BY u.id'
 );
@@ -62,7 +62,12 @@ foreach ($accounts as $a) {
             <tr>
               <td>
                 <strong><?= e($a['full_name']) ?></strong>
-                <div class="xsmall muted"><?= e($a['username']) ?><?= $a['title'] ? ' · ' . e($a['title']) : '' ?></div>
+                <div class="xsmall muted">
+                  <?= e($a['username']) ?><?= $a['title'] ? ' · ' . e($a['title']) : '' ?>
+                </div>
+                <?php if (($a['name_basis'] ?? 'illustrative') !== 'published'): ?>
+                  <div class="xsmall" style="color:var(--ink-4)">illustrative officer</div>
+                <?php endif; ?>
               </td>
               <td class="xsmall"><?= e(Auth::remit($a['role'])['label']) ?></td>
               <td class="center"><span class="badge <?= Auth::rank($a['role']) >= 6 ? 'bad' : (Auth::rank($a['role']) >= 5 ? 'warn' : 'muted') ?>"><?= Auth::rank($a['role']) ?></span></td>

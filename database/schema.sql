@@ -470,6 +470,10 @@ CREATE TABLE `users` (
   `division_id`   INT UNSIGNED DEFAULT NULL,
   `email`         VARCHAR(120) DEFAULT NULL,
   `phone`         VARCHAR(40)  DEFAULT NULL,
+  -- Whether the name and title are published by KCCA or illustrative. An
+  -- officer's name is what the audit trail attributes an action to, so it
+  -- matters that a reader can tell which is which.
+  `name_basis`    ENUM('published','illustrative') NOT NULL DEFAULT 'illustrative',
   `is_active`     TINYINT(1) NOT NULL DEFAULT 1,
   `last_login_at` DATETIME DEFAULT NULL,
   `created_at`    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -84,19 +84,35 @@ server you name, as well as checking PHP and running the verification.
 
 ### Sign in
 
-| Username | Password | Role | Sees |
-|---|---|---|---|
-| `admin` | `KCCA VRSP 2026` | System Administrator | Everything |
-| `ed` | `kcca@2026` | Executive Director | All dashboards, approves and allocates |
-| `mayor.central` | `kcca@2026` | Mayor, Kampala Central | Own division, allocates and enforces |
-| `planner` | `kcca@2026` | Physical Planning | Congestion and relocation, allocates |
-| `enforcement` | `kcca@2026` | Legal Affairs | Notices, ultimatums, clear-up operations |
-| `revenue` | `kcca@2026` | Revenue Collection | Licensing and reports |
-| `market` | `kcca@2026` | Market Administration | Vacancy, allocation, management |
-| `auditor` | `kcca@2026` | Internal Audit | The audit trail |
-| `viewer` | `kcca@2026` | Read-only | Views only, no actions |
+Every account uses `kcca@2026` except `admin`, which uses `KCCA VRSP 2026`.
+
+| Username | Password | Officer | Level | Sees |
+|---|---|---|---|---|
+| `admin` | `KCCA VRSP 2026` | Robert Ssempijja — Director, ICT | 7 | Everything, and the accounts that access it |
+| `ed` | `kcca@2026` | Hajjat Buzeki Sharifah — Executive Director | 6 | All five divisions, approvals, accounts |
+| `mayor.central` | `kcca@2026` | Salim Uhuru — Mayor, Kampala Central | 5 | Own division only |
+| `mayor.nakawa` | `kcca@2026` | Buken Ali — Mayor, Nakawa | 5 | Own division only |
+| `planner` | `kcca@2026` | Godfrey Luyombya — Physical Planning | 4 | Congestion, footfall, matching |
+| `enforcement` | `kcca@2026` | Daniel Nuwabine — Legal Affairs | 4 | Notices, ultimatums, clear-ups |
+| `revenue` | `kcca@2026` | Ezra Ssebufu — Revenue Collection | 2 | Licensing |
+| `market` | `kcca@2026` | Moses Musimire — Market Administration | 4 | Vacancy, pitches, allocations |
+| `auditor` | `kcca@2026` | Grace Nyamwasa — Internal Audit | 3 | The audit trail, and nothing operational |
+| `viewer` | `kcca@2026` | Planning Observer | 1 | The position, read-only |
+
+`mayor.nakawa` is a second Division Mayor, seeded so the division-scoping can be
+compared directly: sign in as each and the rail, the dashboard and every figure
+change to that division.
 
 The trader portal at `/pages/portal.php` needs no sign-in.
+
+**On the names.** Seven of the ten are officers KCCA names on kcca.go.ug — the
+Executive Director, both Division Mayors, the Physical Planning secretary, the
+Legal Affairs spokesperson, the Revenue deputy director and the Market
+Development supervisor. The other three are illustrative: KCCA publishes an ICT
+department, an Internal Audit unit and no read-only role, but names nobody in
+them. Each account states which it is, in the account menu and on the accounts
+page, because the audit trail attributes every action to a name and a reader is
+entitled to know where that name came from.
 
 ## Roles and authority
 
