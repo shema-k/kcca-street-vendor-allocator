@@ -716,16 +716,24 @@ foreach (Database::all("SELECT id, code, name, status, deadline_date, estimated_
 Database::run('DELETE FROM users');
 Database::run('ALTER TABLE users AUTO_INCREMENT = 1');
 
-/* Officers who can sign in. Names and titles follow KCCA's published
-   leadership where KCCA publishes it — the Executive Director, both Division
-   Mayors, the Physical Planning secretary and the Revenue deputy director
-   are all named on kcca.go.ug.
-
-   Where KCCA does not publish a name, the account is given a plausible
-   officer and marked as illustrative, rather than a real person's name
-   being attached to a role they do not hold. The head of ICT and the head
-   of Internal Audit are the two such cases: KCCA publishes an ICT
-   department and an Internal Audit unit, but names neither. */
+/* Officers and traders who can sign in.
+ *
+ * Six roles, in the order of authority the Authority sets out: the System
+ * Administrator runs the system; the Executive Director oversees everything
+ * and takes the final decisions; the Mayor oversees the managers of one
+ * division; the Planner decides how the relocation is planned and holds the
+ * forecast; the Enforcement Officer carries it out on the ground; the vendor
+ * views markets, applies for a stall and follows the footfall.
+ *
+ * Internal Audit is deliberately not a sign-in role. It is viewed by the
+ * Executive Director, the Mayor and the System Administrator, so it is a
+ * screen those three hold rather than a separate desk.
+ *
+ * Names and titles follow KCCA's published leadership where KCCA publishes
+ * it. Where it does not — the ICT department, Internal Audit, and the two
+ * traders — the account is marked illustrative rather than a real person's
+ * name being attached to a post they do not hold.
+ */
 $users = [
     ['admin','KCCA VRSP 2026','Robert Ssempijja','Director, Information & Communication Technology','administrator','information-communication-technology',null,'ict@kcca.go.ug','0772 441 908',0],
     ['ed','kcca@2026','Hajjat Buzeki Sharifah','Executive Director','executive','office-of-the-executive-director',null,'ed@kcca.go.ug','0772 641 118',1],
@@ -733,10 +741,7 @@ $users = [
     ['mayor.nakawa','kcca@2026','Buken Ali','Mayor, Nakawa Division','mayor','office-of-the-executive-director','NKW','mayor.nkw@kcca.go.ug','0772 510 224',1],
     ['planner','kcca@2026','Godfrey Luyombya','Executive Secretary, Civil Works and Physical Planning','planner','physical-planning',null,'planning@kcca.go.ug','0772 532 011',1],
     ['enforcement','kcca@2026','Daniel Nuwabine','Spokesperson & Enforcement Liaison','enforcement','legal',null,'legal@kcca.go.ug','0772 533 640',1],
-    ['revenue','kcca@2026','Ezra Ssebufu','Deputy Director, Revenue Collection','revenue','revenue',null,'revenue@kcca.go.ug','0772 540 772',1],
-    ['market','kcca@2026','Moses Musimire','Supervisor, Market Development','market-admin','physical-planning',null,'markets@kcca.go.ug','0772 541 330',1],
-    ['auditor','kcca@2026','Grace Nyamwasa','Chief Internal Auditor','auditor','internal-audit',null,'audit@kcca.go.ug','0772 546 015',0],
-    ['viewer','kcca@2026','Planning Observer','Read-only access','viewer','physical-planning',null,'observer@kcca.go.ug',null,0],
+    ['vendor','kcca@2026','Nakato Rehema','Street vendor — Kisenyi','vendor',null,null,'rehema.nakato@example.co.ug','0772 990 441',0],
 ];
 foreach ($users as [$u,$p,$n,$t,$r,$d,$dv,$e,$ph,$basis]) {
     Database::insert('users', [

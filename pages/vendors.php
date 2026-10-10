@@ -7,7 +7,10 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../lib/bootstrap.php';
-Auth::requirePermission('view');
+/* The register carries names, national ID numbers and telephone numbers.
+   A trader reaches their own record through their profile; the register as
+   a whole is for the officers who administer it. */
+Auth::requirePermission('report');
 
 $division = (string) ($_GET['division'] ?? '');
 

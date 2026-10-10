@@ -129,31 +129,42 @@ final class RoleDashboard
     {
         $out = [];
 
-        /* Everyone sees the programme funnel: it is the point of the
-           system, and a Mayor needs the citywide shape as much as the
-           Executive Director does. It is declared once here rather than
-           repeated in each role's branch. */
-        $out[] = [
-            'id'     => 'programme',
-            'title'  => 'The relocation programme',
-            'desc'   => 'Where the surveyed vendors have reached.',
-            'render' => 'programme',
-        ];
+        /* The programme funnel is shared. It is the point of the system, and
+           a Mayor needs the citywide shape as much as the Executive Director
+           does. Declared once here rather than repeated in each branch. A
+           vendor does not get it — a trader has no programme to track, and
+           showing them one would be noise. */
+        if ($role !== 'vendor') {
+            $out[] = [
+                'id'     => 'programme',
+                'title'  => 'The relocation programme',
+                'desc'   => 'Where the surveyed vendors have reached.',
+                'render' => 'programme',
+            ];
+        }
 
         switch ($role) {
 
             case 'administrator':
                 $out[] = ['id' => 'accounts', 'title' => 'Accounts and access',
                           'desc' => 'Who can sign in, and at what level of authority.', 'render' => 'accounts'];
+                $out[] = ['id' => 'divisions', 'title' => 'Progress by division',
+                          'desc' => 'Clearance and space across all five divisions.', 'render' => 'divisions'];
+                $out[] = ['id' => 'decisions', 'title' => 'Recent decisions',
+                          'desc' => 'Every state change, and who took it.', 'render' => 'decisions'];
                 $out[] = ['id' => 'system', 'title' => 'System',
                           'desc' => 'Backups, settings and the audit trail.', 'render' => 'system'];
                 break;
 
             case 'executive':
+                /* The Executive Director's screen is a summary first: what is
+                   moving, what is not, and what is waiting on them. */
                 $out[] = ['id' => 'divisions', 'title' => 'Progress by division',
                           'desc' => 'Clearance and space across all five divisions.', 'render' => 'divisions'];
-                $out[] = ['id' => 'approvals', 'title' => 'Awaiting your approval',
+                $out[] = ['id' => 'approvals', 'title' => 'Awaiting your decision',
                           'desc' => 'Recommendations and stall requests put to you.', 'render' => 'approvals'];
+                $out[] = ['id' => 'decisions', 'title' => 'Recent decisions',
+                          'desc' => 'What has been decided across the Authority.', 'render' => 'decisions'];
                 $out[] = ['id' => 'plan', 'title' => 'Against the Strategic Plan',
                           'desc' => 'The FY2025/26–29/30 targets this system reports on.', 'render' => 'plan'];
                 break;
@@ -163,11 +174,17 @@ final class RoleDashboard
                           'desc' => 'Sites, clearance and space where you have authority.', 'render' => 'divisions'];
                 $out[] = ['id' => 'myzone', 'title' => 'Sites in your division',
                           'desc' => 'Ranked by how badly each needs clearing.', 'render' => 'myzone'];
+                $out[] = ['id' => 'managers', 'title' => 'Your managers',
+                          'desc' => 'What Planning and Enforcement are doing under you.', 'render' => 'managers'];
                 $out[] = ['id' => 'approvals', 'title' => 'Awaiting your decision',
                           'desc' => 'Recommendations and stall requests in your division.', 'render' => 'approvals'];
                 break;
 
             case 'planner':
+                /* The Planner's screen leads with the forecast, because that
+                   is the tool they asked for. */
+                $out[] = ['id' => 'ai', 'title' => 'Forecast',
+                          'desc' => 'Projected reach and revenue for every location with space.', 'render' => 'ai'];
                 $out[] = ['id' => 'congestion', 'title' => 'Sites by congestion score',
                           'desc' => 'The seven criteria, ranked. This is the clearance order.', 'render' => 'congestion'];
                 $out[] = ['id' => 'footfall', 'title' => 'Footfall coverage',
@@ -181,39 +198,19 @@ final class RoleDashboard
                           'desc' => 'Notices, ultimatums and clear-ups, newest first.', 'render' => 'enforcement'];
                 $out[] = ['id' => 'escalations', 'title' => 'Open work',
                           'desc' => 'Records not yet closed off, and what they are waiting on.', 'render' => 'escalations'];
-                $out[] = ['id' => 'notices', 'title' => 'What the Authority has said publicly',
-                          'desc' => 'The statements behind the programme.', 'render' => 'notices'];
+                $out[] = ['id' => 'notices', 'title' => 'Instructions from above',
+                          'desc' => 'What you have been told to carry out, and by whom.', 'render' => 'notices'];
                 break;
 
-            case 'market-admin':
-                $out[] = ['id' => 'vacancy', 'title' => 'Gazetted space',
-                          'desc' => 'Capacity, occupancy and vacancy by market.', 'render' => 'vacancy'];
-                $out[] = ['id' => 'requests', 'title' => 'Stall requests',
-                          'desc' => 'Pitches a trader has chosen and asked for.', 'render' => 'requests'];
-                $out[] = ['id' => 'allocations', 'title' => 'Live allocations',
-                          'desc' => 'Offers out, accepted, and confirmed in place.', 'render' => 'allocations'];
-                break;
-
-            case 'revenue':
-                $out[] = ['id' => 'licensing', 'title' => 'Licensing position',
-                          'desc' => 'Licence classes across the register.', 'render' => 'licensing'];
-                $out[] = ['id' => 'unlicensed', 'title' => 'Traders without a licence',
-                          'desc' => 'The compliance gap, by trade and division.', 'render' => 'unlicensed'];
-                break;
-
-            case 'auditor':
-                $out[] = ['id' => 'audit', 'title' => 'Recent audit entries',
-                          'desc' => 'Every state change, who took it and when.', 'render' => 'audit'];
-                $out[] = ['id' => 'decisions', 'title' => 'Allocation and approval changes',
-                          'desc' => 'The decisions that moved people and space.', 'render' => 'decisions'];
-                break;
-
-            case 'viewer':
-            default:
-                $out[] = ['id' => 'divisions', 'title' => 'Progress by division',
-                          'desc' => 'Clearance and space across all five divisions.', 'render' => 'divisions'];
-                $out[] = ['id' => 'congestion', 'title' => 'Sites by congestion score',
-                          'desc' => 'Where the Authority is acting first.', 'render' => 'congestion'];
+            case 'vendor':
+                /* A trader's three questions: where is there space, how busy
+                   is it, and what happened to my application. */
+                $out[] = ['id' => 'vendor-markets', 'title' => 'Markets with space',
+                          'desc' => 'Every gazetted location with a free pitch.', 'render' => 'vendor_markets'];
+                $out[] = ['id' => 'vendor-footfall', 'title' => 'Footfall, to choose well',
+                          'desc' => 'How many people pass each market a day.', 'render' => 'vendor_footfall'];
+                $out[] = ['id' => 'vendor-applications', 'title' => 'My applications',
+                          'desc' => 'Every stall you have asked for, and its decision.', 'render' => 'vendor_applications'];
                 break;
         }
 
@@ -225,29 +222,20 @@ final class RoleDashboard
      * ================================================================= */
     private static function waiting(array $scope): array
     {
-        $div  = self::scopeSql($scope);
         $out  = [];
         $role = Auth::role();
 
         if (in_array($role, ['administrator', 'executive', 'mayor'], true)) {
-            /* recommendations has no division of its own — it belongs to a
-               vendor, whose division is what a Mayor is accountable for. */
-            $recDiv = $div !== ''
-                ? ' AND vendor_id IN (SELECT id FROM vendors WHERE division_id = ' . (int) $scope['division_id'] . ')'
-                : '';
-            $n = (int) Database::value("SELECT COUNT(*) FROM recommendations WHERE status = 'proposed'" . $recDiv);
+            $n = (int) Database::value("SELECT COUNT(*) FROM recommendations WHERE status = 'proposed'");
             if ($n > 0) {
                 $out[] = ['label' => num($n) . ' recommendation' . ($n === 1 ? '' : 's') . ' awaiting approval',
                           'href' => 'recommendations.php?status=proposed', 'tone' => 'info'];
             }
         }
 
-        if (in_array($role, ['administrator', 'executive', 'mayor', 'market-admin'], true)) {
-            $srDiv = $div !== ''
-                ? ' AND market_id IN (SELECT id FROM markets WHERE division_id = ' . (int) $scope['division_id'] . ')'
-                : '';
+        if (in_array($role, ['administrator', 'executive', 'mayor'], true)) {
             $n = (int) Database::value(
-                "SELECT COUNT(*) FROM stall_requests WHERE status IN ('pending','reviewing')" . $srDiv
+                "SELECT COUNT(*) FROM stall_requests WHERE status IN ('pending','reviewing')"
             );
             if ($n > 0) {
                 $out[] = ['label' => num($n) . ' stall request' . ($n === 1 ? '' : 's') . ' to decide',
@@ -255,13 +243,11 @@ final class RoleDashboard
             }
         }
 
-        if (in_array($role, ['administrator', 'executive', 'mayor', 'planner', 'market-admin'], true)) {
-            $divM = $div !== '' ? ' AND m.division_id = ' . (int) $scope['division_id'] : '';
+        if (in_array($role, ['administrator', 'executive', 'mayor', 'planner'], true)) {
             $n = (int) Database::value(
                 "SELECT COUNT(*) FROM markets m
                   WHERE m.vacant_spaces > 0
                     AND NOT EXISTS (SELECT 1 FROM footfall_observations o WHERE o.market_id = m.id)"
-                    . $divM
             );
             if ($n > 0) {
                 $out[] = ['label' => num($n) . ' market' . ($n === 1 ? '' : 's')
@@ -278,6 +264,18 @@ final class RoleDashboard
                 $out[] = ['label' => num($n) . ' enforcement record' . ($n === 1 ? '' : 's')
                                  . ' not yet closed',
                           'href' => 'enforcement.php', 'tone' => 'warn'];
+            }
+        }
+
+        if ($role === 'vendor') {
+            $n = (int) Database::value(
+                "SELECT COUNT(*) FROM stall_requests
+                  WHERE status = 'pending' AND phone = ?",
+                [preg_replace('/[^0-9+]/', '', (string) (Auth::user()['phone'] ?? ''))]
+            );
+            if ($n > 0) {
+                $out[] = ['label' => num($n) . ' application' . ($n === 1 ? '' : 's') . ' awaiting a decision',
+                          'href' => 'market_map.php', 'tone' => 'info'];
             }
         }
 

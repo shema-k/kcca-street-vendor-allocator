@@ -125,7 +125,10 @@ if (Auth::can('allocate')) {
 }
 
 /* Can this visitor pick a stall? */
-$canChoose = !Auth::check() || Auth::can('allocate');
+/* Who may ask for a pitch: a member of the public, an officer with authority
+   to allocate, or a trader signed in as a vendor. Applying for a stall is the
+   vendor's core function, so it must not sit behind a staff permission. */
+$canChoose = !Auth::check() || Auth::can('allocate') || Auth::role() === 'vendor';
 
 $occupancy = $capacity > 0 ? round((int) $market['registered_vendors'] / $capacity * 100, 1) : 0.0;
 

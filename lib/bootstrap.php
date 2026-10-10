@@ -45,26 +45,26 @@ function navigation(): array
     return [
         ['group' => 'Work', 'items' => [
             ['id' => 'dashboard',       'file' => 'pages/dashboard.php',       'label' => 'Dashboard',      'icon' => 'gauge',    'audience' => ['all']],
-            ['id' => 'vendors',         'file' => 'pages/vendors.php',         'label' => 'Vendors',        'icon' => 'people',   'audience' => ['all']],
-            ['id' => 'locations',       'file' => 'pages/locations.php',       'label' => 'Locations',      'icon' => 'store',    'audience' => ['all']],
-            ['id' => 'market-map',      'file' => 'pages/market_map.php',      'label' => 'Stall Map',      'icon' => 'map',      'audience' => ['all']],
-            ['id' => 'recommendations', 'file' => 'pages/recommendations.php', 'label' => 'Recommendations','icon' => 'chart',    'audience' => ['executive', 'planner', 'market-admin', 'administrator']],
-            ['id' => 'allocations',    'file' => 'pages/allocations.php',      'label' => 'Allocations',    'icon' => 'swap',     'audience' => ['executive', 'mayor', 'planner', 'market-admin', 'administrator']],
-            ['id' => 'reports',         'file' => 'pages/reports.php',         'label' => 'Reports',        'icon' => 'download', 'audience' => ['all']],
+            ['id' => 'vendors',         'file' => 'pages/vendors.php',         'label' => 'Vendors',        'icon' => 'people',   'audience' => ['administrator', 'executive', 'mayor', 'planner', 'enforcement']],
+            ['id' => 'locations',       'file' => 'pages/locations.php',       'label' => 'Markets',        'icon' => 'store',    'audience' => ['all']],
+            ['id' => 'market-map',      'file' => 'pages/market_map.php',      'label' => 'Apply for a Stall', 'icon' => 'map',  'audience' => ['all']],
+            ['id' => 'recommendations', 'file' => 'pages/recommendations.php', 'label' => 'AI Forecast',    'icon' => 'chart',    'audience' => ['administrator', 'executive', 'mayor', 'planner']],
+            ['id' => 'allocations',    'file' => 'pages/allocations.php',      'label' => 'Allocations',    'icon' => 'swap',     'audience' => ['administrator', 'executive', 'mayor', 'planner']],
+            ['id' => 'reports',         'file' => 'pages/reports.php',         'label' => 'Reports',        'icon' => 'download', 'audience' => ['administrator', 'executive', 'mayor', 'planner', 'enforcement']],
         ]],
         ['group' => 'Trade Order', 'items' => [
             ['id' => 'city-map',        'file' => 'pages/city-map.php',       'label' => 'City Map',       'icon' => 'map',      'audience' => ['all']],
-            ['id' => 'congestion',     'file' => 'pages/congestion.php',      'label' => 'Congestion',      'icon' => 'pulse',    'audience' => ['all']],
-            ['id' => 'vacancy',        'file' => 'pages/vacancy.php',         'label' => 'Vacancy',         'icon' => 'grid',     'audience' => ['all']],
-            ['id' => 'relocation',     'file' => 'pages/relocation.php',      'label' => 'Matching',        'icon' => 'list',     'audience' => ['executive', 'planner', 'market-admin', 'administrator']],
-            ['id' => 'enforcement',    'file' => 'pages/enforcement.php',     'label' => 'Enforcement',     'icon' => 'shield',   'audience' => ['executive', 'mayor', 'enforcement', 'administrator']],
-            ['id' => 'licensing',      'file' => 'pages/licensing.php',       'label' => 'Licensing',       'icon' => 'doc',      'audience' => ['executive', 'revenue', 'administrator']],
+            ['id' => 'congestion',     'file' => 'pages/congestion.php',      'label' => 'Congestion',      'icon' => 'pulse',    'audience' => ['administrator', 'executive', 'mayor', 'planner', 'enforcement']],
+            ['id' => 'vacancy',        'file' => 'pages/vacancy.php',         'label' => 'Vacant Space',    'icon' => 'grid',     'audience' => ['all']],
+            ['id' => 'relocation',     'file' => 'pages/relocation.php',      'label' => 'Matching',        'icon' => 'list',     'audience' => ['administrator', 'executive', 'mayor', 'planner']],
+            ['id' => 'enforcement',    'file' => 'pages/enforcement.php',     'label' => 'Enforcement',     'icon' => 'shield',   'audience' => ['administrator', 'executive', 'mayor', 'enforcement']],
+            ['id' => 'licensing',      'file' => 'pages/licensing.php',       'label' => 'Licensing',       'icon' => 'doc',      'audience' => ['administrator', 'executive', 'mayor']],
             ['id' => 'markets',        'file' => 'pages/markets.php',         'label' => 'Markets',         'icon' => 'layers',   'audience' => ['all']],
         ]],
         ['group' => 'Oversight', 'items' => [
-            ['id' => 'analytics',      'file' => 'pages/analytics.php',       'label' => 'Performance',     'icon' => 'trend',    'audience' => ['executive', 'auditor', 'administrator']],
-            ['id' => 'audit',          'file' => 'pages/audit.php',           'label' => 'Audit Trail',     'icon' => 'log',      'audience' => ['executive', 'auditor', 'administrator']],
-            ['id' => 'users',          'file' => 'pages/users.php',           'label' => 'Accounts',        'icon' => 'people',   'audience' => ['executive', 'administrator']],
+            ['id' => 'analytics',      'file' => 'pages/analytics.php',       'label' => 'Performance',     'icon' => 'trend',    'audience' => ['administrator', 'executive', 'mayor']],
+            ['id' => 'audit',          'file' => 'pages/audit.php',           'label' => 'Audit Trail',     'icon' => 'log',      'audience' => ['administrator', 'executive', 'mayor']],
+            ['id' => 'accounts',       'file' => 'pages/users.php',           'label' => 'Accounts',        'icon' => 'people',   'audience' => ['administrator', 'executive']],
             ['id' => 'settings',       'file' => 'pages/settings.php',        'label' => 'Settings',        'icon' => 'cog',      'audience' => ['administrator']],
         ]],
         ['group' => 'Public', 'items' => [
@@ -81,18 +81,23 @@ function navigation(): array
  * aimed at the failure mode where an officer is handed screens they cannot
  * act on:
  *
- *   Span of control. A manager sees their own directorate's work and the
- *   decisions put to them — not the working screens of another
- *   directorate. Legal Affairs does not operate the vendor-matching engine;
- *   Revenue Collection does not serve notices. Those are somebody else's
- *   line authority, and showing them is how a rail becomes a maze.
+ *   Span of control. A manager sees their own work and the decisions put
+ *   to them — not the working screens of another manager. The Enforcement
+ *   Officer does not plan the relocation; the Planner does not serve
+ *   notices. Those are separate tasks under the Mayor, and showing each
+ *   the other's screens is how a rail becomes a maze.
  *
  *   Altitude. Everyone sees the citywide position, because that is the
- *   shared picture. As authority rises, the officer gains the screens that
- *   summarise and decide; as it falls, they keep the screens they operate.
- *   A Division Mayor sees enforcement because they act on it in their own
- *   division. An auditor sees none of it — the audit trail is the
- *   auditor's instrument, not a substitute for a management report.
+ *   shared picture. As authority rises the officer gains the screens that
+ *   summarise and decide; as it falls they keep the screens they operate.
+ *   A Mayor sees enforcement because they oversee the officer who runs it;
+ *   a vendor sees none of it, because a trader's question is where the
+ *   space is, not how the Authority is organised.
+ *
+ * Internal Audit is the deliberate exception to both. It is not a role
+ * anybody signs in as: the Authority's instruction is that it is viewed by
+ * the Executive Director, the Mayor and the System Administrator, so the
+ * audit trail is a screen those three hold rather than a separate desk.
  *
  * The result: no two roles see the same rail, and no role is shown a link
  * to somewhere it has no standing to act.

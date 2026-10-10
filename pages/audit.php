@@ -224,17 +224,12 @@ require __DIR__ . '/../layouts/header.php';
             <thead><tr><th>Role</th><th class="center">View</th><th class="center">Allocate</th><th class="center">Enforce</th><th class="center">Manage</th><th class="center">Audit</th></tr></thead>
             <tbody>
               <?php
-              $perm = [
-                  'administrator' => ['*'],
-                  'executive'     => ['view','allocate','approve','enforce','report','manage'],
-                  'mayor'         => ['view','allocate','enforce','report'],
-                  'planner'       => ['view','allocate','report'],
-                  'enforcement'   => ['view','enforce','report'],
-                  'revenue'       => ['view','report'],
-                  'market-admin'  => ['view','allocate','manage','report'],
-                  'auditor'       => ['view','report','audit'],
-                  'viewer'        => ['view'],
-              ];
+              /* Drawn from Auth itself, so the table can never disagree with
+                 the permissions actually being enforced. */
+              $perm = [];
+              foreach (Auth::roles() as $roleName) {
+                  $perm[$roleName] = Auth::permissionsFor($roleName);
+              }
               foreach ($perm as $role => $granted):
                   $has = static fn(string $p) => in_array('*', $granted, true) || in_array($p, $granted, true);
               ?>

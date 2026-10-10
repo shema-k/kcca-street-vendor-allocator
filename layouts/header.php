@@ -12,7 +12,10 @@ $stats = headlineStats();
 $navPageId = currentPage();
 $me    = Auth::check() ? Auth::user() : [];
 $meId  = Auth::check() ? Auth::id() : 0;
-$myDiv = (int) ($me['division_id'] ?? 0);
+/* Namespaced: a page (profile.php) already uses $myDiv for the
+   division row it fetched, and this line would silently replace it
+   with an integer. */
+$layoutDivisionId = (int) ($me['division_id'] ?? 0);
 ?>
 <!doctype html>
 <html lang="en">
@@ -67,8 +70,8 @@ $myDiv = (int) ($me['division_id'] ?? 0);
       /* Account menu. Clicking the name or role opens this; clicking
          anywhere else, or pressing Escape, closes it. Signing out is in
          here, and also reachable by keyboard. */
-      $acctDivision = $myDiv > 0
-          ? (string) Database::value('SELECT name FROM divisions WHERE id = ?', [$myDiv])
+      $acctDivision = $layoutDivisionId > 0
+          ? (string) Database::value('SELECT name FROM divisions WHERE id = ?', [$layoutDivisionId])
           : null;
       $acctRank     = Auth::rank();
       $acctRemit    = Auth::remit();
@@ -102,7 +105,11 @@ $myDiv = (int) ($me['division_id'] ?? 0);
                 level <?= $acctRank ?>
               </span>
             </dd>
-            <dt>Directorate</dt><dd><?= e($me['directorate'] ? humanise($me['directorate']) : '—') ?></dd>
+            <?php if (Auth::role() === 'vendor'): ?>
+              <dt>Trading at</dt><dd><?= e(Auth::user()['title'] ?: 'Not recorded') ?></dd>
+            <?php else: ?>
+              <dt>Directorate</dt><dd><?= e($me['directorate'] ? humanise($me['directorate']) : 'Office of the Authority') ?></dd>
+            <?php endif; ?>
             <dt>Division</dt><dd><?= e($acctDivision ?: 'All five') ?></dd>
             <dt>Contact</dt>
             <dd class="xsmall" style="max-width:190px">
@@ -196,9 +203,11 @@ $myDiv = (int) ($me['division_id'] ?? 0);
       $railScopeText = match ($railScope) {
           'system'      => 'Whole system',
           'citywide'    => 'All five divisions',
-          'division'    => $myDiv > 0 ? (string) Database::value('SELECT name FROM divisions WHERE id = ?', [$myDiv]) . ' Division' : 'Own division',
-          'oversight'   => 'Oversight',
-          'directorate' => Auth::user()['directorate'] ? ucwords(str_replace(['-'], ' ', (string) Auth::user()['directorate'])) : 'Directorate',
+          'division'    => $layoutDivisionId > 0 ? (string) Database::value('SELECT name FROM divisions WHERE id = ?', [$layoutDivisionId]) . ' Division' : 'Own division',
+          'directorate' => Auth::user()['directorate']
+                            ? humanise((string) Auth::user()['directorate'])
+                            : ucfirst(Auth::role()),
+          'vendor'      => 'Trader',
           default       => 'Read only',
       };
       ?>

@@ -9,14 +9,14 @@ final class Auth
 {
     private const PERMISSIONS = [
         'administrator' => ['*'],
-        'executive'     => ['view', 'allocate', 'approve', 'enforce', 'report', 'manage'],
-        'mayor'         => ['view', 'allocate', 'enforce', 'report'],
+        'executive'     => ['view', 'allocate', 'approve', 'enforce', 'report', 'manage', 'audit'],
+        'mayor'         => ['view', 'allocate', 'enforce', 'report', 'audit'],
         'planner'       => ['view', 'allocate', 'report'],
         'enforcement'   => ['view', 'enforce', 'report'],
-        'revenue'       => ['view', 'report'],
-        'market-admin'  => ['view', 'allocate', 'manage', 'report'],
-        'auditor'       => ['view', 'report', 'audit'],
-        'viewer'        => ['view'],
+        // A trader views markets, applies for a stall and tracks footfall.
+        // The stall request is a separate, public endpoint with its own
+        // validation, so this role needs no further grant.
+        'vendor'        => ['view'],
     ];
 
     /**
@@ -29,15 +29,12 @@ final class Auth
      * to be kept in step with this one.
      */
     private const HIERARCHY = [
-        'viewer'       => 1,   // read-only observer
-        'revenue'      => 2,   // Revenue Collection
-        'auditor'      => 3,   // Internal Audit — oversight, no operations
-        'planner'      => 4,   // Physical Planning
-        'enforcement'  => 4,   // Legal Affairs
-        'market-admin' => 4,   // Market Administration
-        'mayor'        => 5,   // a Division Mayor — authority across own division
-        'executive'    => 6,   // Executive Director — citywide
-        'administrator'=> 7,   // System Administrator — everything
+        'vendor'        => 1,   // the trader
+        'enforcement'   => 2,   // carries the decision out on the ground
+        'planner'       => 3,   // decides how the relocation is done
+        'mayor'         => 4,   // oversees the managers of one division
+        'executive'     => 5,   // the whole Authority, and the final decision
+        'administrator' => 6,   // the system itself
     ];
 
     /**
@@ -49,49 +46,34 @@ final class Auth
      */
     private const REMIT = [
         'administrator' => [
-            'label'   => 'System Administrator',
-            'scope'   => 'system',
-            'blurb'  => 'The whole system: every division, every register, the accounts that access it.',
+            'label'  => 'System Administrator',
+            'scope'  => 'system',
+            'blurb' => 'Everything on the system, and every account that reaches it.',
         ],
         'executive' => [
-            'label'   => 'Executive Director',
-            'scope'   => 'citywide',
-            'blurb'  => 'The whole programme across all five divisions, and its approval decisions.',
+            'label'  => 'Executive Director',
+            'scope'  => 'citywide',
+            'blurb' => 'All progress across the Authority, and the final decisions.',
         ],
         'mayor' => [
-            'label'   => 'Division Mayor',
-            'scope'   => 'division',
-            'blurb'  => 'Your own division: its sites, its vendors and its relocation progress.',
+            'label'  => 'Mayor',
+            'scope'  => 'division',
+            'blurb' => 'Your division, and the managers working under you.',
         ],
         'planner' => [
-            'label'   => 'Physical Planning',
-            'scope'   => 'directorate',
-            'blurb'  => 'Survey, congestion measurement and where vendors are matched.',
+            'label'  => 'Planner',
+            'scope'  => 'directorate',
+            'blurb' => 'How the relocation is planned, and what the forecast says.',
         ],
         'enforcement' => [
-            'label'   => 'Legal Affairs',
-            'scope'   => 'directorate',
-            'blurb'  => 'Notices, ultimatums and clear-up operations, and the record of each.',
+            'label'  => 'Enforcement Officer',
+            'scope'  => 'directorate',
+            'blurb' => 'The Authority on the ground, and the vendors following instructions.',
         ],
-        'market-admin' => [
-            'label'   => 'Market Administration',
-            'scope'   => 'directorate',
-            'blurb'  => 'Gazetted space, the pitch register and the allocation of it.',
-        ],
-        'revenue' => [
-            'label'   => 'Revenue Collection',
-            'scope'   => 'directorate',
-            'blurb'  => 'Trading licences, and the licence position of every vendor.',
-        ],
-        'auditor' => [
-            'label'   => 'Internal Audit',
-            'scope'   => 'oversight',
-            'blurb'  => 'The audit trail: every decision, who took it, and when.',
-        ],
-        'viewer' => [
-            'label'   => 'Read-only',
-            'scope'   => 'readonly',
-            'blurb'  => 'The position across the city, with no ability to change it.',
+        'vendor' => [
+            'label'  => 'Vendor',
+            'scope'  => 'vendor',
+            'blurb' => 'Find space, apply for a stall, and follow the footfall.',
         ],
     ];
 
@@ -240,6 +222,18 @@ final class Auth
             return false;
         }
         return self::rank() > self::rank((string) ($target['role'] ?? 'viewer'));
+    }
+
+    /**
+     * What one role may do, for any screen that needs to explain the model
+     * rather than enforce it — the permission table on the audit page, for
+     * instance. Enforcing code uses can(), not this.
+     *
+     * @return array<int,string>
+     */
+    public static function permissionsFor(string $role): array
+    {
+        return self::PERMISSIONS[$role] ?? ['view'];
     }
 
     /** Every role, highest first, for the account screens. */

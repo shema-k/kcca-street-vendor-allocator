@@ -12,7 +12,10 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../lib/bootstrap.php';
-Auth::requirePermission('view');
+/* The forecast tool is the Planner's instrument. Everyone who can view may
+   open the dashboard, but the model itself belongs to the roles that plan
+   with it — so the page is guarded at that level rather than at 'view'. */
+Auth::requirePermission('allocate');
 
 $f            = facts();
 $status       = (string) ($_GET['status'] ?? 'proposed');

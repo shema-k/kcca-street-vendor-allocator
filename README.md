@@ -88,20 +88,21 @@ Every account uses `kcca@2026` except `admin`, which uses `KCCA VRSP 2026`.
 
 | Username | Password | Officer | Level | Sees |
 |---|---|---|---|---|
-| `admin` | `KCCA VRSP 2026` | Robert Ssempijja — Director, ICT | 7 | Everything, and the accounts that access it |
-| `ed` | `kcca@2026` | Hajjat Buzeki Sharifah — Executive Director | 6 | All five divisions, approvals, accounts |
-| `mayor.central` | `kcca@2026` | Salim Uhuru — Mayor, Kampala Central | 5 | Own division only |
-| `mayor.nakawa` | `kcca@2026` | Buken Ali — Mayor, Nakawa | 5 | Own division only |
-| `planner` | `kcca@2026` | Godfrey Luyombya — Physical Planning | 4 | Congestion, footfall, matching |
-| `enforcement` | `kcca@2026` | Daniel Nuwabine — Legal Affairs | 4 | Notices, ultimatums, clear-ups |
-| `revenue` | `kcca@2026` | Ezra Ssebufu — Revenue Collection | 2 | Licensing |
-| `market` | `kcca@2026` | Moses Musimire — Market Administration | 4 | Vacancy, pitches, allocations |
-| `auditor` | `kcca@2026` | Grace Nyamwasa — Internal Audit | 3 | The audit trail, and nothing operational |
-| `viewer` | `kcca@2026` | Planning Observer | 1 | The position, read-only |
+| `admin` | `KCCA VRSP 2026` | Robert Ssempijja — Director, ICT | 6 | Everything |
+| `ed` | `kcca@2026` | Hajjat Buzeki Sharifah — Executive Director | 5 | All progress, approvals, audit |
+| `mayor.central` | `kcca@2026` | Salim Uhuru — Mayor, Kampala Central | 4 | Own division, its managers, audit |
+| `mayor.nakawa` | `kcca@2026` | Buken Ali — Mayor, Nakawa | 4 | Own division, its managers, audit |
+| `planner` | `kcca@2026` | Godfrey Luyombya — Physical Planning | 3 | The forecast, congestion, matching |
+| `enforcement` | `kcca@2026` | Daniel Nuwabine — Legal Affairs | 2 | Notices, ultimatums, clear-ups |
+| `vendor` | `kcca@2026` | Nakato Rehema — street vendor, Kisenyi | 1 | Markets, stalls, footfall, applications |
 
-`mayor.nakawa` is a second Division Mayor, seeded so the division-scoping can be
-compared directly: sign in as each and the rail, the dashboard and every figure
-change to that division.
+Sign in as `mayor.central` and then `mayor.nakawa` and the rail, the dashboard
+and every figure change to that division — the quickest way to see that the
+scoping is real rather than cosmetic.
+
+Sign in as `vendor` for the trader's view: no programme figures, no registers,
+no audit trail. Three sections — markets with space, footfall to choose well,
+and their own applications.
 
 The trader portal at `/pages/portal.php` needs no sign-in.
 
@@ -116,32 +117,37 @@ entitled to know where that name came from.
 
 ## Roles and authority
 
-Nine roles, in an explicit order of authority. A role determines the screen an
-officer lands on, the figures they are accountable for, what they may change, and
+Six roles, in the order of authority. A role determines the screen an officer
+lands on, the figures they are accountable for, what they may change, and
 whose records they may edit.
 
 | Level | Role | Remit | Can change |
 |---|---|---|---|
-| 7 | System Administrator | The whole system | Everything, and the accounts that access it |
-| 6 | Executive Director | All five divisions, and the approval decisions | Allocations, requests, accounts below level 6 |
-| 5 | Division Mayor | Own division only | Allocations and requests in that division |
-| 4 | Physical Planning | Survey, congestion, matching | Allocations and recommendations |
-| 4 | Legal Affairs | Notices, ultimatums, clear-ups | Enforcement records |
-| 4 | Market Administration | Gazetted space and the pitch register | Pitches, allocations, stall requests |
-| 3 | Internal Audit | The trail of decisions | Nothing — reads and reports |
-| 2 | Revenue Collection | Licences | Nothing — reads and reports |
-| 1 | Read-only | The position across the city | Nothing |
+| 6 | System Administrator | Everything on the system, and every account that reaches it | All of it |
+| 5 | Executive Director | All progress across the Authority, and the final decisions | Approvals, allocations, accounts |
+| 4 | Mayor | One division, and the managers working under them | Allocations and requests in that division |
+| 3 | Planner | How the relocation is planned, and what the forecast says | Matching and recommendations |
+| 2 | Enforcement Officer | The Authority on the ground, and vendors following instructions | Enforcement records |
+| 1 | Vendor | Find space, apply for a stall, follow the footfall | Nothing — applies for a stall and waits |
 
-Two rules hang off the order of authority, both stated once rather than
-duplicated as permission lists:
+**Internal Audit is not a sign-in role.** The Authority's instruction is that it
+is *viewed by* the Executive Director, the Mayor and the System Administrator,
+so the audit trail is a screen those three hold rather than a separate desk.
 
-- **A Mayor sees only their own division.** Every figure is scoped before it is
-  fetched, not filtered afterwards — a Mayor never sees four divisions they
-  cannot act on.
-- **An officer edits only accounts below their own level, and never their own.**
-  That is why an account cannot be quietly widened by the person it belongs to.
-  Passwords are stored hashed, so the only operation offered is issuing a
-  temporary one.
+Two rules hang off the order of authority rather than a second permission list:
+
+- **A Mayor sees only their own division.** Every figure is scoped before it
+  is fetched, not filtered afterwards.
+- **An officer edits only accounts below their own level, and never their
+  own.** That is why an account cannot be quietly widened by the person it
+  belongs to.
+
+**On the names.** Five accounts are officers KCCA names on kcca.go.ug — the
+Executive Director, both Mayors, the Physical Planning secretary and the Legal
+Affairs spokesperson. The System Administrator and the vendor are illustrative: KCCA
+publishes an ICT department and a street-vendor role but names nobody in them. Each account states which it is, because the
+audit trail attributes every action to a name and a reader is entitled to know
+where it came from.
 
 ## The dashboard, by role
 

@@ -357,6 +357,10 @@ require __DIR__ . '/../layouts/header.php';
               </option>
             <?php endforeach; ?>
           </select>
+          <span class="hint">
+            Level 6 System Administrator · 5 Executive Director · 4 Mayor · 3 Planner ·
+            2 Enforcement Officer · 1 Vendor.
+          </span>
           <?php if (isset($errors['role'])): ?>
             <span class="hint error"><?= e($errors['role']) ?></span>
           <?php else: ?>
