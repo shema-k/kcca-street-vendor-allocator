@@ -193,6 +193,14 @@ final class RoleDashboard
                           'desc' => 'The weights in force, and what each criterion measures.', 'render' => 'method'];
                 break;
 
+            case 'revenue':
+                /* The Revenue Officer's screen answers how much is licensed and how much is not. */
+                $out[] = ['id' => 'licensing', 'title' => 'Licensing position',
+                          'desc' => 'Licence classes across the register.', 'render' => 'licensing'];
+                $out[] = ['id' => 'unlicensed', 'title' => 'The compliance gap',
+                          'desc' => 'Who holds no licence, and where they are.', 'render' => 'unlicensed'];
+                break;
+
             case 'enforcement':
                 $out[] = ['id' => 'enforcement', 'title' => 'Your operations',
                           'desc' => 'Notices, ultimatums and clear-ups, newest first.', 'render' => 'enforcement'];

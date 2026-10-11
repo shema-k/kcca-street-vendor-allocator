@@ -352,7 +352,7 @@ require __DIR__ . '/../layouts/header.php';
         <h2>Markets holding space</h2>
         <p class="desc">Where the cleared vendors can go.</p>
       </div>
-      <a class="btn btn-ghost btn-sm" href="vacancy.php">Vacancy finder</a>
+      <a class="btn btn-ghost btn-sm" href="locations.php">Markets</a>
     </div>
     <div class="card-body tight">
       <div class="table-wrap" style="max-height:520px;overflow-y:auto">

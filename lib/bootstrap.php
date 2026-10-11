@@ -45,30 +45,28 @@ function navigation(): array
     return [
         ['group' => 'Work', 'items' => [
             ['id' => 'dashboard',       'file' => 'pages/dashboard.php',       'label' => 'Dashboard',      'icon' => 'gauge',    'audience' => ['all']],
-            ['id' => 'vendors',         'file' => 'pages/vendors.php',         'label' => 'Vendors',        'icon' => 'people',   'audience' => ['administrator', 'executive', 'mayor', 'planner', 'enforcement']],
+            ['id' => 'vendors',         'file' => 'pages/vendors.php',         'label' => 'Vendors',        'icon' => 'people',   'audience' => ['administrator', 'executive', 'mayor', 'planner', 'enforcement', 'revenue']],
             ['id' => 'locations',       'file' => 'pages/locations.php',       'label' => 'Markets',        'icon' => 'store',    'audience' => ['all']],
-            ['id' => 'market-map',      'file' => 'pages/market_map.php',      'label' => 'Apply for a Stall', 'icon' => 'map',  'audience' => ['all']],
+            ['id' => 'market-map',      'file' => 'pages/market_map.php',      'label' => 'Stall Map',      'icon' => 'map',      'audience' => ['all']],
+        ]],
+        ['group' => 'Relocation', 'items' => [
+            ['id' => 'relocation',      'file' => 'pages/relocation.php',      'label' => 'Matching',       'icon' => 'list',     'audience' => ['administrator', 'executive', 'mayor', 'planner']],
             ['id' => 'recommendations', 'file' => 'pages/recommendations.php', 'label' => 'AI Forecast',    'icon' => 'chart',    'audience' => ['administrator', 'executive', 'mayor', 'planner']],
-            ['id' => 'allocations',    'file' => 'pages/allocations.php',      'label' => 'Allocations',    'icon' => 'swap',     'audience' => ['administrator', 'executive', 'mayor', 'planner']],
-            ['id' => 'reports',         'file' => 'pages/reports.php',         'label' => 'Reports',        'icon' => 'download', 'audience' => ['administrator', 'executive', 'mayor', 'planner', 'enforcement']],
+            ['id' => 'allocations',     'file' => 'pages/allocations.php',      'label' => 'Allocations',    'icon' => 'swap',     'audience' => ['administrator', 'executive', 'mayor', 'planner']],
         ]],
-        ['group' => 'Trade Order', 'items' => [
+        ['group' => 'Operations', 'items' => [
             ['id' => 'city-map',        'file' => 'pages/city-map.php',       'label' => 'City Map',       'icon' => 'map',      'audience' => ['all']],
-            ['id' => 'congestion',     'file' => 'pages/congestion.php',      'label' => 'Congestion',      'icon' => 'pulse',    'audience' => ['administrator', 'executive', 'mayor', 'planner', 'enforcement']],
-            ['id' => 'vacancy',        'file' => 'pages/vacancy.php',         'label' => 'Vacant Space',    'icon' => 'grid',     'audience' => ['all']],
-            ['id' => 'relocation',     'file' => 'pages/relocation.php',      'label' => 'Matching',        'icon' => 'list',     'audience' => ['administrator', 'executive', 'mayor', 'planner']],
-            ['id' => 'enforcement',    'file' => 'pages/enforcement.php',     'label' => 'Enforcement',     'icon' => 'shield',   'audience' => ['administrator', 'executive', 'mayor', 'enforcement']],
-            ['id' => 'licensing',      'file' => 'pages/licensing.php',       'label' => 'Licensing',       'icon' => 'doc',      'audience' => ['administrator', 'executive', 'mayor']],
-            ['id' => 'markets',        'file' => 'pages/markets.php',         'label' => 'Markets',         'icon' => 'layers',   'audience' => ['all']],
+            ['id' => 'congestion',      'file' => 'pages/congestion.php',     'label' => 'Congestion',     'icon' => 'pulse',    'audience' => ['administrator', 'executive', 'mayor', 'planner', 'enforcement']],
+            ['id' => 'enforcement',     'file' => 'pages/enforcement.php',     'label' => 'Enforcement',    'icon' => 'shield',   'audience' => ['administrator', 'executive', 'mayor', 'enforcement']],
+            ['id' => 'licensing',       'file' => 'pages/licensing.php',       'label' => 'Licensing',      'icon' => 'doc',      'audience' => ['administrator', 'executive', 'mayor', 'revenue']],
         ]],
-        ['group' => 'Oversight', 'items' => [
-            ['id' => 'analytics',      'file' => 'pages/analytics.php',       'label' => 'Performance',     'icon' => 'trend',    'audience' => ['administrator', 'executive', 'mayor']],
-            ['id' => 'audit',          'file' => 'pages/audit.php',           'label' => 'Audit Trail',     'icon' => 'log',      'audience' => ['administrator', 'executive', 'mayor']],
-            ['id' => 'accounts',       'file' => 'pages/users.php',           'label' => 'Accounts',        'icon' => 'people',   'audience' => ['administrator', 'executive']],
-            ['id' => 'settings',       'file' => 'pages/settings.php',        'label' => 'Settings',        'icon' => 'cog',      'audience' => ['administrator']],
-        ]],
-        ['group' => 'Public', 'items' => [
-            ['id' => 'portal',         'file' => 'pages/portal.php',          'label' => 'Trader Portal',   'icon' => 'user',     'audience' => ['all']],
+        ['group' => 'Records', 'items' => [
+            ['id' => 'analytics',       'file' => 'pages/analytics.php',       'label' => 'Performance',    'icon' => 'trend',    'audience' => ['administrator', 'executive', 'mayor']],
+            ['id' => 'reports',         'file' => 'pages/reports.php',         'label' => 'Reports',        'icon' => 'download', 'audience' => ['administrator', 'executive', 'mayor', 'planner', 'enforcement', 'revenue']],
+            ['id' => 'audit',           'file' => 'pages/audit.php',           'label' => 'Audit Trail',    'icon' => 'log',      'audience' => ['administrator', 'executive', 'mayor']],
+            ['id' => 'accounts',        'file' => 'pages/users.php',           'label' => 'Accounts',       'icon' => 'people',   'audience' => ['administrator', 'executive']],
+            ['id' => 'settings',        'file' => 'pages/settings.php',        'label' => 'Settings',       'icon' => 'cog',      'audience' => ['administrator']],
+            ['id' => 'portal',          'file' => 'pages/portal.php',          'label' => 'Trader Portal',  'icon' => 'user',     'audience' => ['all']],
         ]],
     ];
 }

@@ -36,7 +36,7 @@ kcca-vendor-relocation/
 ├── partials/               dashboard sections, one per role remit
 ├── api/                    map data, stall plans, zone detail, vendor options,
 │                           actions, modal forms, stall requests, CSV exports, backups
-├── pages/                  the 20 screens
+├── pages/                  the 17 screens, plus three redirects
 └── assets/
     ├── brand/              KCCA logo, from kcca.go.ug
     ├── css/kcca.css        one stylesheet, Authority colours
@@ -84,25 +84,32 @@ server you name, as well as checking PHP and running the verification.
 
 ### Sign in
 
-Every account uses `kcca@2026` except `admin`, which uses `KCCA VRSP 2026`.
+One form, and beneath it a card per role. Click a card and it signs you in —
+the demonstration accounts are fixed, so asking an officer to type a username
+adds nothing. Every account uses `kcca@2026` except `admin`, which uses
+`KCCA VRSP 2026`.
 
-| Username | Password | Officer | Level | Sees |
-|---|---|---|---|---|
-| `admin` | `KCCA VRSP 2026` | Robert Ssempijja — Director, ICT | 6 | Everything |
-| `ed` | `kcca@2026` | Hajjat Buzeki Sharifah — Executive Director | 5 | All progress, approvals, audit |
-| `mayor.central` | `kcca@2026` | Salim Uhuru — Mayor, Kampala Central | 4 | Own division, its managers, audit |
-| `mayor.nakawa` | `kcca@2026` | Buken Ali — Mayor, Nakawa | 4 | Own division, its managers, audit |
-| `planner` | `kcca@2026` | Godfrey Luyombya — Physical Planning | 3 | The forecast, congestion, matching |
-| `enforcement` | `kcca@2026` | Daniel Nuwabine — Legal Affairs | 2 | Notices, ultimatums, clear-ups |
-| `vendor` | `kcca@2026` | Nakato Rehema — street vendor, Kisenyi | 1 | Markets, stalls, footfall, applications |
+| Role | Level | Sees |
+|---|---|---|
+| `admin` — Robert Ssempijja, Director ICT | 7 | Everything |
+| `ed` — Hajjat Buzeki Sharifah, Executive Director | 6 | All progress, approvals, audit |
+| `mayor.central` — Salim Uhuru, Mayor Kampala Central | 5 | Own division, its managers, audit |
+| `mayor.nakawa` — Buken Ali, Mayor Nakawa | 5 | Own division, its managers, audit |
+| `planner` — Godfrey Luyombya, Physical Planning | 4 | The forecast, congestion, matching |
+| `enforcement` — Daniel Nuwabine, Legal Affairs | 3 | Notices, ultimatums, clear-ups |
+| `revenue` — Ezra Ssebufu, Revenue Collection | 2 | Licences and the compliance gap |
+| `vendor` — Nakato Rehema, street vendor | 1 | Markets, stalls, footfall, applications |
 
 Sign in as `mayor.central` and then `mayor.nakawa` and the rail, the dashboard
 and every figure change to that division — the quickest way to see that the
 scoping is real rather than cosmetic.
 
-Sign in as `vendor` for the trader's view: no programme figures, no registers,
+Sign in as `vendor` for the trader's view: no registers, no programme figures,
 no audit trail. Three sections — markets with space, footfall to choose well,
 and their own applications.
+
+Sign in as `revenue` for the licensing desk: the licence position across the
+register and the compliance gap by division.
 
 The trader portal at `/pages/portal.php` needs no sign-in.
 
@@ -117,22 +124,23 @@ entitled to know where that name came from.
 
 ## Roles and authority
 
-Six roles, in the order of authority. A role determines the screen an officer
-lands on, the figures they are accountable for, what they may change, and
-whose records they may edit.
+Seven roles, in the order of authority. A role determines the screen an
+officer lands on, the figures they are accountable for, what they may change,
+and whose records they may edit.
 
-| Level | Role | Remit | Can change |
+| Level | Role | Remit | Links |
 |---|---|---|---|
-| 6 | System Administrator | Everything on the system, and every account that reaches it | All of it |
-| 5 | Executive Director | All progress across the Authority, and the final decisions | Approvals, allocations, accounts |
-| 4 | Mayor | One division, and the managers working under them | Allocations and requests in that division |
-| 3 | Planner | How the relocation is planned, and what the forecast says | Matching and recommendations |
-| 2 | Enforcement Officer | The Authority on the ground, and vendors following instructions | Enforcement records |
-| 1 | Vendor | Find space, apply for a stall, follow the footfall | Nothing — applies for a stall and waits |
+| 7 | System Administrator | Everything on the system, and every account that reaches it | 17 |
+| 6 | Executive Director | All progress across the Authority, and the final decisions | 16 |
+| 5 | Mayor | One division, and the managers working under them | 15 |
+| 4 | Planner | How the relocation is planned, and what the forecast says | 11 |
+| 3 | Enforcement Officer | The Authority on the ground, and vendors following instructions | 9 |
+| 2 | Revenue Officer | Licences and fees across the register | 8 |
+| 1 | Vendor | Find space, apply for a stall, follow the footfall | 5 |
 
-**Internal Audit is not a sign-in role.** The Authority's instruction is that it
-is *viewed by* the Executive Director, the Mayor and the System Administrator,
-so the audit trail is a screen those three hold rather than a separate desk.
+**Internal Audit is not a sign-in role.** The instruction is that it is
+*viewed by* the Executive Director, the Mayor and the System Administrator, so
+the audit trail is a screen those three hold rather than a separate desk.
 
 Two rules hang off the order of authority rather than a second permission list:
 
@@ -142,20 +150,25 @@ Two rules hang off the order of authority rather than a second permission list:
   own.** That is why an account cannot be quietly widened by the person it
   belongs to.
 
+The rail is drawn from the same ladder, and no two roles see the same links.
+It is grouped into four — Work, Relocation, Operations, Records — and a role
+that does not operate a screen does not have a link to it.
+
 **On the names.** Five accounts are officers KCCA names on kcca.go.ug — the
 Executive Director, both Mayors, the Physical Planning secretary and the Legal
-Affairs spokesperson. The System Administrator and the vendor are illustrative: KCCA
-publishes an ICT department and a street-vendor role but names nobody in them. Each account states which it is, because the
-audit trail attributes every action to a name and a reader is entitled to know
-where it came from.
+Affairs spokesperson. The System Administrator and the vendor are illustrative:
+KCCA publishes an ICT department and a street-vendor role but names nobody in
+them. Each account states which it is, because the audit trail attributes
+every action to a name and a reader is entitled to know where it came from.
 
 ## The dashboard, by role
 
 One page, one composer. `lib/RoleDashboard.php` declares which sections each role
-owns and scopes every figure before it is fetched, so a Division Mayor and the
-System Administrator open the same URL and see a different screen. The relocation
-programme funnel is the one section every role shares, because it is the point of
-the system — it is declared once and never repeated per role.
+owns and scopes every figure before it is fetched, so a Mayor and the System
+Administrator open the same URL and see a different screen. The relocation
+programme funnel is the one section most roles share, because it is the point of
+the system — it is declared once and never repeated per role. The vendor gets
+none of it: a trader has no programme to track.
 
 The **menu button** in the top bar opens that officer's dashboard as a drawer,
 from any page; clicking it again closes it. It fetches the same sections through
@@ -165,27 +178,34 @@ The **name and role** in the top right open the account menu: the position,
 directorate, division, contact details, last sign-in, what the account can do,
 and a sign-out.
 
-## The twenty screens
+## The screens
 
-**Dashboard** — *Dashboard* (built per role; see above), *Vendors* (register and manage traders),
-*Location & Stall Map* (every market as a pitch plan, open to the public, with stall requests),
-*Accounts* (who may sign in, and whose records an officer may edit),
-*Trading Locations* (every location, its individual pitches, counted footfall, rent, capacity and
-land-use restrictions), *AI Recommendations* (the reach model, with approve and reject),
-*Allocations & Relocation* (every offer, its outcome, and the full relocation history), *Reports*
-(search, filter and export).
+Seventeen, grouped as the rail groups them. A role sees only the screens it
+operates.
 
-**Trade Order** — *City Situation Map* (Leaflet with an offline vector fallback), *Congestion
-Analysis* (ranked sites, full scoring method), *Vacant Space Finder* (every market with space,
-filterable by facility and trade), *Relocation Engine* (vendor matched to space, six criteria,
-reasoning shown), *Enforcement & Notices* (the full chain from survey to escalation, plus the public
-statements), *Trade Licensing*, *Market Register* (Markets Act 2023 s.17).
+**Work** — *Dashboard* (built per role; see above), *Vendors* (register and
+manage traders), *Markets* (every location, its individual pitches, counted
+footfall, rent, capacity and land-use restrictions), *Stall Map* (every market
+as a pitch plan, open to the public, with stall requests).
 
-**Assurance** — *Performance & KPIs* (against the Strategic Plan), *Audit Trail*, *KCCA Online
-Services* (every Authority platform, linked), *Settings* (engine weights, model calibration,
-programme policy, and backups).
+**Relocation** — *Matching* (vendor matched to space on six criteria, with the
+reasoning shown), *AI Forecast* (the reach model, with approve and reject),
+*Allocations* (every offer, its outcome, and the full relocation history).
 
-**Public** — *Trader Portal*: what space is free, what a licence needs, how to complain.
+**Operations** — *City Map* (Leaflet with an offline vector fallback),
+*Congestion Analysis* (ranked sites, full scoring method), *Enforcement &
+Notices* (the full chain from survey to escalation, plus the public
+statements), *Trade Licensing*.
+
+**Records** — *Performance & KPIs* (against the Strategic Plan), *Reports*
+(search, filter and export), *Audit Trail*, *Accounts* (who may sign in, and
+whose records an officer may edit), *Settings* (engine weights, model
+calibration, programme policy, and backups), *Trader Portal*.
+
+Three screens that duplicated others now redirect: the Market Register into
+Markets, the Vacant Space Finder into Markets, and the KCCA Online Services
+directory into the dashboard, because every page already carries those links
+in its footer and the trader portal lists them in full.
 
 ## The two engines
 

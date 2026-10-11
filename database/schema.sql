@@ -466,7 +466,7 @@ CREATE TABLE `users` (
   `full_name`     VARCHAR(140) NOT NULL,
   `title`         VARCHAR(140) DEFAULT NULL,
   `directorate`   VARCHAR(160) DEFAULT NULL,
-  `role`          ENUM('administrator','executive','mayor','planner','enforcement','vendor') NOT NULL DEFAULT 'vendor',
+  `role`          ENUM('administrator','executive','mayor','planner','enforcement','revenue','vendor') NOT NULL DEFAULT 'vendor',
   `division_id`   INT UNSIGNED DEFAULT NULL,
   `email`         VARCHAR(120) DEFAULT NULL,
   `phone`         VARCHAR(40)  DEFAULT NULL,

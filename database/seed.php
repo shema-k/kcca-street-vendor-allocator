@@ -741,6 +741,7 @@ $users = [
     ['mayor.nakawa','kcca@2026','Buken Ali','Mayor, Nakawa Division','mayor','office-of-the-executive-director','NKW','mayor.nkw@kcca.go.ug','0772 510 224',1],
     ['planner','kcca@2026','Godfrey Luyombya','Executive Secretary, Civil Works and Physical Planning','planner','physical-planning',null,'planning@kcca.go.ug','0772 532 011',1],
     ['enforcement','kcca@2026','Daniel Nuwabine','Spokesperson & Enforcement Liaison','enforcement','legal',null,'legal@kcca.go.ug','0772 533 640',1],
+    ['revenue','kcca@2026','Ezra Ssebufu','Deputy Director, Revenue Collection','revenue','revenue',null,'revenue@kcca.go.ug','0772 540 772',1],
     ['vendor','kcca@2026','Nakato Rehema','Street vendor — Kisenyi','vendor',null,null,'rehema.nakato@example.co.ug','0772 990 441',0],
 ];
 foreach ($users as [$u,$p,$n,$t,$r,$d,$dv,$e,$ph,$basis]) {

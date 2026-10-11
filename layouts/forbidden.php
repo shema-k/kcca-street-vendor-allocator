@@ -44,7 +44,7 @@ $pageTitle = 'Access not permitted';
 
     <div class="row mt-2">
       <a class="btn btn-primary" href="../pages/executive.php">Back to the dashboard</a>
-      <a class="btn btn-ghost" href="../pages/resources.php">Who to contact</a>
+      <a class="btn btn-ghost" href="../pages/portal.php">Who to contact</a>
       <a class="btn btn-quiet" href="../auth/logout.php">Sign out</a>
     </div>
 

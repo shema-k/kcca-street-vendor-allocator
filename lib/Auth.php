@@ -13,6 +13,7 @@ final class Auth
         'mayor'         => ['view', 'allocate', 'enforce', 'report', 'audit'],
         'planner'       => ['view', 'allocate', 'report'],
         'enforcement'   => ['view', 'enforce', 'report'],
+        'revenue'       => ['view', 'report'],
         // A trader views markets, applies for a stall and tracks footfall.
         // The stall request is a separate, public endpoint with its own
         // validation, so this role needs no further grant.
@@ -30,11 +31,12 @@ final class Auth
      */
     private const HIERARCHY = [
         'vendor'        => 1,   // the trader
-        'enforcement'   => 2,   // carries the decision out on the ground
-        'planner'       => 3,   // decides how the relocation is done
-        'mayor'         => 4,   // oversees the managers of one division
-        'executive'     => 5,   // the whole Authority, and the final decision
-        'administrator' => 6,   // the system itself
+        'revenue'       => 2,   // licences and fees: a regulatory desk, not command
+        'enforcement'   => 3,   // carries the decision out on the ground
+        'planner'       => 4,   // decides how the relocation is done
+        'mayor'         => 5,   // oversees the managers of one division
+        'executive'     => 6,   // the whole Authority, and the final decision
+        'administrator' => 7,   // the system itself
     ];
 
     /**
@@ -69,6 +71,11 @@ final class Auth
             'label'  => 'Enforcement Officer',
             'scope'  => 'directorate',
             'blurb' => 'The Authority on the ground, and the vendors following instructions.',
+        ],
+        'revenue' => [
+            'label'  => 'Revenue Officer',
+            'scope'  => 'directorate',
+            'blurb' => 'Licences and fees across the register.',
         ],
         'vendor' => [
             'label'  => 'Vendor',
