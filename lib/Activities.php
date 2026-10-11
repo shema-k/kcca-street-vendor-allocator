@@ -230,7 +230,7 @@ SVG;
  * Render the slideshow. Auto-advances, pauses on hover and focus, and is
  * fully keyboard operable.
  */
-function renderActivitySlideshow(bool $showControls = true, int $intervalMs = 5200): void
+function renderActivitySlideshow(bool $showControls = true, int $intervalMs = 2000): void
 {
     static $n = 0;
     $uid = 'kcca-slides-' . (++$n);
@@ -273,8 +273,6 @@ function renderActivitySlideshow(bool $showControls = true, int $intervalMs = 52
         </div>
         <button type="button" class="acts-nav next" data-slide-nav="next"
                 aria-label="Next activity">›</button>
-        <button type="button" class="acts-play" data-slide-play aria-pressed="false"
-                aria-label="Pause the slideshow" title="Pause">❙❙</button>
       </div>
     <?php endif; ?>
   </section>

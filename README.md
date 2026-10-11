@@ -366,10 +366,11 @@ colours says the same thing, loads instantly, and works offline.
 
 The cards appear as an auto slideshow on the dashboard and the trader portal,
 and as a static grid for readers who want them all at once. The slideshow
-advances on its own, **stops the moment a reader shows any interest** — hover,
-focus or touch — and can be set going again by hand. Left and right move
-through it, Home and End jump to the ends. A reader who has asked the
-operating system for less motion gets no auto-advance at all.
+advances every two seconds and **stops the moment a reader shows any
+interest** — hover, focus or touch. Left and right step through it and Home
+and End jump to the ends, any of which sets it going again; there is no play
+button, because a reader who has stopped it wanted it stopped. A reader who
+has asked the operating system for less motion gets no auto-advance at all.
 
 A vendor does not see the slideshow. A trader's three questions are where the
 space is, how busy it is, and what happened to their application; what the

@@ -74,15 +74,6 @@
   transition: background .15s, width .15s;
 }
 .dot:hover { background: var(--ink-4); }
-.dot.on { background: var(--kcca-red); width: 22px; border-radius: 4px; }
-.acts-play {
-  width: 30px; height: 30px; flex: none;
-  border: 1px solid var(--line); border-radius: 50%;
-  background: var(--surface); color: var(--ink-2);
-  cursor: pointer; font-size: 8px; display: grid; place-items: center;
-}
-.acts-play:hover { background: var(--surface-2); color: var(--ink); }
-.acts-play[aria-pressed="true"] { color: var(--kcca-red); border-color: var(--kcca-red); }
 
 /* ---- static grid ---- */
 .acts-grid {

@@ -19,15 +19,15 @@
       if (slides.length < 2) return;
 
       var dots = [].slice.call(root.querySelectorAll('[data-slide-dot]'));
-      var playBtn = root.querySelector('[data-slide-play]');
       var prev = root.querySelector('[data-slide-nav="prev"]');
       var next = root.querySelector('[data-slide-nav="next"]');
 
-      var interval = parseInt(root.getAttribute('data-interval') || '5200', 10);
+      /* Two seconds. The cards are read, not studied, so the rotation is
+         quick and the reader's first interest stops it. */
+      var interval = parseInt(root.getAttribute('data-interval') || '2000', 10);
       var userControls = root.getAttribute('data-controls') !== '0';
       var timer = null;
       var index = 0;
-      var stopped = false;
 
       /* A reader who asked for less motion should not have content moving
          without them asking. Show the first card and leave it. */
@@ -47,47 +47,31 @@
         });
       }
 
+      /* Stopping is one-directional now that there is no play button: once
+         the reader engages, the slideshow stays put. A reader who wants to
+         move on clicks a dot or an arrow, which restarts the rotation. */
       function stop() {
-        stopped = true;
         if (timer) { clearInterval(timer); timer = null; }
-        if (playBtn) {
-          playBtn.setAttribute('aria-pressed', 'true');
-          playBtn.setAttribute('aria-label', 'Play the slideshow');
-          playBtn.title = 'Play';
-          playBtn.innerHTML = '\u25b6';
-        }
       }
 
       function start() {
         if (reduce) return;            // never auto-advance for reduced motion
-        stopped = false;
         if (timer) { clearInterval(timer); }
         timer = setInterval(function () { show(index + 1); }, Math.max(1500, interval));
-        if (playBtn) {
-          playBtn.setAttribute('aria-pressed', 'false');
-          playBtn.setAttribute('aria-label', 'Pause the slideshow');
-          playBtn.title = 'Pause';
-          playBtn.innerHTML = '\u2759\u2759';
-        }
       }
 
       /* Controls. */
       dots.forEach(function (d) {
         d.addEventListener('click', function () {
           show(parseInt(d.getAttribute('data-slide-dot'), 10));
-          if (!reduce) start();
+          start();
         });
       });
-      if (prev) { prev.addEventListener('click', function () { show(index - 1); }); }
-      if (next) { next.addEventListener('click', function () { show(index + 1); }); }
-      if (playBtn) {
-        playBtn.addEventListener('click', function () {
-          if (stopped) { start(); } else { stop(); }
-        });
-      }
+      if (prev) { prev.addEventListener('click', function () { show(index - 1); start(); }); }
+      if (next) { next.addEventListener('click', function () { show(index + 1); start(); }); }
 
-      /* Any interest from the reader stops the rotation: hover, focus, or
-         a touch. It is restarted by the play button only. */
+      /* Any interest from the reader stops the rotation: hover, focus, or a
+         touch. Using a control sets it going again. */
       ['mouseenter', 'focusin', 'touchstart'].forEach(function (ev) {
         root.addEventListener(ev, stop, { passive: true });
       });
@@ -95,10 +79,10 @@
       /* Keyboard: left and right, and Home and End. */
       root.addEventListener('keydown', function (e) {
         var k = e.key;
-        if (k === 'ArrowLeft')  { e.preventDefault(); show(index - 1); stop(); }
-        if (k === 'ArrowRight') { e.preventDefault(); show(index + 1); stop(); }
-        if (k === 'Home')       { e.preventDefault(); show(0); stop(); }
-        if (k === 'End')        { e.preventDefault(); show(slides.length - 1); stop(); }
+        if (k === 'ArrowLeft')  { e.preventDefault(); show(index - 1); start(); }
+        if (k === 'ArrowRight') { e.preventDefault(); show(index + 1); start(); }
+        if (k === 'Home')       { e.preventDefault(); show(0); start(); }
+        if (k === 'End')        { e.preventDefault(); show(slides.length - 1); start(); }
       });
 
       show(0);

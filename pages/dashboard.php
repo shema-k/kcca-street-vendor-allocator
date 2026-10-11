@@ -72,7 +72,7 @@ require __DIR__ . '/../layouts/header.php';
 
 <!-- ================= WHAT THE AUTHORITY DOES ================== -->
 <?php if (Auth::role() !== 'vendor'): ?>
-  <?php renderActivitySlideshow(true, 5200); ?>
+  <?php renderActivitySlideshow(true, 2000); ?>
 <?php endif; ?>
 
 <?php if ($hasDecisions): ?>

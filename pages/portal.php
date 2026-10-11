@@ -78,7 +78,7 @@ require __DIR__ . '/../layouts/header.php';
   <!-- ======================= MAIN COLUMN ======================= -->
   <div>
     <!-- Available space -->
-    <?php renderActivitySlideshow(true, 5200); ?>
+    <?php renderActivitySlideshow(true, 2000); ?>
 
   <div class="card">
       <div class="card-head">
