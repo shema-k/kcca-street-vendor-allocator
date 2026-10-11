@@ -45,6 +45,15 @@ foreach ($stageOrder as $s) {
 
 $hasDecisions = $dash['decisions'][0]['tone'] !== 'ok';
 
+/* Recent activity across the whole programme. */
+$activity = Database::all(
+    "SELECT e.occurred_at, e.event_type, e.note, v.full_name, m.name AS market_name
+       FROM relocation_events e
+       LEFT JOIN vendors v ON v.id = e.vendor_id
+       LEFT JOIN markets m ON m.id = e.market_id
+      ORDER BY e.occurred_at DESC, e.id DESC LIMIT 8"
+);
+
 $pageTitle = 'Dashboard';
 require __DIR__ . '/../layouts/header.php';
 ?>
@@ -105,6 +114,44 @@ require __DIR__ . '/../layouts/header.php';
       <div class="meta"><?= e($s['meta']) ?></div>
     </div>
   <?php endforeach; ?>
+</div>
+
+<!-- ============================ ACTIVITY ======================== -->
+<div class="card mb-2">
+  <div class="card-head">
+    <div class="grow">
+      <h2>Recent activity</h2>
+      <p class="desc">The latest decisions and movements across the programme.</p>
+    </div>
+    <a class="btn btn-ghost btn-sm" href="audit.php">Full audit trail</a>
+  </div>
+  <div class="card-body">
+    <?php if ($activity): ?>
+      <ul class="activity">
+        <?php foreach ($activity as $a): ?>
+          <li>
+            <time><?= e(fmtDate($a['occurred_at'], 'd M H:i')) ?></time>
+            <p>
+              <span class="tag"><?= e(humanise($a['event_type'])) ?></span>
+              <strong><?= e($a['full_name'] ?: '—') ?></strong>
+              <?php if ($a['market_name']): ?>
+                → <?= e($a['market_name']) ?>
+              <?php endif; ?>
+              <?php if ($a['note']): ?>
+                <span class="muted"> · <?= e(truncateText($a['note'], 70)) ?></span>
+              <?php endif; ?>
+            </p>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    <?php else: ?>
+      <div class="empty">
+        <div class="big"><?= KCCA_icon('log', 28) ?></div>
+        <h3>No activity yet</h3>
+        <p>Generating a recommendation or issuing an offer starts the trail.</p>
+      </div>
+    <?php endif; ?>
+  </div>
 </div>
 
 <!-- ============================ SECTIONS ======================= -->
