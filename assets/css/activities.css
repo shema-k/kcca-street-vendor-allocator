@@ -32,12 +32,48 @@
   display: block; width: 100%; height: 100%;
   min-height: 232px;
 }
-.a-red   .act-plate { background: #F3E3E1; }
-.a-green .act-plate { background: #E8F1EC; }
-.a-gold  .act-plate { background: #FBF2DA; }
-[data-theme="dark"] .a-red   .act-plate { background: #2A1714; }
-[data-theme="dark"] .a-green .act-plate { background: #12261C; }
-[data-theme="dark"] .a-gold  .act-plate { background: #2A2010; }
+.a-red   .act-plate { background: #F3E3E1; }\n.a-green .act-plate { background: #E8F1EC; }\n.a-gold  .act-plate { background: #FBF2DA; }\n[data-theme="dark"] .a-red   .act-plate { background: #2A1714; }\n[data-theme="dark"] .a-green .act-plate { background: #12261C; }\n[data-theme="dark"] .a-gold  .act-plate { background: #2A2010; }\n\n.act-body { padding: 22px 26px; display: flex; flex-direction: column; }
+.act-kicker {
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--kcca-red); margin-bottom: 7px;
+}
+.act-body h3 { font-size: 19px; margin: 0 0 9px; line-height: 1.28; color: var(--ink); }
+.act-does { font-size: 13.5px; line-height: 1.6; color: var(--ink-2); margin: 0 0 12px; }
+.act-benefit {
+  font-size: 13px; line-height: 1.55; color: var(--ink-2); margin: 0 0 12px;
+  padding: 11px 14px; border-radius: var(--radius-sm);
+  background: var(--surface-2); border-left: 3px solid var(--kcca-green);
+}
+.act-benefit strong { color: var(--ink); }
+
+/* Image-based cards with depth and opacity */
+.act-image-wrapper {
+  position: relative; width: 300px; flex-shrink: 0;
+  border-right: 1px solid var(--line-2);
+  overflow: hidden; background: var(--surface-2);
+}
+.act-image {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: transform 0.3s ease;
+}
+.act-image-wrapper:hover .act-image {
+  transform: scale(1.02);
+}
+.act-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, 
+    rgba(0,0,0,0.15) 0%, 
+    rgba(0,0,0,0.05) 50%, 
+    transparent 100%);
+  pointer-events: none;
+}
+.act-accent-bar {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  background: var(--kcca-red);
+}
+.a-green .act-accent-bar { background: var(--kcca-green); }
+.a-gold .act-accent-bar { background: var(--kcca-gold); }
+.a-red .act-accent-bar { background: var(--kcca-red); }
 
 .act-body { padding: 22px 26px; display: flex; flex-direction: column; }
 .act-kicker {
@@ -47,8 +83,8 @@
 .act-body h3 { font-size: 19px; margin: 0 0 9px; line-height: 1.28; color: var(--ink); }
 .act-does { font-size: 13.5px; line-height: 1.6; color: var(--ink-2); margin: 0 0 12px; }
 .act-benefit {
-  font-size: 13px; line-height: 1.55; color: var(--ink-2);
-  margin: 0; padding: 11px 14px; border-radius: var(--radius-sm);
+  font-size: 13px; line-height: 1.55; color: var(--ink-2); margin: 0 0 12px;
+  padding: 11px 14px; border-radius: var(--radius-sm);
   background: var(--surface-2); border-left: 3px solid var(--kcca-green);
 }
 .act-benefit strong { color: var(--ink); }
@@ -74,6 +110,15 @@
   transition: background .15s, width .15s;
 }
 .dot:hover { background: var(--ink-4); }
+.dot.on { background: var(--kcca-red); width: 22px; border-radius: 4px; }
+.acts-play {
+  width: 30px; height: 30px; flex: none;
+  border: 1px solid var(--line); border-radius: 50%;
+  background: var(--surface); color: var(--ink-2);
+  cursor: pointer; font-size: 8px; display: grid; place-items: center;
+}
+.acts-play:hover { background: var(--surface-2); color: var(--ink); }
+.acts-play[aria-pressed="true"] { color: var(--kcca-red); border-color: var(--kcca-red); }
 
 /* ---- static grid ---- */
 .acts-grid {
@@ -91,6 +136,13 @@
 .act-card-plate svg { display: block; width: 100%; height: 100%; }
 .act-card-body { padding: 16px 18px 18px; display: flex; flex-direction: column; }
 .act-card-body h3 { font-size: 15.5px; margin: 0 0 7px; line-height: 1.3; }
+.act-card-body .act-does { font-size: 13px; line-height: 1.5; color: var(--ink-2); margin: 0 0 8px; }
+.act-card-body .act-benefit {
+  font-size: 13px; line-height: 1.5; color: var(--ink-2); margin: 0 0 8px;
+  padding: 8px 12px; border-radius: var(--radius-sm);
+  background: var(--surface-2); border-left: 3px solid var(--kcca-green);
+}
+.act-card-body .act-benefit strong { color: var(--ink); }
 
 /* The slideshow collapses to a plate above text on a narrow screen. */
 @media (max-width: 760px) {
@@ -107,4 +159,3 @@
 
 .slides-fallback { display: none; }
 [data-theme="dark"] svg text { fill: #C3C8D2; }
-
