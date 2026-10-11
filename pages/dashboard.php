@@ -70,6 +70,11 @@ require __DIR__ . '/../layouts/header.php';
   </div>
 </div>
 
+<!-- ================= WHAT THE AUTHORITY DOES ================== -->
+<?php if (Auth::role() !== 'vendor'): ?>
+  <?php renderActivitySlideshow(true, 5200); ?>
+<?php endif; ?>
+
 <?php if ($hasDecisions): ?>
   <div class="card">
     <div class="card-head">

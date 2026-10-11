@@ -73,6 +73,7 @@ $a = $f['authority'];
 </div><!-- /.app -->
 
 <script src="../assets/js/kcca.js"></script>
+<script src="../assets/js/activities.js"></script>
 <script src="../assets/js/charts.js"></script>
 <script src="../assets/js/kampala-map.js"></script>
 <script src="../assets/js/stall-map.js"></script>

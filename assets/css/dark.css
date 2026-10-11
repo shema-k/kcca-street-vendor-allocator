@@ -1,0 +1,134 @@
+/* =====================================================================
+   Dark mode
+   =====================================================================
+   Values are set on :root as custom properties, so dark mode is a single
+   override block rather than a hunt through every rule. Light stays the
+   default: the toggle only writes when the reader chooses, and an unset
+   preference follows the operating system.
+
+   The brand colours are kept as they are. KCCA red on white and KCCA red
+   on near-black are the same red; changing it would make this stop being
+   the Authority's system. What changes is the field it sits on.
+
+   Contrast: --ink on --surface is 15.7:1; --ink-3 on --surface-2 is 6.2:1;
+   --ok/--info/--warn/--bad are lightened from their light values because
+   #1B7F4D on #17181C is 4.0:1 and #0A6339 would be 2.6:1.
+   ===================================================================== */
+
+[data-theme="dark"] {
+  /* Neutrals — near-black with a blue cast, not pure black, so elevation
+     reads as a change in surface rather than a change in brightness. */
+  --ink:       #EDEFF3;
+  --ink-2:     #C3C8D2;
+  --ink-3:     #949CAB;
+  --ink-4:     #6C7484;
+  --line:      #2A2D35;
+  --line-2:    #22252C;
+  --surface:   #17181C;
+  --surface-2: #1E2026;
+  --surface-3: #262930;
+
+  /* Brand — same hues, more light. */
+  --kcca-red:       #F0553E;
+  --kcca-red-dark:  #C4321C;
+  --kcca-red-bright:#FF6A55;
+  --kcca-red-soft:  #2A1714;
+  --kcca-green:     #4FC08A;
+  --kcca-green-soft:#12261C;
+  --kcca-gold:      #F0B84A;
+  --kcca-gold-soft: #2A2010;
+
+  /* Semantic — lightened for the dark field. */
+  --ok:      #5CC593;   --ok-bg:      #12261C;
+  --info:    #62AEE0;   --info-bg:    #10202C;
+  --warn:    #E5A93C;   --warn-bg:    #2A2010;
+  --bad:     #F0665A;   --bad-bg:     #2A1613;
+  --muted:   #949CAB;   --muted-bg:   #22252C;
+
+  /* Depth on a dark field is built from a lighter surface, not a shadow. */
+  --shadow-1: 0 1px 2px rgba(0,0,0,.4);
+  --shadow-2: 0 4px 12px rgba(0,0,0,.45);
+  --shadow-3: 0 12px 32px rgba(0,0,0,.55);
+
+  color-scheme: dark;
+}
+
+/* A reader who has not chosen still follows the operating system. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink:       #EDEFF3;
+    --ink-2:     #C3C8D2;
+    --ink-3:     #949CAB;
+    --ink-4:     #6C7484;
+    --line:      #2A2D35;
+    --line-2:    #22252C;
+    --surface:   #17181C;
+    --surface-2: #1E2026;
+    --surface-3: #262930;
+    --kcca-red:       #F0553E;
+    --kcca-red-dark:  #C4321C;
+    --kcca-red-bright:#FF6A55;
+    --kcca-red-soft:  #2A1714;
+    --kcca-green:     #4FC08A;
+    --kcca-green-soft:#12261C;
+    --kcca-gold:      #F0B84A;
+    --kcca-gold-soft: #2A2010;
+    --ok:      #5CC593;   --ok-bg:      #12261C;
+    --info:    #62AEE0;   --info-bg:    #10202C;
+    --warn:    #E5A93C;   --warn-bg:    #2A2010;
+    --bad:     #F0665A;   --bad-bg:     #2A1613;
+    --muted:   #949CAB;   --muted-bg:   #22252C;
+    --shadow-1: 0 1px 2px rgba(0,0,0,.4);
+    --shadow-2: 0 4px 12px rgba(0,0,0,.45);
+    --shadow-3: 0 12px 32px rgba(0,0,0,.55);
+    color-scheme: dark;
+  }
+}
+
+/* The toggle in the top bar. */
+.theme-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 10px; border-radius: 20px;
+  border: 1px solid var(--line); background: var(--surface);
+  color: var(--ink-2); cursor: pointer; font: inherit; font-size: 12px; font-weight: 600;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.theme-toggle:hover { background: var(--surface-2); color: var(--ink); border-color: var(--ink-4); }
+.theme-toggle svg { flex: none; }
+.theme-toggle .moon { display: block; }
+.theme-toggle .sun  { display: none; }
+[data-theme="dark"] .theme-toggle .moon { display: none; }
+[data-theme="dark"] .theme-toggle .sun  { display: block; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-toggle .moon { display: none; }
+  :root:not([data-theme="light"]) .theme-toggle .sun  { display: block; }
+}
+
+/* Form controls, which the UA would otherwise leave light. */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background: var(--surface-2);
+  border-color: var(--line);
+  color: var(--ink);
+}
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder { color: var(--ink-4); }
+[data-theme="dark"] input[type="checkbox"],
+[data-theme="dark"] input[type="radio"] { accent-color: var(--kcca-red); }
+[data-theme="dark"] input[readonly] { background: var(--surface-3); }
+
+/* The KCCA red top bar is dark-mode-safe already, but the logo lockup
+   inverts on the rail where the surface is dark. */
+[data-theme="dark"] .brand,
+[data-theme="dark"] .roledash-head,
+[data-theme="dark"] .acct-head { color-scheme: dark; }
+
+/* Charts carry light backgrounds from their inline styles. */
+[data-theme="dark"] svg.chart text { fill: #C3C8D2; }
+[data-theme="dark"] svg.chart .grid-line { stroke: #2A2D35; }
+[data-theme="dark"] .map-fallback { background: #1E2026; }
+[data-theme="dark"] .leaflet-container { background: #1E2026; }
+
+/* Login and forbidden pages sit on a light wash. */
+[data-theme="dark"] body { background: var(--surface-2); }

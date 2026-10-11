@@ -1004,3 +1004,30 @@ table.data.compact tbody td, table.data.compact thead th { padding: 7px 10px; }
 }
 .role-card .role-name { display: block; font-size: 13.5px; font-weight: 700; color: var(--ink); line-height: 1.3; }
 .role-card .role-sub  { display: block; font-size: 11px; color: var(--ink-4); margin-top: 4px; line-height: 1.4; }
+
+/* =====================================================================
+   Sign-in page: theme toggle
+   The sign-in screen is its own layout, so the toggle sits here rather
+   than in the shared top bar.
+   ===================================================================== */
+.login-card { position: relative; }
+.login-theme {
+  position: absolute; top: 18px; right: 18px; z-index: 5;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 11px; border: 1px solid var(--line); border-radius: 20px;
+  background: var(--surface); color: var(--ink-2);
+  cursor: pointer; font: inherit; font-size: 12px; font-weight: 600;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.login-theme:hover { background: var(--surface-2); color: var(--ink); border-color: var(--ink-4); }
+.login-theme .sun-text { display: none; }
+[data-theme="dark"] .login-theme .moon-text { display: none; }
+[data-theme="dark"] .login-theme .sun-text { display: inline; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .login-theme .moon-text { display: none; }
+  :root:not([data-theme="light"]) .login-theme .sun-text { display: inline; }
+}
+/* The logo sits on a light plate; give it one on a dark surface. */
+[data-theme="dark"] .login-logo {
+  background: #FFFFFF; border-radius: var(--radius-sm); padding: 8px 12px;
+}

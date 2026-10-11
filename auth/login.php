@@ -70,12 +70,26 @@ foreach (Auth::roles() as $role) {
 <title>Sign in · <?= e(APP_SHORT) ?></title>
 <link rel="icon" type="image/png" href="../assets/brand/kcca-favicon.png">
 <link rel="stylesheet" href="../assets/css/kcca.css">
+<link rel="stylesheet" href="../assets/css/activities.css?v=<?= e(APP_VERSION) ?>">
+<link rel="stylesheet" href="../assets/css/dark.css?v=<?= e(APP_VERSION) ?>">
+<script>
+/* Applied before first paint so a dark-mode reader never sees a white
+   flash while the stylesheets settle. */
+(function(){try{var c=document.cookie.match(/(^| )kcca-theme=([^;]+)/),t=c?c[2]:localStorage.getItem('kcca-theme');
+if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+</script>
 </head>
 <body>
 
 <div class="login-wrap">
   <main class="login-main">
     <div class="login-card wide">
+
+      <button type="button" class="login-theme" data-theme-toggle aria-pressed="false"
+              aria-label="Switch to dark mode" title="Switch to dark mode">
+        <?= KCCA_icon('moon', 15) ?><span class="moon-text">Dark</span>
+        <?= KCCA_icon('sun', 15) ?><span class="sun-text">Light</span>
+      </button>
 
       <img class="login-logo" src="../assets/brand/kcca-logo.png" alt="Kampala Capital City Authority">
 
@@ -136,6 +150,7 @@ foreach (Auth::roles() as $role) {
   </main>
 </div>
 
+<script src="../assets/js/activities.js?v=<?= e(APP_VERSION) ?>"></script>
 <script>
 /* The role cards sit outside the form, so the form is found by its field
    rather than by climbing from the button. */

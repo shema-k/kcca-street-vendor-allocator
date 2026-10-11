@@ -39,8 +39,11 @@ kcca-vendor-relocation/
 ├── pages/                  the 17 screens, plus three redirects
 └── assets/
     ├── brand/              KCCA logo, from kcca.go.ug
-    ├── css/kcca.css        one stylesheet, Authority colours
-    └── js/                 kcca.js, charts.js, kampala-map.js
+    ├── css/kcca.css        Authority colours and layout
+    ├── css/activities.css  activity cards and slideshow
+    ├── css/dark.css        dark-mode overrides
+    └── js/                 kcca.js, charts.js, kampala-map.js,
+                            stall-map.js, activities.js
 ```
 
 ## Requirements
@@ -349,6 +352,49 @@ the trader knows it is being considered, not ignored.
 
 Officers see the same screen plus every open request for that market, and can approve one into a real
 allocation — or reject it with a reason that is recorded and shown back to the trader.
+
+## What the Authority does, on cards
+
+`lib/Activities.php` holds six activities — trade order, gazetted space, trading
+licences, market development, trader welfare and digital services — each as a
+card saying what the Authority does and what the reader gets from it.
+
+The illustrations are inline SVG rather than photographs. A photograph of
+Kisenyi Market at seven in the morning carries rights we do not hold and a
+network dependency we do not want; a drawn plate in the Authority's own
+colours says the same thing, loads instantly, and works offline.
+
+The cards appear as an auto slideshow on the dashboard and the trader portal,
+and as a static grid for readers who want them all at once. The slideshow
+advances on its own, **stops the moment a reader shows any interest** — hover,
+focus or touch — and can be set going again by hand. Left and right move
+through it, Home and End jump to the ends. A reader who has asked the
+operating system for less motion gets no auto-advance at all.
+
+A vendor does not see the slideshow. A trader's three questions are where the
+space is, how busy it is, and what happened to their application; what the
+Authority does organisationally is not one of them.
+
+## Dark mode
+
+The stylesheet is built on custom properties, so dark mode is one override
+block rather than a hunt through every rule. Light is the default; the toggle
+writes the choice to both `localStorage` and a cookie — the cookie so the
+sign-in page, which has no stored value yet, honours it too — and an unset
+choice follows the operating system.
+
+The brand colours are unchanged. KCCA red on white and KCCA red on near-black
+are the same red; changing it would make this stop being the Authority's
+system. What changes is the field it sits on.
+
+The theme is applied before first paint, so a reader who chose dark never sees
+a white flash while the stylesheets settle. Contrast was checked rather than
+assumed: the semantic colours are lightened from their light values, because
+#1B7F4D on near-black is 4.0:1 and #0A6339 would be 2.6:1.
+
+`prefers-color-scheme` is honoured, `prefers-reduced-motion` stops the
+slideshow, and the chart fills, form controls and map fallbacks are all
+overridden for the dark field.
 
 ## Security
 

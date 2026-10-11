@@ -31,9 +31,17 @@ $layoutDivisionId = (int) ($me['division_id'] ?? 0);
 <title><?= e($pageTitle ?? 'Dashboard') ?> · <?= e(APP_SHORT) ?></title>
 <link rel="icon" type="image/png" href="../assets/brand/kcca-favicon.png">
 <link rel="stylesheet" href="<?= e(APP_REL) ?>assets/css/kcca.css?v=<?= e(APP_VERSION) ?>">
+<link rel="stylesheet" href="<?= e(APP_REL) ?>assets/css/activities.css?v=<?= e(APP_VERSION) ?>">
+<link rel="stylesheet" href="<?= e(APP_REL) ?>assets/css/dark.css?v=<?= e(APP_VERSION) ?>">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body>
+<script>
+/* Applied before first paint: a reader who chose dark should never see a
+   white flash while the stylesheets settle. */
+(function(){try{var c=document.cookie.match(/(^| )kcca-theme=([^;]+)/),t=c?c[2]:localStorage.getItem('kcca-theme');
+if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+</script>
 <a class="skip-link" href="#main">Skip to main content</a>
 
 <div class="app">
@@ -64,6 +72,12 @@ $layoutDivisionId = (int) ($me['division_id'] ?? 0);
     <a class="icon-link" href="../pages/portal.php" title="Open the public trader portal" aria-label="Public trader portal">
       <?= KCCA_icon('user', 15) ?>
     </a>
+
+    <button type="button" class="theme-toggle" data-theme-toggle aria-pressed="false"
+            aria-label="Switch to dark mode" title="Switch to dark mode">
+      <?= KCCA_icon('moon', 14) ?><span class="moon-text" aria-hidden="true">Dark</span>
+      <?= KCCA_icon('sun', 14) ?><span class="sun-text" aria-hidden="true">Light</span>
+    </button>
 
     <?php if (Auth::check()): ?>
       <?php
