@@ -243,6 +243,12 @@ final class Auth
         return self::PERMISSIONS[$role] ?? ['view'];
     }
 
+    /** The top of the order, for display: "level N of M". */
+    public static function maxRank(): int
+    {
+        return max(self::HIERARCHY);
+    }
+
     /** Every role, highest first, for the account screens. */
     public static function roles(): array
     {

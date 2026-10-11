@@ -161,6 +161,9 @@ require __DIR__ . '/../layouts/header.php';
       <a class="chip <?= $view === 'restrictions' ? 'on' : '' ?>"
          href="<?= e(urlWith(['view' => 'restrictions', 'page' => null])) ?>">Land use</a>
     </div>
+    <?php if (Auth::can('manage')): ?>
+      <a class="btn btn-ghost btn-sm" href="market_edit.php?new=1">Add a location</a>
+    <?php endif; ?>
   </div>
 </div>
 
@@ -587,7 +590,11 @@ require __DIR__ . '/../layouts/header.php';
                     : '<span class="muted small">—</span>' ?>
               </td>
               <td class="center"><span class="badge <?= e(statusTone($loc['status'])) ?>"><?= e(humanise($loc['status'])) ?></span></td>
-              <td class="right">
+              <td class="right nowrap">
+                <?php if (Auth::can('manage')): ?>
+                  <a class="btn btn-ghost btn-sm" href="market_edit.php?market=<?= (int) $loc['id'] ?>"
+                     title="Edit this location">Edit</a>
+                <?php endif; ?>
                 <a class="btn btn-ghost btn-sm"
                    href="market_map.php?market=<?= (int) $loc['id'] ?>">Open</a>
               </td>
@@ -685,9 +692,15 @@ require __DIR__ . '/../layouts/header.php';
               <td class="xsmall"><?= e($r['market_name']) ?></td>
               <td class="xsmall"><?= e($r['division_name']) ?></td>
               <td class="xsmall">
-                <?= $r['excluded_categories'] !== ''
-                    ? e(implode(', ', array_map(static fn($c) => humanise($c),
-                          array_filter(explode(',', $r['excluded_categories'])))))
+                <?php
+                /* The column is nullable, so ``!== ''`` alone lets NULL
+                   through into explode(). A restriction covering the whole
+                   site is stored as NULL rather than an empty string. */
+                $blocked = array_filter(array_map('trim',
+                    explode(',', (string) ($r['excluded_categories'] ?? ''))));
+                ?>
+                <?= $blocked !== []
+                    ? e(implode(', ', array_map(static fn($c) => humanise($c), $blocked)))
                     : '<span class="badge bad">Every trade</span>' ?>
               </td>
               <td class="xsmall"><?= e($r['authority'] ?: '—') ?></td>

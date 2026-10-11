@@ -198,9 +198,20 @@ Notices* (the full chain from survey to escalation, plus the public
 statements), *Trade Licensing*.
 
 **Records** — *Performance & KPIs* (against the Strategic Plan), *Reports*
-(search, filter and export), *Audit Trail*, *Accounts* (who may sign in, and
-whose records an officer may edit), *Settings* (engine weights, model
-calibration, programme policy, and backups), *Trader Portal*.
+(search, filter and export), *Audit Trail*, *Accounts* (add staff, set what
+they may do, set their password, and edit every location in the register),
+*Settings* (engine weights, model calibration, programme policy, and
+backups), *Trader Portal*.
+
+**Editing a location.** `pages/market_edit.php` is the System Administrator's
+instrument over the location register — which is also what the map, the stall
+map, the vacancy figures and every citywide total read from. Adding or
+changing a location takes effect everywhere at once.
+
+A change to a public market's capacity or vacancy is allowed, because the
+administrator owns the system; but it is not silent. The page states the
+consequence on the way out, and `database/verify.php` reports the resulting
+difference against the published figures rather than absorbing it.
 
 Three screens that duplicated others now redirect: the Market Register into
 Markets, the Vacant Space Finder into Markets, and the KCCA Online Services

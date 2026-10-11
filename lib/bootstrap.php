@@ -15,6 +15,7 @@ require_once __DIR__ . '/Recommendations.php';
 require_once __DIR__ . '/Validator.php';
 require_once __DIR__ . '/Settings.php';
 require_once __DIR__ . '/VendorService.php';
+require_once __DIR__ . '/AccountService.php';
 require_once __DIR__ . '/RoleDashboard.php';
 require_once __DIR__ . '/Backup.php';
 require_once __DIR__ . '/ErrorHandler.php';
