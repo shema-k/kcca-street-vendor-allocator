@@ -7,7 +7,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../lib/bootstrap.php';
-Auth::requirePermission('view');
+Auth::requirePermission('enforce');
 
 $f    = facts();
 $zone = (int) ($_GET['zone'] ?? 0);

@@ -6,7 +6,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../lib/bootstrap.php';
-Auth::requirePermission('view');
+Auth::requirePermission('allocate');
 
 $status   = (string) ($_GET['status'] ?? '');
 $division = (string) ($_GET['division'] ?? '');

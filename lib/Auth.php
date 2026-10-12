@@ -14,6 +14,10 @@ final class Auth
         'planner'       => ['view', 'allocate', 'report'],
         'enforcement'   => ['view', 'enforce', 'report'],
         'revenue'       => ['view', 'report'],
+        // A chairman sees their own market and nothing else. They trade no
+        // decision, so they hold no grant beyond viewing: what follows which
+        // vendor is theirs to know, not to act on.
+        'chairman'      => ['view'],
         // A trader views markets, applies for a stall and tracks footfall.
         // The stall request is a separate, public endpoint with its own
         // validation, so this role needs no further grant.
@@ -33,6 +37,7 @@ final class Auth
         'vendor'        => 1,   // the trader
         'revenue'       => 2,   // licences and fees: a regulatory desk, not command
         'enforcement'   => 3,   // carries the decision out on the ground
+        'chairman'      => 4,   // administers one market; elected, not an officer
         'planner'       => 4,   // decides how the relocation is done
         'mayor'         => 5,   // oversees the managers of one division
         'executive'     => 6,   // the whole Authority, and the final decision
@@ -76,6 +81,11 @@ final class Auth
             'label'  => 'Revenue Officer',
             'scope'  => 'directorate',
             'blurb' => 'Licences and fees across the register.',
+        ],
+        'chairman' => [
+            'label'  => 'Market Chairman',
+            'scope'  => 'market',
+            'blurb' => 'The traders allocated to your market, and what the Authority has done for them.',
         ],
         'vendor' => [
             'label'  => 'Vendor',
@@ -153,10 +163,14 @@ final class Auth
         }
         $row = Database::one(
             'SELECT u.id, u.username, u.full_name, u.title, u.directorate, u.role, u.division_id,
-                    u.email, u.phone, u.is_active, u.last_login_at,
-                    d.name AS division_name
+                    u.chairman_id, u.email, u.phone, u.is_active, u.last_login_at,
+                    d.name AS division_name,
+                    ch.market_id AS my_market_id, ch.full_name AS chairman_name,
+                    m.name AS market_name
                FROM users u
                LEFT JOIN divisions d ON d.id = u.division_id
+               LEFT JOIN market_chairmen ch ON ch.id = u.chairman_id
+               LEFT JOIN markets m ON m.id = ch.market_id
               WHERE u.id = ? LIMIT 1',
             [(int) $_SESSION['user_id']]
         );

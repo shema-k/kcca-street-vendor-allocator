@@ -290,6 +290,10 @@ switch ($action) {
                     "UPDATE vendors SET status = 'offered-space' WHERE id = ? AND status IN ('surveyed','notified')",
                     [$vendorId]
                 );
+                // A trader who asked for a pitch has chosen their market, so
+                // the chairman is attached now rather than waiting for the
+                // offer to be accepted: it is the same person either way.
+                syncVendorChairman($vendorId, (int) $row['market_id']);
 
                 Database::run(
                     "UPDATE stall_requests SET status = 'approved', decided_by = ?, decided_at = NOW(),

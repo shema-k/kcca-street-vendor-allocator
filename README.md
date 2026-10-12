@@ -127,7 +127,7 @@ entitled to know where that name came from.
 
 ## Roles and authority
 
-Seven roles, in the order of authority. A role determines the screen an
+Eight roles, in the order of authority. A role determines the screen an
 officer lands on, the figures they are accountable for, what they may change,
 and whose records they may edit.
 
@@ -136,19 +136,31 @@ and whose records they may edit.
 | 7 | System Administrator | Everything on the system, and every account that reaches it | 17 |
 | 6 | Executive Director | All progress across the Authority, and the final decisions | 16 |
 | 5 | Mayor | One division, and the managers working under them | 15 |
+| 4 | Market Chairman | The traders allocated to your market, and what has been done for them | 8 |
 | 4 | Planner | How the relocation is planned, and what the forecast says | 11 |
 | 3 | Enforcement Officer | The Authority on the ground, and vendors following instructions | 9 |
 | 2 | Revenue Officer | Licences and fees across the register | 8 |
 | 1 | Vendor | Find space, apply for a stall, follow the footfall | 5 |
 
+A **Market Chairman** sits at level 4, alongside the Planner. A chairman is
+elected by the traders of a market rather than appointed by the Authority, so
+they sit level with a directorate role rather than beneath or above it, and
+neither outranks the other. See *Market chairmen* below.
+
 **Internal Audit is not a sign-in role.** The instruction is that it is
 *viewed by* the Executive Director, the Mayor and the System Administrator, so
 the audit trail is a screen those three hold rather than a separate desk.
 
-Two rules hang off the order of authority rather than a second permission list:
+Three rules hang off the order of authority rather than a second permission list:
 
 - **A Mayor sees only their own division.** Every figure is scoped before it
   is fetched, not filtered afterwards.
+- **A chairman sees only their own market**, on the same principle. The scope
+  is applied to the query rather than to a copy of the results, and it cannot
+  be widened by editing the query string: `RoleDashboard::scopeFor()` names the
+  table it is being applied to, because `vendors` carries a chairman while
+  `markets` and `trade_zones` carry a division — so a chairman's scope reads
+  differently on each.
 - **An officer edits only accounts below their own level, and never their
   own.** That is why an account cannot be quietly widened by the person it
   belongs to.
@@ -163,6 +175,37 @@ Affairs spokesperson. The System Administrator and the vendor are illustrative:
 KCCA publishes an ICT department and a street-vendor role but names nobody in
 them. Each account states which it is, because the audit trail attributes
 every action to a name and a reader is entitled to know where it came from.
+
+## Market chairmen
+
+Every market has a chairman, and every vendor in that market follows them.
+`market_chairmen` holds one row per market — the name, telephone, email, when
+the tenure began and whether it is active, interim or vacant.
+
+The chairman is **a record against the market, not a login**. A market can have
+a chairman on record before their account exists, and a report must be able to
+name a chairman without implying that person can sign in. Granting a sign-in is
+a separate step in Accounts, and the `chairman` role is what it produces.
+
+The association is **not** a field somebody maintains. When a vendor is placed
+into a market — an offer accepted, a pitch confirmed, a trader request approved
+— `syncVendorChairman()` writes that market's chairman onto the vendor, and from
+then on it travels with them through the register, the allocation record and
+every report without anyone remembering to update it. A placement that is undone
+(an offer withdrawn, a space declined) clears it again, because a vendor back in
+the pool is nobody's responsibility until they are placed again.
+
+`pages/chairmen.php` is where the assignment is made. Officers with `manage`
+maintain it; a Mayor is narrowed to their own division; a chairman sees their own
+market and may correct their own contact details and nothing else.
+
+**The 8,386 existing vendors carry no chairman.** They sit in trade zones and
+have never been allocated to a market, so there is no market to take a chairman
+from, and inventing one would put a name against a vendor on no authority. Their
+chairman is written when they are placed. `verify.php` checks the invariants that
+must not break meanwhile: one chairman per market, every chairman on a market that
+exists, no vendor on a chairman who does not exist, and no account outside the
+`chairman` role carrying a `chairman_id`.
 
 ## The dashboard, by role
 
@@ -183,7 +226,7 @@ and a sign-out.
 
 ## The screens
 
-Seventeen, grouped as the rail groups them. A role sees only the screens it
+Eighteen, grouped as the rail groups them. A role sees only the screens it
 operates.
 
 **Work** — *Dashboard* (built per role; see above), *Vendors* (register and
@@ -204,7 +247,7 @@ statements), *Trade Licensing*.
 (search, filter and export), *Audit Trail*, *Accounts* (add staff, set what
 they may do, set their password, and edit every location in the register),
 *Settings* (engine weights, model calibration, programme policy, and
-backups), *Trader Portal*.
+backups), *Chairmen* (who administers each market), *Trader Portal*.
 
 **Editing a location.** `pages/market_edit.php` is the System Administrator's
 instrument over the location register — which is also what the map, the stall
@@ -407,10 +450,36 @@ overridden for the dark field.
 
 ## Security
 
-Nine roles with explicit permissions (`Auth::PERMISSIONS`). Passwords are bcrypt. Every
+Eight roles with explicit permissions (`Auth::PERMISSIONS`). Passwords are bcrypt. Every
 state-changing request needs a CSRF token. SQL is exclusively prepared statements. Output is escaped
 by `e()` at every interpolation. The audit trail is written *before* the action completes, so a
 download or an offer remains accountable even if the client disconnects.
+
+### The gate has to gate something
+
+`Auth::requirePermission('view')` on a staff screen is not a guard. **Every
+role holds `view`**, including a trader, so a page gated on it is readable by
+anyone who can sign in at all — and several were: a trader could open the
+system settings, the account list, the enforcement register, the allocations
+register, the analytics screen and the relocation engine, each of which names
+traders and carries their national ID numbers and telephone numbers.
+
+Each staff screen is now gated on the grant that actually separates its readers,
+matching the audience its own navigation entry already declared:
+
+| Screen | Was | Now | Held by |
+|---|---|---|---|
+| Analytics, Congestion, Licensing | `view` | `report` | administrator, ED, mayor, planner, enforcement, revenue |
+| Allocations, Relocation | `view` | `allocate` | administrator, ED, mayor, planner |
+| Enforcement | `view` | `enforce` | administrator, ED, mayor, enforcement |
+| Settings, Accounts | `view` / login only | `manage` | administrator, ED |
+
+The fix that is easy to repeat is the audit trail, and it is worth stating: a
+page that pins a reader to their own rows has to apply the pin **after** reading
+the query string. Applied before, the filter is silently overwritten by `$_GET`
+and the screen looks scoped while the URL widens it. The audit trail, the vendor
+register and the chairmen register all apply their scope after the request is
+parsed, not before.
 
 ### Validation
 
@@ -469,6 +538,7 @@ the log, so a fault report can be traced to one record. CLI scripts see the real
 | `GET api/form.php?form=` | Modal forms: `footfall`, `space`, `restriction`, `vendor` |
 | `GET api/market_stalls.php?market=` | Every pitch of one market, at its coordinates |
 | `POST api/stall_request.php` | `request`, `review`, `approve`, `reject`, `cancel` |
+| `POST api/chairman_save.php` | Record or amend the chairman of one market |
 | `GET api/export.php?report=` | CSV export of any register |
 
 ## Resetting

@@ -24,17 +24,30 @@ $remit = Auth::remit();
    figure below is filtered by the SQL fragment, never by permission checks
    after the fact. */
 $scope = RoleDashboard::scope();
-$scope['sql']   = RoleDashboard::scopeSql($scope);
-$scope['level'] = isset($scope['division_id']) ? 'division' : 'citywide';
-$scope['label'] = ($scope['level'] === 'division' && !empty($me['division_name']))
-    ? (string) $me['division_name']
-    : (string) $remit['label'];
+/* The scope is not one fragment: markets and trade_zones do not carry a
+   chairman, so a chairman's scope reads differently on them. */
+$scope['sql']         = RoleDashboard::scopeSql($scope);
+$scope['sql_zones']   = RoleDashboard::scopeFor('trade_zones', $scope, 'z');
+$scope['sql_markets'] = RoleDashboard::scopeFor('markets', $scope, 'm');
+$scope['level'] = isset($scope['division_id'])
+    ? 'division'
+    : (isset($scope['chairman_id']) ? 'market' : 'citywide');
+$scope['label'] = $scope['level'] === 'market' && !empty($me['market_name'])
+    ? (string) $me['market_name']
+    : (($scope['level'] === 'division' && !empty($me['division_name']))
+        ? (string) $me['division_name']
+        : (string) $remit['label']);
 
 /* Every staff role holds 'report'; a trader does not. That single grant is
    what separates the Authority's internal programme figures from a trader's
    view, so the analytics sections below are gated on it rather than each
    being hidden by a separate rule that would have to be kept in step. */
-$isStaff = Auth::can('report');
+$isStaff   = Auth::can('report');
+/* A chairman sits between the two: not an officer, so not the programme
+   figures, but accountable for the traders of one market rather than for
+   none at all. */
+$isChairman = Auth::role() === 'chairman';
+$myMarket   = $isChairman ? chairmanLock() : null;
 
 /* ---- headline figures, scoped ---- */
 $vendorCount = (int) Database::value(
@@ -45,14 +58,14 @@ $vendorCount = (int) Database::value(
 $surveyed = (int) Database::value("SELECT COUNT(*) FROM vendors");
 $toMove = (int) Database::value(
     "SELECT COALESCE(SUM(estimated_vendors),0) FROM trade_zones z
-      WHERE 1=1" . str_replace('v.', 'z.', $scope['sql'])
+      WHERE 1=1" . $scope['sql_zones']
 );
 $relocated = (int) Database::value(
     "SELECT COUNT(*) FROM vendors WHERE status='relocated'" . $scope['sql']
 );
 $vacant = (int) Database::value(
     "SELECT COALESCE(SUM(vacant_spaces),0) FROM markets m
-      WHERE 1=1" . str_replace('v.', 'm.', $scope['sql'])
+      WHERE 1=1" . $scope['sql_markets']
 );
 $pending = (int) Database::value(
     "SELECT COUNT(*) FROM vendors WHERE status IN ('offered-space','notified')" . $scope['sql']
@@ -114,6 +127,12 @@ require __DIR__ . '/../layouts/header.php';
             ? 'Your division’s position: vendors to move, space available, and progress.'
             : 'The whole programme across all five divisions, at a glance.') ?>
       </p>
+    <?php elseif ($isChairman): ?>
+      <h1><?= e($myMarket ? $myMarket['market_name'] : 'My market') ?></h1>
+      <p>
+        The traders allocated to your market, the space still free, and what
+        the Authority has done with each of them.
+      </p>
     <?php else: ?>
       <h1>Welcome back, <?= e(explode(' ', (string) $me['full_name'])[0]) ?></h1>
       <p>Find gazetted trading space, check what is available, and reach the Authority without a queue.</p>
@@ -123,6 +142,8 @@ require __DIR__ . '/../layouts/header.php';
     <button class="btn btn-ghost" data-print><?= KCCA_icon('print', 15) ?> Print</button>
     <?php if ($isStaff): ?>
       <a class="btn btn-ghost" href="reports.php"><?= KCCA_icon('download', 15) ?> Reports</a>
+    <?php elseif ($isChairman): ?>
+      <a class="btn btn-ghost" href="chairmen.php"><?= KCCA_icon('user', 15) ?> My record</a>
     <?php else: ?>
       <a class="btn btn-ghost" href="portal.php"><?= KCCA_icon('store', 15) ?> Trader portal</a>
     <?php endif; ?>

@@ -209,6 +209,47 @@ check('Zone vendor counts equal the register',
     ),
     0, 'sum of absolute differences should be zero');
 
+/* ---- Market chairmen ----
+ * Each market has at most one chairman, and a vendor's chairman is always a
+ * real one. The unique index on market_id already forbids a second, so this
+ * confirms the constraint exists rather than trusting that it does. */
+check('No market has more than one chairman',
+    (int) Database::value(
+        'SELECT COUNT(*) FROM (
+             SELECT market_id FROM market_chairmen GROUP BY market_id HAVING COUNT(*) > 1
+         ) t'
+    ),
+    0, 'one chairman per market, enforced by the unique index');
+
+check('Chairman records pointing at a real market',
+    (int) Database::value(
+        'SELECT COUNT(*) FROM market_chairmen ch
+           LEFT JOIN markets m ON m.id = ch.market_id WHERE m.id IS NULL'
+    ),
+    0, 'a chairman is always recorded against a market that exists');
+
+check('Vendors with a chairman who does not exist',
+    (int) Database::value(
+        'SELECT COUNT(*) FROM vendors v
+           LEFT JOIN market_chairmen ch ON ch.id = v.chairman_id
+          WHERE v.chairman_id IS NOT NULL AND ch.id IS NULL'
+    ),
+    0, 'a vendor’s chairman is written from a real chairman record');
+
+check('Chairman sign-ins bound to a chairman record',
+    (int) Database::value(
+        "SELECT COUNT(*) FROM users u
+           LEFT JOIN market_chairmen ch ON ch.id = u.chairman_id
+          WHERE u.role = 'chairman' AND (u.chairman_id IS NULL OR ch.id IS NULL)"
+    ),
+    0, 'a chairman account without a market would be able to see nothing, so none exists');
+
+check('Non-chairman accounts carrying a chairman',
+    (int) Database::value(
+        "SELECT COUNT(*) FROM users WHERE role <> 'chairman' AND chairman_id IS NOT NULL"
+    ),
+    0, 'only a chairman is scoped by chairman_id; a mayor is scoped by division');
+
 check('Allocations pointing at a real vendor',
     (int) Database::value(
         'SELECT COUNT(*) FROM allocations a LEFT JOIN vendors v ON v.id = a.vendor_id WHERE v.id IS NULL'

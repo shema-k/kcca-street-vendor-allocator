@@ -161,6 +161,10 @@ switch ($action) {
             Database::run(
                 "UPDATE allocations SET status = 'accepted', decided_at = NOW() WHERE id = ?", [$id]);
             Database::run("UPDATE vendors SET status = 'relocated' WHERE id = ?", [(int) $a['vendor_id']]);
+            // Placed in this market, so its chairman becomes responsible for
+            // them from here on. Written inside the transaction so the vendor
+            // can never be relocated without a chairman if one exists.
+            syncVendorChairman((int) $a['vendor_id'], (int) $a['market_id']);
 
             // The pitch leaves the vacancy pool exactly once: when the offer
             // was made. Accepting only moves reserved -> occupied and counts
@@ -202,6 +206,9 @@ switch ($action) {
                 [$reason !== '' ? $reason : 'No reason given', $id]
             );
             Database::run("UPDATE vendors SET status = 'declined' WHERE id = ?", [(int) $a['vendor_id']]);
+            // They declined the space, so they are not in that market and its
+            // chairman is not responsible for them.
+            clearVendorChairman((int) $a['vendor_id']);
 
             // The pitch and the space return to the vacancy pool.
             if ($a['market_space_id'] !== null) {
@@ -243,6 +250,7 @@ switch ($action) {
                 [(int) $a['market_id']]);
             Database::run("UPDATE vendors SET status = 'notified' WHERE id = ? AND status = 'offered-space'",
                 [(int) $a['vendor_id']]);
+            clearVendorChairman((int) $a['vendor_id']);
         });
 
         Auth::log('withdraw-allocation', 'allocations', $id, $a['reference'] . ' withdrawn');
@@ -267,6 +275,9 @@ switch ($action) {
         }
 
         Database::run("UPDATE allocations SET status = 'occupied', decided_at = NOW() WHERE id = ?", [$id]);
+        // Idempotent on an already-placed vendor, and it repairs a vendor
+        // placed before their market had a chairman recorded.
+        syncVendorChairman((int) $a['vendor_id'], (int) $a['market_id']);
         Auth::log('occupy-allocation', 'allocations', $id, $a['reference'] . ' confirmed occupied');
         jsonOut(['ok' => true, 'message' => $a['full_name'] . ' confirmed trading at ' . $a['market_name'] . '.']);
     }

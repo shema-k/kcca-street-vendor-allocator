@@ -9,8 +9,12 @@ declare(strict_types=1);
 require_once __DIR__ . '/../lib/bootstrap.php';
 /* The register carries names, national ID numbers and telephone numbers.
    A trader reaches their own record through their profile; the register as
-   a whole is for the officers who administer it. */
-Auth::requirePermission('report');
+   a whole is for the officers who administer it. A chairman reaches the
+   same screen scoped to their own market, because the vendor's chairman is
+   the one person outside the Authority expected to follow them. */
+if (Auth::role() !== 'chairman') {
+    Auth::requirePermission('report');
+}
 
 $division = (string) ($_GET['division'] ?? '');
 
@@ -19,6 +23,9 @@ $divisionLock = divisionLock();
 if ($divisionLock !== null) {
     $division = $divisionLock['code'];
 }
+
+// A chairman is scoped to their own market, and to nothing wider.
+$chairmanLock = chairmanLock();
 $category = (string) ($_GET['category'] ?? '');
 $status   = (string) ($_GET['status'] ?? '');
 $zoneId   = (int) ($_GET['zone'] ?? 0);
@@ -33,6 +40,13 @@ if ($division !== '') { $where[] = 'd.code = :div';  $params['div'] = $division;
 if ($category !== '') { $where[] = 'v.business_category = :cat'; $params['cat'] = $category; }
 if ($status !== '')   { $where[] = 'v.status = :st'; $params['st'] = $status; }
 if ($zoneId > 0)      { $where[] = 'v.current_zone_id = :zid'; $params['zid'] = $zoneId; }
+/* A chairman may not widen their own scope by editing the query string, in
+   the same way a mayor may not override their division. The market filter
+   is applied on top of whatever was asked for and cannot be removed. */
+if ($chairmanLock !== null) {
+    $where[] = 'v.chairman_id = :ch';
+    $params['ch'] = $chairmanLock['id'];
+}
 if ($q !== '') {
     [$likeSql, $likeParams] = orLike('q',
         ['v.full_name', 'v.vendor_code', 'v.phone', 'v.national_id', 'v.business_description'], $q);
@@ -50,10 +64,12 @@ $pageNo   = min($pageNo, $pageCount);
 $offset  = ($pageNo - 1) * $perPage;
 
 $rows = Database::all(
-    "SELECT v.*, d.name AS division_name, d.code AS div_code, z.name AS zone_name
+    "SELECT v.*, d.name AS division_name, d.code AS div_code, z.name AS zone_name,
+            ch.full_name AS chairman_name
        FROM vendors v
        JOIN divisions d ON d.id = v.division_id
        LEFT JOIN trade_zones z ON z.id = v.current_zone_id
+       LEFT JOIN market_chairmen ch ON ch.id = v.chairman_id
       WHERE $whereSql
       ORDER BY v.full_name
       LIMIT $perPage OFFSET $offset",
@@ -75,14 +91,22 @@ $profile = Database::one(
             ROUND(AVG(monthly_turnover_ugx) * 12) AS avg_annual,
             MIN(started_year) AS oldest
        FROM vendors"
+    . ($chairmanLock !== null ? ' WHERE chairman_id = ' . $chairmanLock['id'] : '')
 );
 
 $byCategory = Database::all(
     "SELECT business_category, COUNT(*) AS n, SUM(gender='female') AS women
-       FROM vendors GROUP BY business_category ORDER BY n DESC"
+       FROM vendors"
+    . ($chairmanLock !== null ? ' WHERE chairman_id = ' . $chairmanLock['id'] : '')
+    . " GROUP BY business_category ORDER BY n DESC"
 );
 
-$statusCounts = vendorStatusCounts();
+$statusCounts = $chairmanLock !== null
+    ? array_column(Database::all(
+        'SELECT status, COUNT(*) AS n FROM vendors WHERE chairman_id = '
+        . $chairmanLock['id'] . ' GROUP BY status'
+      ), 'n', 'status')
+    : vendorStatusCounts();
 $categories = Database::column('SELECT DISTINCT business_category FROM vendors ORDER BY business_category');
 
 /* ---------------- Single vendor record ---------------- */
@@ -91,13 +115,22 @@ $detailAllocs = [];
 if ($vendorId > 0) {
     $detail = Database::one(
         'SELECT v.*, d.name AS division_name, z.name AS zone_name, z.code AS zone_code,
-                z.road_or_feature
+                z.road_or_feature, ch.full_name AS chairman_name, ch.phone AS chairman_phone,
+                cm.name AS chairman_market
            FROM vendors v
            JOIN divisions d ON d.id = v.division_id
            LEFT JOIN trade_zones z ON z.id = v.current_zone_id
+           LEFT JOIN market_chairmen ch ON ch.id = v.chairman_id
+           LEFT JOIN markets cm ON cm.id = ch.market_id
           WHERE v.id = ? LIMIT 1',
         [$vendorId]
     );
+    /* The record is scoped too: a chairman given a vendor id that is not
+       theirs must get nothing, rather than the full personal record of
+       somebody in another market. */
+    if ($detail && $chairmanLock !== null && (int) $detail['chairman_id'] !== $chairmanLock['id']) {
+        $detail = null;
+    }
     if ($detail) {
         $detailAllocs = Database::all(
             'SELECT a.*, m.name AS market_name, m.lat, m.lng, s.space_code
@@ -399,6 +432,7 @@ require __DIR__ . '/../layouts/header.php';
         <thead>
           <tr>
             <th>Vendor</th><th>Trade</th><th>Division</th><th>Current site</th>
+            <th>Chairman</th>
             <th class="right">Turnover</th><th class="center">Household</th>
             <th class="center">Licence</th><th class="center">Stage</th><th></th>
           </tr>
@@ -418,6 +452,13 @@ require __DIR__ . '/../layouts/header.php';
               <td class="xsmall"><?= e(humanise($v['business_category'])) ?></td>
               <td class="xsmall"><?= e($v['division_name']) ?></td>
               <td class="xsmall"><?= e($v['zone_name'] ?: '—') ?></td>
+              <td class="xsmall">
+                <?php if (!empty($v['chairman_name'])): ?>
+                  <?= e($v['chairman_name']) ?>
+                <?php else: ?>
+                  <span class="muted" title="Not yet placed in a market">—</span>
+                <?php endif; ?>
+              </td>
               <td class="right num xsmall"><?= ugxShort((int) $v['monthly_turnover_ugx']) ?></td>
               <td class="center xsmall">
                 <?= num((int) $v['household_size']) ?>

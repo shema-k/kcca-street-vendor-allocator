@@ -13,7 +13,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../lib/bootstrap.php';
-Auth::requireLogin();
+Auth::requirePermission('manage');
 
 $canEdit = Auth::can('manage');
 

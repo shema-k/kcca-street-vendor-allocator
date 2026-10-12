@@ -712,6 +712,40 @@ foreach (Database::all("SELECT id, code, name, status, deadline_date, estimated_
     }
 }
 
+/* ---- Market chairmen ---- */
+Database::run('DELETE FROM market_chairmen');
+Database::run('ALTER TABLE market_chairmen AUTO_INCREMENT = 1');
+
+/* One chairman per market, recorded against the market rather than against
+   a login. KCCA does not publish a register of market chairmen, so every
+   name here is illustrative: the point of the seed is the shape of the
+   record and the join onto the vendor, not a real person's name attached to
+   a post they do not hold. A market with no chairman is left without one
+   rather than given an invented name — the register shows the gap. */
+$chairmen = [
+    /* St Balikuddembe (Owino) and Kiseka are the two markets the relocation
+       programme moves the most traders into, so they are the two worth
+       showing chaired. */
+    ['Usafi Market',      'Ssali Mukasa',      '0772 300 118', 'ssali.mukasa@example.co.ug',   '2019-03-01', 'active'],
+    ['Kiseka Market',     'Nabbanja Aminah',   '0772 300 224', 'nabbanja.aminah@example.co.ug','2021-07-15', 'active'],
+    ['Kamwokya Market',   'Kirumira Robert',   '0772 300 337', 'kirumira.r@example.co.ug',     '2022-01-10', 'interim'],
+];
+$chairmanIdByMarket = [];
+foreach ($chairmen as [$marketName, $name, $phone, $email, $since, $status]) {
+    $market = Database::one('SELECT id FROM markets WHERE name = ? LIMIT 1', [$marketName]);
+    if (!$market) {
+        continue;
+    }
+    $chairmanIdByMarket[$marketName] = Database::insert('market_chairmen', [
+        'market_id' => (int) $market['id'],
+        'full_name' => $name,
+        'phone'     => $phone,
+        'email'     => $email,
+        'since'     => $since,
+        'status'    => $status,
+    ]);
+}
+
 /* ---- Users ---- */
 Database::run('DELETE FROM users');
 Database::run('ALTER TABLE users AUTO_INCREMENT = 1');
@@ -743,12 +777,18 @@ $users = [
     ['enforcement','kcca@2026','Daniel Nuwabine','Spokesperson & Enforcement Liaison','enforcement','legal',null,'legal@kcca.go.ug','0772 533 640',1],
     ['revenue','kcca@2026','Ezra Ssebufu','Deputy Director, Revenue Collection','revenue','revenue',null,'revenue@kcca.go.ug','0772 540 772',1],
     ['vendor','kcca@2026','Nakato Rehema','Street vendor — Kisenyi','vendor',null,null,'rehema.nakato@example.co.ug','0772 990 441',0],
+    /* A chairman signs in and sees only the traders of their own market.
+       Illustrative, like the chairman it belongs to. */
+    ['chairman','kcca@2026','Ssali Mukasa','Chairman, Usafi Market','chairman',null,null,'ssali.mukasa@example.co.ug','0772 300 118',0],
 ];
 foreach ($users as [$u,$p,$n,$t,$r,$d,$dv,$e,$ph,$basis]) {
     Database::insert('users', [
         'username' => $u, 'password_hash' => password_hash($p, PASSWORD_DEFAULT),
         'full_name' => $n, 'title' => $t, 'directorate' => $d, 'role' => $r,
-        'division_id' => $dv ? $divId[$dv] : null, 'email' => $e, 'phone' => $ph,
+        'division_id' => $dv ? $divId[$dv] : null,
+        'chairman_id' => $r === 'chairman' && isset($chairmanIdByMarket['Usafi Market'])
+            ? $chairmanIdByMarket['Usafi Market'] : null,
+        'email' => $e, 'phone' => $ph,
         'name_basis' => $basis ? 'published' : 'illustrative',
         'is_active' => 1,
     ]);

@@ -30,7 +30,7 @@ $remit = Auth::remit();
    context object keeps the partials plain PHP includes, which is what makes
    them easy to read and easy to test. */
 $funnel = [
-    ['label' => 'To relocate',   'value' => (int) Database::value("SELECT COALESCE(SUM(estimated_vendors),0) FROM trade_zones WHERE 1=1" . RoleDashboard::scopeSql($scope)), 'color' => '#464646'],
+    ['label' => 'To relocate',   'value' => (int) Database::value("SELECT COALESCE(SUM(estimated_vendors),0) FROM trade_zones WHERE 1=1" . RoleDashboard::scopeFor('trade_zones', $scope)), 'color' => '#464646'],
     ['label' => 'Offered space', 'value' => (int) Database::value("SELECT COUNT(*) FROM vendors WHERE status = 'offered-space'" . RoleDashboard::scopeSql($scope)), 'color' => '#EAA515'],
     ['label' => 'Relocated',     'value' => (int) Database::value("SELECT COUNT(*) FROM vendors WHERE status = 'relocated'" . RoleDashboard::scopeSql($scope)), 'color' => '#1B7F4D'],
     ['label' => 'Declined',      'value' => (int) Database::value("SELECT COUNT(*) FROM vendors WHERE status = 'declined'" . RoleDashboard::scopeSql($scope)), 'color' => '#C0261A'],

@@ -18,7 +18,9 @@ require_once __DIR__ . '/VendorService.php';
 require_once __DIR__ . '/AccountService.php';
 require_once __DIR__ . '/RoleDashboard.php';
 require_once __DIR__ . '/Activities.php';
-require_once __DIR__ . '/RoleDashboard.php';
+/* Read wherever a market is named, so a page can show a market's chairman
+   without reaching into the market register itself. */
+require_once __DIR__ . '/ChairmanService.php';
 require_once __DIR__ . '/Backup.php';
 require_once __DIR__ . '/ErrorHandler.php';
 
@@ -48,7 +50,7 @@ function navigation(): array
     return [
         ['group' => 'Work', 'items' => [
             ['id' => 'dashboard',       'file' => 'pages/dashboard.php',       'label' => 'Dashboard',      'icon' => 'gauge',    'audience' => ['all']],
-            ['id' => 'vendors',         'file' => 'pages/vendors.php',         'label' => 'Vendors',        'icon' => 'people',   'audience' => ['administrator', 'executive', 'mayor', 'planner', 'enforcement', 'revenue']],
+            ['id' => 'vendors',         'file' => 'pages/vendors.php',         'label' => 'Vendors',        'icon' => 'people',   'audience' => ['administrator', 'executive', 'mayor', 'planner', 'enforcement', 'revenue', 'chairman']],
             ['id' => 'locations',       'file' => 'pages/locations.php',       'label' => 'Markets',        'icon' => 'store',    'audience' => ['all']],
             ['id' => 'market-map',      'file' => 'pages/market_map.php',      'label' => 'Stall Map',      'icon' => 'map',      'audience' => ['all']],
         ]],
@@ -67,6 +69,9 @@ function navigation(): array
             ['id' => 'analytics',       'file' => 'pages/analytics.php',       'label' => 'Performance',    'icon' => 'trend',    'audience' => ['administrator', 'executive', 'mayor']],
             ['id' => 'reports',         'file' => 'pages/reports.php',         'label' => 'Reports',        'icon' => 'download', 'audience' => ['administrator', 'executive', 'mayor', 'planner', 'enforcement', 'revenue']],
             ['id' => 'audit',           'file' => 'pages/audit.php',           'label' => 'Audit Trail',    'icon' => 'log',      'audience' => ['administrator', 'executive', 'mayor']],
+            /* Who chairs each market. Officers maintain it; a chairman reads
+               it to see the tenure and contact details held for their own. */
+            ['id' => 'chairmen',        'file' => 'pages/chairmen.php',        'label' => 'Chairmen',       'icon' => 'user',     'audience' => ['administrator', 'executive', 'mayor', 'chairman']],
             ['id' => 'accounts',        'file' => 'pages/users.php',           'label' => 'Accounts',       'icon' => 'people',   'audience' => ['administrator', 'executive']],
             ['id' => 'settings',        'file' => 'pages/settings.php',        'label' => 'Settings',       'icon' => 'cog',      'audience' => ['administrator']],
             ['id' => 'portal',          'file' => 'pages/portal.php',          'label' => 'Trader Portal',  'icon' => 'user',     'audience' => ['all']],
@@ -326,6 +331,106 @@ function divisionLock(): ?array
         'code' => (string) $mine['code'],
         'name' => (string) $mine['name'],
     ];
+}
+
+/**
+ * The market a chairman administers, or null for every other role.
+ *
+ * The market-level counterpart to divisionLock(): a mayor is confined by
+ * the division they are recorded against, a chairman by the market they
+ * chair. Returning null for every other role means the call sites need no
+ * role check of their own.
+ */
+function chairmanLock(): ?array
+{
+    if (Auth::role() !== 'chairman') {
+        return null;
+    }
+
+    $me = Auth::user();
+    if (empty($me['chairman_id'])) {
+        return null;
+    }
+
+    $mine = Database::one(
+        'SELECT ch.id, ch.full_name, ch.status, ch.market_id, m.name AS market_name,
+                m.code AS market_code, m.vacant_spaces, m.capacity,
+                d.name AS division_name
+           FROM market_chairmen ch
+           JOIN markets m ON m.id = ch.market_id
+           JOIN divisions d ON d.id = m.division_id
+          WHERE ch.id = ?',
+        [(int) $me['chairman_id']]
+    );
+    if (!$mine) {
+        return null;
+    }
+
+    return [
+        'id'           => (int) $mine['id'],
+        'market_id'    => (int) $mine['market_id'],
+        'market_code'  => (string) $mine['market_code'],
+        'market_name'  => (string) $mine['market_name'],
+        'full_name'    => (string) $mine['full_name'],
+        'division'     => (string) $mine['division_name'],
+        'status'       => (string) $mine['status'],
+        'vacant'       => (int) $mine['vacant_spaces'],
+        'capacity'     => (int) $mine['capacity'],
+    ];
+}
+
+/**
+ * The chairman responsible for a vendor, if the market has one on record.
+ *
+ * Read at the point of display rather than cached on the vendor, so a
+ * change of chairman is reflected everywhere at once instead of leaving
+ * stale names behind in rows written before the change.
+ */
+function chairmanForVendor(int $vendorId): ?array
+{
+    return Database::one(
+        'SELECT ch.id, ch.full_name, ch.phone, ch.status, m.name AS market_name
+           FROM vendors v
+           JOIN market_chairmen ch ON ch.id = v.chairman_id
+           LEFT JOIN markets m ON m.id = ch.market_id
+          WHERE v.id = ?',
+        [$vendorId]
+    );
+}
+
+/**
+ * Record the chairman responsible for a vendor, taken from the market they
+ * have just been placed in.
+ *
+ * The chairman is not a second assignment to be made and kept in step: it
+ * is the chairman of the vendor's own market, written at the moment of
+ * placement so it travels with them through the register, the allocation
+ * record and every report. A market with no chairman on record leaves the
+ * link alone rather than clearing one that exists.
+ */
+function syncVendorChairman(int $vendorId, int $marketId): void
+{
+    $chairmanId = Database::value(
+        "SELECT id FROM market_chairmen WHERE market_id = ? AND status = 'active' LIMIT 1",
+        [$marketId]
+    );
+    if ($chairmanId === null) {
+        return;
+    }
+    Database::run('UPDATE vendors SET chairman_id = ? WHERE id = ?', [(int) $chairmanId, $vendorId]);
+}
+
+/**
+ * Drop the chairman from a vendor whose placement has been undone.
+ *
+ * Only for a move that actually removes them from the market: a vendor back
+ * in the pool is nobody's responsibility until they are placed again, and
+ * leaving the old chairman attached would show a name against a vendor who
+ * is no longer in that market.
+ */
+function clearVendorChairman(int $vendorId): void
+{
+    Database::run('UPDATE vendors SET chairman_id = NULL WHERE id = ?', [$vendorId]);
 }
 
 /**

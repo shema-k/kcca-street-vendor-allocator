@@ -101,6 +101,36 @@ CREATE TABLE `markets` (
     REFERENCES `divisions` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ---------------------------------------------------------------------
+-- 2b. MARKET CHAIRMEN  (Markets Act 2023, s.21 — market administration)
+-- ---------------------------------------------------------------------
+-- One chairman per market. The chairman is a named person recorded against
+-- the market, independent of whether they hold a login: a market can have
+-- a chairman on record before their account is created, and reports must
+-- be able to name them without implying a sign-in exists. UNIQUE on
+-- market_id enforces "each market has a chairman" at the storage layer
+-- rather than in application code that a concurrent write could race.
+
+DROP TABLE IF EXISTS `market_chairmen`;
+CREATE TABLE `market_chairmen` (
+  `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `market_id`  INT UNSIGNED NOT NULL,
+  `full_name`  VARCHAR(140) NOT NULL,
+  `phone`      VARCHAR(40)  NOT NULL,
+  `email`      VARCHAR(120) DEFAULT NULL,
+  -- Tenure start, not a hire date: a chairman is elected by the traders
+  -- of the market, so the Authority records when the tenure began.
+  `since`      DATE DEFAULT NULL,
+  `status`     ENUM('active','interim','vacant') NOT NULL DEFAULT 'active',
+  `notes`      TEXT,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_chairman_market` (`market_id`),
+  KEY `ix_chairman_status` (`status`),
+  CONSTRAINT `fk_chairman_market` FOREIGN KEY (`market_id`)
+    REFERENCES `markets` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Individual pitch within a market (Markets Act 2023 definition of "pitch")
 DROP TABLE IF EXISTS `market_spaces`;
 CREATE TABLE `market_spaces` (
@@ -205,6 +235,7 @@ CREATE TABLE `vendors` (
   `association`         VARCHAR(160) DEFAULT NULL,
   `photo`               VARCHAR(255) DEFAULT NULL,
   `status`              ENUM('surveyed','notified','offered-space','relocated','declined','deferred','complaint') NOT NULL DEFAULT 'surveyed',
+  `chairman_id`         INT UNSIGNED DEFAULT NULL,
   `registered_at`       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_vendor_code` (`vendor_code`),
@@ -212,8 +243,16 @@ CREATE TABLE `vendors` (
   KEY `ix_vendor_div` (`division_id`),
   KEY `ix_vendor_cat` (`business_category`),
   KEY `ix_vendor_status` (`status`),
+  KEY `ix_vendor_chairman` (`chairman_id`),
   CONSTRAINT `fk_vendor_zone` FOREIGN KEY (`current_zone_id`)
     REFERENCES `trade_zones` (`id`) ON DELETE SET NULL,
+  -- Which chairman is responsible for this vendor. Written from the market
+  -- the vendor is placed into, so it follows them through the register,
+  -- the allocation record and every report. NULL for a vendor still trading
+  -- in a zone and not yet placed: an absent chairman is a fact about the
+  -- vendor's stage, not a gap to be filled by guessing.
+  CONSTRAINT `fk_vendor_chairman` FOREIGN KEY (`chairman_id`)
+    REFERENCES `market_chairmen` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_vendor_div` FOREIGN KEY (`division_id`)
     REFERENCES `divisions` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -466,8 +505,12 @@ CREATE TABLE `users` (
   `full_name`     VARCHAR(140) NOT NULL,
   `title`         VARCHAR(140) DEFAULT NULL,
   `directorate`   VARCHAR(160) DEFAULT NULL,
-  `role`          ENUM('administrator','executive','mayor','planner','enforcement','revenue','vendor') NOT NULL DEFAULT 'vendor',
+  `role`          ENUM('administrator','executive','mayor','planner','enforcement','revenue','chairman','vendor') NOT NULL DEFAULT 'vendor',
   `division_id`   INT UNSIGNED DEFAULT NULL,
+  -- Which market this account chairs. Set only for role 'chairman'; it is
+  -- what confines the account to one market's vendors. NULL for every
+  -- other role, including a mayor, whose scope is the division instead.
+  `chairman_id`   INT UNSIGNED DEFAULT NULL,
   `email`         VARCHAR(120) DEFAULT NULL,
   `phone`         VARCHAR(40)  DEFAULT NULL,
   -- Whether the name and title are published by KCCA or illustrative. An
@@ -481,7 +524,9 @@ CREATE TABLE `users` (
   UNIQUE KEY `uq_username` (`username`),
   KEY `ix_user_role` (`role`),
   CONSTRAINT `fk_user_div` FOREIGN KEY (`division_id`)
-    REFERENCES `divisions` (`id`) ON DELETE SET NULL
+    REFERENCES `divisions` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_user_chairman` FOREIGN KEY (`chairman_id`)
+    REFERENCES `market_chairmen` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------

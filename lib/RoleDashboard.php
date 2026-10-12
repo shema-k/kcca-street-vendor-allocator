@@ -52,23 +52,85 @@ final class RoleDashboard
     {
         $me = Auth::check() ? Auth::user() : [];
 
-        // A Division Mayor sees only their own division. Everyone else is
+        // A Division Mayor sees only their own division. A chairman sees
+        // only the vendors of the one market they chair. Everyone else is
         // citywide; a directorate role is confined by which sections it is
         // given rather than by filtering the figures.
         if (Auth::role() === 'mayor' && !empty($me['division_id'])) {
             return ['division_id' => (int) $me['division_id']];
         }
 
+        if (Auth::role() === 'chairman' && !empty($me['chairman_id'])) {
+            return ['chairman_id' => (int) $me['chairman_id']];
+        }
+
         return [];
     }
 
-    /** SQL fragment restricting a table to this officer's scope. */
-    public static function scopeSql(array $scope, string $tableAlias = ''): string
+    /**
+     * SQL fragment restricting a table to this officer's scope.
+     *
+     * `vendors` is the default because it is the overwhelmingly common case.
+     * The table has to be named explicitly for markets and trade_zones: both
+     * carry a division, so a mayor's scope reads the same on all three, but
+     * only vendors carry a chairman — so a chairman's scope has to be
+     * expressed differently on them rather than assumed to be the same.
+     */
+    public static function scopeFor(string $table, array $scope, string $alias = ''): string
     {
-        $p = $tableAlias !== '' ? $tableAlias . '.' : '';
-        return isset($scope['division_id'])
-            ? ' AND ' . $p . 'division_id = ' . (int) $scope['division_id']
-            : '';
+        $p = $alias !== '' ? $alias . '.' : '';
+
+        // A mayor is confined by the division, which all three tables carry.
+        if (isset($scope['division_id'])) {
+            return ' AND ' . $p . 'division_id = ' . (int) $scope['division_id'];
+        }
+
+        if (!isset($scope['chairman_id'])) {
+            return '';
+        }
+
+        $id = (int) $scope['chairman_id'];
+
+        switch ($table) {
+            case 'markets':
+                /* A chairman administers exactly one market, so that market is
+                   the scope rather than a set of them. */
+                $marketId = (int) Database::value(
+                    'SELECT market_id FROM market_chairmen WHERE id = ?', [$id]
+                );
+                return ' AND ' . $p . 'id = ' . $marketId;
+
+            case 'trade_zones':
+                /* The vendors under a chairman still trade in zones, so their
+                   reach into the zone register is exactly those vendors. */
+                return ' AND ' . $p . 'id IN (SELECT current_zone_id FROM vendors WHERE chairman_id = ' . $id . ')';
+
+            case 'vendors':
+            default:
+                return ' AND ' . $p . 'chairman_id = ' . $id;
+        }
+    }
+
+    /**
+     * SQL fragment restricting a query against the vendors table.
+     *
+     * Kept as the short form because that is what nearly every call site
+     * wants; a query against markets or trade_zones must use scopeFor(),
+     * because a chairman's scope is not the same fragment there.
+     */
+    public static function scopeSql(array $scope, string $alias = ''): string
+    {
+        return self::scopeFor('vendors', $scope, $alias);
+    }
+
+    /** The market a chairman administers, or null for any other role. */
+    public static function chairmanMarketId(): ?int
+    {
+        if (Auth::role() !== 'chairman') {
+            return null;
+        }
+        $me = Auth::user();
+        return !empty($me['my_market_id']) ? (int) $me['my_market_id'] : null;
     }
 
     /* =================================================================
@@ -76,23 +138,25 @@ final class RoleDashboard
      * ================================================================= */
     private static function headline(array $scope): array
     {
-        $div = self::scopeSql($scope);
+        $onVendors = self::scopeSql($scope);
+        $onZones   = self::scopeFor('trade_zones', $scope);
+        $onMarkets = self::scopeFor('markets', $scope);
 
-        $vendors = (int) Database::value("SELECT COUNT(*) FROM vendors WHERE 1 = 1" . $div);
+        $vendors = (int) Database::value("SELECT COUNT(*) FROM vendors WHERE 1 = 1" . $onVendors);
         $toMove  = (int) Database::value(
-            "SELECT COALESCE(SUM(estimated_vendors),0) FROM trade_zones WHERE 1 = 1" . $div
+            "SELECT COALESCE(SUM(estimated_vendors),0) FROM trade_zones WHERE 1 = 1" . $onZones
         );
         $moved   = (int) Database::value(
-            "SELECT COUNT(*) FROM vendors WHERE status = 'relocated'" . $div
+            "SELECT COUNT(*) FROM vendors WHERE status = 'relocated'" . $onVendors
         );
         $vacant  = (int) Database::value(
-            "SELECT COALESCE(SUM(vacant_spaces),0) FROM markets WHERE 1 = 1" . $div
+            "SELECT COALESCE(SUM(vacant_spaces),0) FROM markets WHERE 1 = 1" . $onMarkets
         );
         $pending = (int) Database::value(
-            "SELECT COUNT(*) FROM vendors WHERE status IN ('offered-space','notified')" . $div
+            "SELECT COUNT(*) FROM vendors WHERE status IN ('offered-space','notified')" . $onVendors
         );
-        $capacity   = (int) Database::value("SELECT COALESCE(SUM(capacity),0) FROM markets WHERE 1 = 1" . $div);
-        $registered = (int) Database::value("SELECT COALESCE(SUM(registered_vendors),0) FROM markets WHERE 1 = 1" . $div);
+        $capacity   = (int) Database::value("SELECT COALESCE(SUM(capacity),0) FROM markets WHERE 1 = 1" . $onMarkets);
+        $registered = (int) Database::value("SELECT COALESCE(SUM(registered_vendors),0) FROM markets WHERE 1 = 1" . $onMarkets);
 
         return [
             [

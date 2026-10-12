@@ -15,8 +15,8 @@ $scopeSql = RoleDashboard::scopeSql(RoleDashboard::scope());
 
 /* Planning: how much is planned, matched and left. */
 $planned = [
-    'Sites surveyed'    => (int) Database::value("SELECT COUNT(*) FROM trade_zones WHERE 1=1" . $scopeSql),
-    'Vendors to move'   => (int) Database::value("SELECT COALESCE(SUM(estimated_vendors),0) FROM trade_zones WHERE 1=1" . $scopeSql),
+    'Sites surveyed'    => (int) Database::value("SELECT COUNT(*) FROM trade_zones WHERE 1=1" . RoleDashboard::scopeFor('trade_zones', RoleDashboard::scope())),
+    'Vendors to move'   => (int) Database::value("SELECT COALESCE(SUM(estimated_vendors),0) FROM trade_zones WHERE 1=1" . RoleDashboard::scopeFor('trade_zones', RoleDashboard::scope())),
     'Matched to space'  => (int) Database::value("SELECT COUNT(*) FROM vendors WHERE status IN ('offered-space','relocated')" . $scopeSql),
     'Still to match'    => (int) Database::value("SELECT COUNT(*) FROM vendors WHERE status IN ('surveyed','notified')" . $scopeSql),
 ];
