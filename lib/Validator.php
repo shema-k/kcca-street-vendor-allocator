@@ -177,9 +177,26 @@ final class Validator
         return $this->errors === [];
     }
 
-    public function errors(): array
+    /**
+     * The field errors, by reference.
+     *
+     * Returned by reference so a caller can add a rule the field list cannot
+     * express — a duplicate code, a date range that runs backwards, a total
+     * larger than its parts. Written as `return $this->errors;` the array came
+     * back by value, and every one of those rules was written to a temporary
+     * and thrown away: the write looked correct and the rule never fired.
+     *
+     * @return array<string,string>
+     */
+    public function &errors(): array
     {
         return $this->errors;
+    }
+
+    /** Add a rule the field list cannot express. Preferred over writing errors()[]. */
+    public function addError(string $field, string $message): void
+    {
+        $this->errors[$field] = $message;
     }
 
     /** First error message, for a single-line summary. */

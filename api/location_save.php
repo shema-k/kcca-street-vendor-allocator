@@ -52,7 +52,7 @@ switch ($action) {
         $from = $v->value('effective_from');
         $to   = $v->value('effective_to');
         if ($from && $to && strtotime((string) $to) < strtotime((string) $from)) {
-            $v->errors()['effective_to'] = 'The end date cannot be before the start date.';
+            $v->addError('effective_to', 'The end date cannot be before the start date.');
         }
 
         /* Any trade named must exist, or the gate silently does nothing. */
@@ -60,8 +60,8 @@ switch ($action) {
         $named = array_filter(array_map('trim', explode(',', (string) ($_POST['excluded_categories'] ?? ''))));
         foreach ($named as $code) {
             if (!in_array($code, $known, true)) {
-                $v->errors()['excluded_categories'] =
-                    'Unrecognised trade code "' . $code . '". Leave it blank to restrict the whole site.';
+                $v->addError('excluded_categories',
+                    'Unrecognised trade code "' . $code . '". Leave it blank to restrict the whole site.');
                 break;
             }
         }

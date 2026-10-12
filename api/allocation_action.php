@@ -28,8 +28,11 @@ switch ($action) {
 
         $vendorId = (int) ($_POST['vendor_id'] ?? 0);
         $marketId = (int) ($_POST['market_id'] ?? 0);
-        $spaceId  = $_POST['market_space_id'] !== null && $_POST['market_space_id'] !== ''
-                        ? (int) $_POST['market_space_id'] : null;
+        /* An offer may name a specific pitch or the market as a whole, and
+           the form leaves the field out entirely in the second case. Read it
+           once, through a default, rather than three times unguarded. */
+        $spaceRaw = trim((string) ($_POST['market_space_id'] ?? ''));
+        $spaceId  = $spaceRaw !== '' ? (int) $spaceRaw : null;
 
         if ($vendorId <= 0 || $marketId <= 0) {
             badRequest('Choose both a vendor and a market.');

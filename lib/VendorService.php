@@ -85,6 +85,31 @@ final class VendorService
             $v->checkExists('current_zone_id', 'trade_zones', $input['current_zone_id']);
         }
 
+        /* A trader in a zone is in that zone's division. The register joins
+           divisions with an inner join, so a vendor saved without one is
+           stored and then never appears in any list — the form accepted it
+           and the trader vanished. Derive it, and only ask if neither is
+           known. */
+        if (empty($input['division_id']) && !empty($input['current_zone_id'])) {
+            $fromZone = Database::value(
+                'SELECT division_id FROM trade_zones WHERE id = ?', [(int) $input['current_zone_id']]
+            );
+            if ($fromZone !== null) {
+                $input['division_id'] = (int) $fromZone;
+                $v = new Validator($input, self::rules());
+                $v->checkExists('division_id', 'divisions', $input['division_id']);
+                if (!empty($input['current_zone_id'])) {
+                    $v->checkExists('current_zone_id', 'trade_zones', $input['current_zone_id']);
+                }
+            }
+        }
+        if (empty($input['division_id'])) {
+            return ['ok' => false, 'status' => 422,
+                    'error'  => 'Choose the division, or the trading site the division follows from.',
+                    'errors' => ['division_id' => 'A trader must belong to a division. '
+                        . 'Pick one, or name the site they trade at.']];
+        }
+
         if ($v->fails()) {
             return [
                 'ok'     => false,
@@ -95,6 +120,25 @@ final class VendorService
         }
 
         $data = $v->validated();
+
+        /* A chairman registers traders into their own market. The market is
+           theirs, so it is taken from their account rather than chosen from
+           a list — a submitted chairman_id or division_id is replaced, not
+           trusted, or a chairman could attach a trader to somebody else's
+           market by editing the request. */
+        $chairmanId = (int) (Auth::user()['chairman_id'] ?? 0);
+        if (Auth::role() === 'chairman' && $chairmanId > 0) {
+            $data['chairman_id'] = $chairmanId;
+            $divisionId = Database::value(
+                'SELECT m.division_id FROM market_chairmen ch
+                   JOIN markets m ON m.id = ch.market_id
+                  WHERE ch.id = ?',
+                [$chairmanId]
+            );
+            if ($divisionId !== null) {
+                $data['division_id'] = (int) $divisionId;
+            }
+        }
 
         return $action === 'update'
             ? self::update((int) ($input['vendor_id'] ?? 0), $data)
@@ -154,6 +198,16 @@ final class VendorService
         $existing = Database::one('SELECT * FROM vendors WHERE id = ?', [$id]);
         if (!$existing) {
             return ['ok' => false, 'status' => 404, 'error' => 'That vendor is not in the register.', 'errors' => []];
+        }
+
+        /* A chairman may correct a trader in their own market and nobody
+           else's. Without this they could amend any record in the register
+           by editing the request. */
+        $chairmanId = (int) (Auth::user()['chairman_id'] ?? 0);
+        if (Auth::role() === 'chairman' && $chairmanId > 0
+            && (int) ($existing['chairman_id'] ?? 0) !== $chairmanId) {
+            return ['ok' => false, 'status' => 403,
+                    'error' => 'That trader is not in your market.', 'errors' => []];
         }
 
         $oldZone = (int) ($existing['current_zone_id'] ?? 0);

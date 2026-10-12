@@ -26,6 +26,12 @@ if ($divisionLock !== null) {
 
 // A chairman is scoped to their own market, and to nothing wider.
 $chairmanLock = chairmanLock();
+
+/* Registering and correcting a trader is one question and matching one to
+   space is another. A chairman does the first for their own market and is
+   not the officer who decides the second, so the two are not gated together. */
+$isChairman   = $chairmanLock !== null;
+$mayRegister  = Auth::can('allocate') || $isChairman;
 $category = (string) ($_GET['category'] ?? '');
 $status   = (string) ($_GET['status'] ?? '');
 $zoneId   = (int) ($_GET['zone'] ?? 0);
@@ -159,9 +165,10 @@ require __DIR__ . '/../layouts/header.php';
     </p>
   </div>
   <div class="actions">
-    <?php if (Auth::can('allocate')): ?>
+    <?php if ($mayRegister): ?>
       <button class="btn btn-primary" data-modal="api/form.php?form=vendor">
-        <?= KCCA_icon('plus', 15) ?> Register a vendor
+        <?= KCCA_icon('plus', 15) ?>
+        <?= $isChairman ? 'Register a trader into your market' : 'Register a vendor' ?>
       </button>
     <?php endif; ?>
     <?php if (Auth::can('allocate')): ?>
@@ -193,7 +200,7 @@ require __DIR__ . '/../layouts/header.php';
     </div>
     <div class="tools">
       <span class="badge <?= e(statusTone($detail['status'])) ?>"><?= e(humanise($detail['status'])) ?></span>
-      <?php if (Auth::can('allocate')): ?>
+      <?php if ($mayRegister): ?>
         <button class="btn btn-ghost btn-sm"
                 data-modal="api/form.php?form=vendor&amp;vendor_id=<?= (int) $detail['id'] ?>">Edit record</button>
       <?php endif; ?>
@@ -481,7 +488,7 @@ require __DIR__ . '/../layouts/header.php';
               </td>
               <td class="center"><span class="badge <?= e(statusTone($v['status'])) ?>"><?= e(humanise($v['status'])) ?></span></td>
               <td class="right nowrap">
-                <?php if (Auth::can('allocate')): ?>
+                <?php if ($mayRegister): ?>
                   <a class="btn btn-ghost btn-sm" title="Edit this record"
                      data-modal="api/form.php?form=vendor&amp;vendor_id=<?= (int) $v['id'] ?>">Edit</a>
                 <?php endif; ?>

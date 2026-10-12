@@ -101,7 +101,7 @@ switch ($action) {
             'action_type'    => $type,
             'status'         => 'in-progress',
             'issued_date'    => date('Y-m-d'),
-            'deadline_date'  => $_POST['deadline_date'] ?: null,
+            'deadline_date'  => ($_POST['deadline_date'] ?? '') ?: null,
             'officers_deployed' => (int) ($_POST['officers_deployed'] ?? 0),
             'vendors_affected'  => (int) ($_POST['vendors_affected'] ?? $zone['estimated_vendors']),
             'vendors_relocated' => (int) ($_POST['vendors_relocated'] ?? 0),

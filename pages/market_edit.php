@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['
         [$_POST['code'] ?? '', $id]
     );
     if ($existingCode) {
-        $v->errors()['code'] = 'That location code is already used.';
+        $v->addError('code', 'That location code is already used.');
     }
 
     /* Registered cannot exceed capacity, and vacant cannot exceed what is left. */
@@ -104,11 +104,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['
     $reg  = (int) ($_POST['registered_vendors'] ?? 0);
     $free = (int) ($_POST['vacant_spaces'] ?? 0);
     if ($reg > $cap) {
-        $v->errors()['registered_vendors'] = 'Cannot exceed the capacity.';
+        $v->addError('registered_vendors', 'Cannot exceed the capacity.');
     }
     if ($free > $cap - $reg) {
-        $v->errors()['vacant_spaces'] =
-            'Cannot exceed ' . ($cap - $reg) . ' — the pitches left after registered vendors.';
+        $v->addError('vacant_spaces',
+            'Cannot exceed ' . ($cap - $reg) . ' — the pitches left after registered vendors.');
     }
 
     if ($v->fails()) {

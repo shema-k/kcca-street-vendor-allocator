@@ -376,7 +376,10 @@ switch ($form) {
             $from = $v->value('effective_from');
             $to   = $v->value('effective_to');
             if ($from && $to && strtotime((string) $to) < strtotime((string) $from)) {
-                $v->errors();
+                /* Was calling errors() and discarding the result, so a
+                   restriction dated backwards was accepted here and then
+                   rejected by the endpoint that saves it. */
+                $v->addError('effective_to', 'The end date cannot be before the start date.');
             }
 
             if ($v->fails()) {

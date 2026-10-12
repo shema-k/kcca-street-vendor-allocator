@@ -23,7 +23,14 @@ if (!in_array($action, ['create', 'update', 'delete'], true)) {
 if ($action === 'delete') {
     requirePerm('manage');
 } else {
-    requirePerm('allocate');
+    /* A chairman registers and corrects the traders in their own market,
+       which is theirs to do and nobody else's. VendorService pins the
+       market to their account and refuses an update to a trader outside it,
+       so opening the endpoint here grants no reach beyond that market. */
+    requireSession();
+    if (!Auth::can('allocate') && Auth::role() !== 'chairman') {
+        requirePerm('allocate');
+    }
 }
 
 $result = VendorService::save($_POST, $action);
