@@ -21,3 +21,8 @@ backups/
 # Local database and PHP artefacts
 *.pid
 *.sock
+
+# The web-sized photographs are in the repository; the full-resolution
+# originals they were made from stay on disk only. Twenty megabytes of
+# camera raw in the history is permanent, and Pexels serves them again.
+images/source/

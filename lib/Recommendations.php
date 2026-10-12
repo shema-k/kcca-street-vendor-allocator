@@ -301,7 +301,7 @@ final class RecommendationService
         );
 
         self::logEvent(null, (int) $rec['vendor_id'], (int) $rec['market_id'],
-            (int) $rec['status'], 'rejected', 'note', $note);
+            (string) $rec['status'], 'rejected', 'rejected', $note);
 
         Auth::log('reject-recommendation', 'recommendations', $recommendationId,
             $rec['reference'] . ' rejected: ' . $note);

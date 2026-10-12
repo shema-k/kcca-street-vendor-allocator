@@ -24,6 +24,8 @@ function kccaActivities(): array
             'code'    => 'clear',
             'kicker'  => 'Trade order',
             'title'   => 'Streets returned to the public',
+            'image'   => '../images/pexels-proudlyswazi-36498408.jpg',
+            'alt'     => 'A road reserve kept clear, with a sign against illegal dumping and a walking public',
             'does'    => 'Encroached pavements and road reserves are cleared, in an order set by how much '
                        . 'harm the occupation causes, not by where the pressure is loudest.',
             'benefit' => 'You can walk down the street again — and vendors get somewhere lawful to trade '
@@ -35,6 +37,8 @@ function kccaActivities(): array
             'code'    => 'space',
             'kicker'  => 'Gazetted space',
             'title'   => '4,500 pitches identified',
+            'image'   => '../images/pexels-phinley-sperrer-2163513679-39554462.jpg',
+            'alt'     => 'A Kampala street packed with traders, motorcycles and traffic',
             'does'    => 'Every public market holding empty space is registered with its capacity, its '
                        . 'occupancy and its individual pitches, so the space can be found and allocated.',
             'benefit' => 'A pitch you can choose, with water, power and toilets known before you commit.',
@@ -45,6 +49,8 @@ function kccaActivities(): array
             'code'    => 'licence',
             'kicker'  => 'Trading licence',
             'title'   => 'Trade formalised',
+            'image'   => '../images/pexels-nasiru-othman-447186959-40082918.jpg',
+            'alt'     => 'Sacks of grain and dry produce stacked for sale in a market',
             'does'    => 'A trading licence legalises your business under the Trade Licensing Act, and '
                        . 'gives you standing with suppliers, banks and the Authority.',
             'benefit' => 'You can trade without being removed, and you can hold the Authority to that.',
@@ -55,6 +61,8 @@ function kccaActivities(): array
             'code'    => 'upgrade',
             'kicker'  => 'Market development',
             'title'   => 'Markets built and rebuilt',
+            'image'   => '../images/pexels-ana-kenk-2159501753-36470055.jpg',
+            'alt'     => 'A busy covered market hall, with traders at their stalls',
             'does'    => 'Public markets are rehabilitated and extended — Kiseka, St Balikuddembe and '
                        . 'Usafi among them — with handling areas, waste systems and access.',
             'benefit' => 'A market that works in the rain, holds your stock, and is worth paying rent in.',
@@ -65,6 +73,8 @@ function kccaActivities(): array
             'code'    => 'equity',
             'kicker'  => 'Trader welfare',
             'title'   => 'Allocation that weights fairness',
+            'image'   => '../images/pexels-the-chongaiman-ace-1620694153-39916941.jpg',
+            'alt'     => 'A trader at his stall, serving a customer',
             'does'    => 'Who is offered a pitch first weighs capital, dependants, disability, single '
                        . 'parenthood and years in trade, and the weighing is shown.',
             'benefit' => 'The most exposed traders are served first — and you can see why.',
@@ -74,7 +84,9 @@ function kccaActivities(): array
         [
             'code'    => 'digital',
             'kicker'  => 'Digital services',
-            'title'  => 'Services without the queue',
+            'title'   => 'Services without the queue',
+            'image'   => '../images/pexels-dokunayano-38968324.jpg',
+            'alt'     => 'A market passage between trading stalls',
             'does'    => 'Apply, pay and review your licence online, and reach the Authority by toll '
                        . 'free line and web channel instead of a counter.',
             'benefit' => 'You can pay a fee from your stall and keep trading.',
@@ -82,6 +94,33 @@ function kccaActivities(): array
             'accent'  => 'gold',
         ],
     ];
+}
+
+/**
+ * The illustration for one activity: a photograph where one is supplied,
+ * otherwise the drawn plate.
+ *
+ * A photograph of a Kampala market at 7am carries rights we do not hold, so
+ * the default is the drawn plate in the Authority's own colours — it loads
+ * instantly and works offline. Where a licensed photograph is available the
+ * card prefers it, because it says more about the work than a drawing does.
+ *
+ * The image is object-fit: cover, so any aspect ratio fills the plate
+ * without distortion; a portrait photograph is cropped, not stretched.
+ */
+function kccaActivityMedia(array $card, string $class = 'act-image', bool $lazy = true): string
+{
+    if (!empty($card['image'])) {
+        return sprintf(
+            '<img class="%s" src="%s" alt="%s" loading="%s" decoding="async">',
+            e($class),
+            e((string) $card['image']),
+            e((string) ($card['alt'] ?? $card['title'])),
+            $lazy ? 'lazy' : 'eager'
+        );
+    }
+
+    return kccaActivityPlate((string) $card['icon']);
 }
 
 /**
@@ -247,7 +286,7 @@ function renderActivitySlideshow(bool $showControls = true, int $intervalMs = 20
                 aria-label="<?= $i + 1 ?> of <?= count($cards) ?>: <?= e($c['title']) ?>"
                 <?= $i === 0 ? '' : 'aria-hidden="true"' ?>>
           <div class="act-plate a-<?= e($c['accent']) ?>">
-            <?= kccaActivityPlate($c['icon']) ?>
+            <?= kccaActivityMedia($c, 'act-image', false) ?>
           </div>
           <figcaption class="act-body">
             <span class="act-kicker"><?= e($c['kicker']) ?></span>
@@ -290,7 +329,7 @@ function renderActivityGrid(): void
 <section class="acts-grid" aria-label="What KCCA does">
   <?php foreach ($cards as $c): ?>
     <article class="act-card a-<?= e($c['accent']) ?>">
-      <div class="act-card-plate"><?= kccaActivityPlate($c['icon']) ?></div>
+      <div class="act-card-plate"><?= kccaActivityMedia($c, 'act-card-image') ?></div>
       <div class="act-card-body">
         <span class="act-kicker"><?= e($c['kicker']) ?></span>
         <h3><?= e($c['title']) ?></h3>

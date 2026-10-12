@@ -1,17 +1,31 @@
 <?php
 /**
  * Audit Trail — every state-changing action, who took it and when.
- * Restricted to Internal Audit and the administrator.
+ *
+ * Officers holding the audit grant see the whole trail. Any other reader
+ * is pinned to their own name, which is what makes the "My audit trail"
+ * link in the account menu safe to offer everyone.
  */
 
 declare(strict_types=1);
 
 require_once __DIR__ . '/../lib/bootstrap.php';
-Auth::requirePermission('audit');
 
+/* Officers holding the audit grant see the whole trail. Everyone else — the
+   account menu offers any signed-in reader a link to their own actions — is
+   pinned to their own name. Without that pinning the route could be used to
+   read another officer's record simply by editing the query string. */
+$fullAccess = Auth::can('audit');
+$meName     = (string) (Auth::user()['full_name'] ?? '');
 $action = (string) ($_GET['action'] ?? '');
 $actor  = (string) ($_GET['actor'] ?? '');
 $since  = (string) ($_GET['since'] ?? '');
+
+/* Applied after the query string is read: without that order a reader
+   without the grant could widen their own view by editing the URL. */
+if (!$fullAccess) {
+    $actor = $meName;
+}
 
 $where  = ['1 = 1'];
 $params = [];
@@ -27,13 +41,25 @@ $events = Database::all(
     $params
 );
 
-$byAction = Database::all('SELECT action, COUNT(*) AS n FROM audit_log GROUP BY action ORDER BY n DESC');
-$actors   = Database::column('SELECT DISTINCT actor FROM audit_log ORDER BY actor');
+$byAction = $fullAccess
+    ? Database::all('SELECT action, COUNT(*) AS n FROM audit_log GROUP BY action ORDER BY n DESC')
+    : [];
+$actors   = $fullAccess ? Database::column('SELECT DISTINCT actor FROM audit_log ORDER BY actor') : [];
 
-$total    = (int) Database::value('SELECT COUNT(*) FROM audit_log');
-$today    = (int) Database::value('SELECT COUNT(*) FROM audit_log WHERE DATE(created_at) = CURDATE()');
-$logins   = (int) Database::value("SELECT COUNT(*) FROM audit_log WHERE action IN ('login','login-failed') AND DATE(created_at) = CURDATE()");
-$failures = (int) Database::value("SELECT COUNT(*) FROM audit_log WHERE action = 'login-failed'");
+/* The headline figures obey the same scope as the log below them, so a
+   reader who cannot see other actors is not told how many events exist.
+   The two forms differ because the second query already has a WHERE. */
+$scopeWhere = $fullAccess ? '' : ' WHERE actor = :me';
+$scopeAnd   = $fullAccess ? '' : ' AND actor = :me';
+$scopePar   = $fullAccess ? [] : ['me' => $meName];
+
+$total  = (int) Database::value('SELECT COUNT(*) FROM audit_log' . $scopeWhere, $scopePar);
+$today  = (int) Database::value(
+    'SELECT COUNT(*) FROM audit_log WHERE DATE(created_at) = CURDATE()' . $scopeAnd,
+    $scopePar
+);
+$logins   = $fullAccess ? (int) Database::value("SELECT COUNT(*) FROM audit_log WHERE action IN ('login','login-failed') AND DATE(created_at) = CURDATE()") : 0;
+$failures = $fullAccess ? (int) Database::value("SELECT COUNT(*) FROM audit_log WHERE action = 'login-failed'") : 0;
 
 $pageTitle = 'Audit Trail';
 require __DIR__ . '/../layouts/header.php';
@@ -42,14 +68,19 @@ require __DIR__ . '/../layouts/header.php';
 <div class="page-head">
   <div class="grow">
     <div class="breadcrumb">
-      <a href="dashboard.php">Command</a><span class="sep">/</span>Audit Trail
+      <a href="dashboard.php">Command</a><span class="sep">/</span><?= $fullAccess ? 'Audit Trail' : 'My Audit Trail' ?>
     </div>
-    <div class="eyebrow">Internal Audit · Accountability</div>
-    <h1>Audit Trail</h1>
+    <div class="eyebrow"><?= $fullAccess ? 'Internal Audit · Accountability' : 'Accountability' ?></div>
+    <h1><?= $fullAccess ? 'Audit Trail' : 'My Audit Trail' ?></h1>
     <p>
-      Every sign-in, failed attempt, offer issued, space accepted or withdrawn, notice served and
-      register exported. Written before the action completes, so the record survives even a
-      client that disconnects part-way through.
+      <?php if ($fullAccess): ?>
+        Every sign-in, failed attempt, offer issued, space accepted or withdrawn, notice served and
+        register exported. Written before the action completes, so the record survives even a
+        client that disconnects part-way through.
+      <?php else: ?>
+        The actions this account has taken, newest first. Written before the action completes,
+        so the record survives even a client that disconnects part-way through.
+      <?php endif; ?>
     </p>
   </div>
   <div class="actions">
@@ -59,25 +90,38 @@ require __DIR__ . '/../layouts/header.php';
 
 <div class="grid g4 mb-2">
   <div class="stat">
-    <div class="label">Total events</div>
+    <div class="label"><?= $fullAccess ? 'Total events' : 'My events' ?></div>
     <div class="value"><?= num($total) ?></div>
-    <div class="meta">recorded since inception</div>
+    <div class="meta"><?= $fullAccess ? 'recorded since inception' : 'recorded by this account' ?></div>
   </div>
   <div class="stat info">
     <div class="label">Events today</div>
     <div class="value"><?= num($today) ?></div>
-    <div class="meta"><?= num($logins) ?> sign-in attempts</div>
+    <div class="meta"><?= $fullAccess ? num($logins) . ' sign-in attempts' : 'by this account' ?></div>
   </div>
-  <div class="stat <?= $failures > 0 ? 'warn' : 'ok' ?>">
-    <div class="label">Failed sign-ins</div>
-    <div class="value"><?= num($failures) ?></div>
-    <div class="meta">worth reviewing</div>
-  </div>
-  <div class="stat gold">
-    <div class="label">Distinct actors</div>
-    <div class="value"><?= num(count($actors)) ?></div>
-    <div class="meta">named individuals</div>
-  </div>
+  <?php if ($fullAccess): ?>
+    <div class="stat <?= $failures > 0 ? 'warn' : 'ok' ?>">
+      <div class="label">Failed sign-ins</div>
+      <div class="value"><?= num($failures) ?></div>
+      <div class="meta">worth reviewing</div>
+    </div>
+    <div class="stat gold">
+      <div class="label">Distinct actors</div>
+      <div class="value"><?= num(count($actors)) ?></div>
+      <div class="meta">named individuals</div>
+    </div>
+  <?php else: ?>
+    <div class="stat ok">
+      <div class="label">Failed sign-ins</div>
+      <div class="value">0</div>
+      <div class="meta">none against this account</div>
+    </div>
+    <div class="stat gold">
+      <div class="label">Signed in as</div>
+      <div class="value xsmall" style="font-size:15px"><?= e($meName) ?></div>
+      <div class="meta"><?= e(humanise((string) Auth::role())) ?></div>
+    </div>
+  <?php endif; ?>
 </div>
 
 <!-- =========================== FILTERS ========================== -->
@@ -96,12 +140,16 @@ require __DIR__ . '/../layouts/header.php';
     </div>
     <div class="field grow">
       <label for="actor">Actor</label>
-      <select name="actor" id="actor" data-autosubmit>
-        <option value="">Anyone</option>
-        <?php foreach ($actors as $a): ?>
-          <option value="<?= e($a) ?>" <?= $actor === $a ? 'selected' : '' ?>><?= e($a) ?></option>
-        <?php endforeach; ?>
-      </select>
+      <?php if ($fullAccess): ?>
+        <select name="actor" id="actor" data-autosubmit>
+          <option value="">Anyone</option>
+          <?php foreach ($actors as $a): ?>
+            <option value="<?= e($a) ?>" <?= $actor === $a ? 'selected' : '' ?>><?= e($a) ?></option>
+          <?php endforeach; ?>
+        </select>
+      <?php else: ?>
+        <input type="text" id="actor" value="<?= e($meName) ?>" readonly>
+      <?php endif; ?>
     </div>
     <div class="field">
       <label for="since">Since</label>
@@ -166,6 +214,7 @@ require __DIR__ . '/../layouts/header.php';
     <?php endif; ?>
   </div>
 
+  <?php if ($fullAccess): ?>
   <div>
     <div class="card">
       <div class="card-head"><div class="grow"><h2>Activity by action</h2></div></div>
@@ -250,6 +299,7 @@ require __DIR__ . '/../layouts/header.php';
       </div>
     </div>
   </div>
+  <?php endif; ?>
 </div>
 
 <?php require __DIR__ . '/../layouts/footer.php';

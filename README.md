@@ -359,10 +359,18 @@ allocation — or reject it with a reason that is recorded and shown back to the
 licences, market development, trader welfare and digital services — each as a
 card saying what the Authority does and what the reader gets from it.
 
-The illustrations are inline SVG rather than photographs. A photograph of
-Kisenyi Market at seven in the morning carries rights we do not hold and a
-network dependency we do not want; a drawn plate in the Authority's own
-colours says the same thing, loads instantly, and works offline.
+The illustrations are drawn plates by default and photographs where one is
+supplied. A drawn plate in the Authority's own colours needs no rights, no
+network and loads instantly; a licensed photograph says more about the work
+than a drawing does, so a card prefers one when it has it. Each image is
+`object-fit: cover`, so a portrait photograph fills the plate by cropping
+rather than being squeezed out of shape.
+
+To swap a photograph, edit the `image` key on the card in
+`kccaActivities()` — that is the only place a file is named. A card whose
+`image` is unset falls back to its drawn plate, so nothing breaks if a file
+is missing. Files under `images/` are the web-sized copies served to the
+browser; the originals are kept in `images/source/`.
 
 The cards appear as an auto slideshow on the dashboard and the trader portal,
 and as a static grid for readers who want them all at once. The slideshow
