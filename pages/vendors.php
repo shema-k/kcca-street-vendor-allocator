@@ -149,6 +149,7 @@ if ($vendorId > 0) {
     }
 }
 
+page_assets('charts');
 $pageTitle = 'Vendor Register';
 require __DIR__ . '/../layouts/header.php';
 ?>
@@ -414,15 +415,17 @@ require __DIR__ . '/../layouts/header.php';
         <?php endforeach; ?>
       </select>
     </div>
-    <div class="field">
-      <label for="status">Stage</label>
-      <select name="status" id="status" data-autosubmit>
-        <option value="">All stages</option>
-        <?php foreach ($statusCounts as $st => $n): ?>
-          <option value="<?= e($st) ?>" <?= $status === $st ? 'selected' : '' ?>><?= e(humanise($st)) ?> (<?= num($n) ?>)</option>
-        <?php endforeach; ?>
-      </select>
-    </div>
+    <?php if ($statusCounts !== []): ?>
+      <div class="field">
+        <label for="status">Stage</label>
+        <select name="status" id="status" data-autosubmit>
+          <option value="">All stages</option>
+          <?php foreach ($statusCounts as $st => $n): ?>
+            <option value="<?= e($st) ?>" <?= $status === $st ? 'selected' : '' ?>><?= e(humanise($st)) ?> (<?= num($n) ?>)</option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+    <?php endif; ?>
     <button type="submit" class="btn btn-primary">Apply</button>
     <a class="btn btn-ghost" href="vendors.php">Reset</a>
   </form>
@@ -506,9 +509,19 @@ require __DIR__ . '/../layouts/header.php';
   <?php if ($total === 0): ?>
     <div class="empty">
       <div class="big"><?= KCCA_icon('people', 32) ?></div>
-      <h3>No vendor matches this filter</h3>
-      <p>Clear the search box or widen the division and stage filters.</p>
-      <a class="btn btn-ghost" href="vendors.php">Reset filters</a>
+      <?php if ($isChairman && $q === '' && $status === '' && $category === ''): ?>
+        <h3>No traders placed in your market yet</h3>
+        <p>
+          A trader follows you once a space is allocated to them at
+          <?= e($chairmanLock['market_name']) ?>. Until then there is nothing
+          here to follow — and that is the state, not a fault.
+        </p>
+        <a class="btn btn-primary" href="my_market.php">See my market</a>
+      <?php else: ?>
+        <h3>No vendor matches this filter</h3>
+        <p>Clear the search box or widen the division and stage filters.</p>
+        <a class="btn btn-ghost" href="vendors.php">Reset filters</a>
+      <?php endif; ?>
     </div>
   <?php endif; ?>
 

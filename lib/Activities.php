@@ -111,12 +111,20 @@ function kccaActivities(): array
 function kccaActivityMedia(array $card, string $class = 'act-image', bool $lazy = true): string
 {
     if (!empty($card['image'])) {
+        $src     = (string) $card['image'];
+        $alt     = e((string) ($card['alt'] ?? $card['title']));
+        $loading = $lazy ? 'lazy' : 'eager';
+
+        /* A WebP beside the JPEG. The photographs are the heaviest thing on
+           the dashboard and WebP is little over half the bytes of the same
+           image; the JPEG stays as the source a browser without WebP reads,
+           which costs nothing because it never downloads. */
+        $webp = preg_replace('/\.jpg$/i', '.webp', $src);
+
         return sprintf(
-            '<img class="%s" src="%s" alt="%s" loading="%s" decoding="async">',
-            e($class),
-            e((string) $card['image']),
-            e((string) ($card['alt'] ?? $card['title'])),
-            $lazy ? 'lazy' : 'eager'
+            '<picture><source srcset="%s" type="image/webp">'
+            . '<img class="%s" src="%s" alt="%s" loading="%s" decoding="async"></picture>',
+            e((string) $webp), e($class), e($src), $alt, $loading
         );
     }
 

@@ -70,6 +70,7 @@ if ($zoneId > 0) {
     );
 }
 
+page_assets('charts');
 $pageTitle = 'Congestion Analysis';
 require __DIR__ . '/../layouts/header.php';
 ?>

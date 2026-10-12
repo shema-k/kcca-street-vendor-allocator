@@ -13,14 +13,20 @@
    ===================================================================== */
 
 :root {
-  /* Brand */
-  --kcca-red:        #DC351D;
-  --kcca-red-dark:   #A82614;
-  --kcca-red-bright: #F12D24;
+  /* Brand — taken from the Authority's own stylesheet rather than chosen.
+     kcca.go.ug sets its primary red as #DC351D, its topbar icons as
+     #f7c401, its link hover as #C48709 and its submit buttons as #ed1c24;
+     the seal green is #0A6339. Anything else here is a shade of those. */
+  --kcca-red:        #DC351D;   /* primary, and the Authority's own */
+  --kcca-red-dark:   #A82614;   /* pressed states */
+  --kcca-red-bright: #E74339;   /* the lighter red kcca.go.ug uses on hover */
+  --kcca-red-deep:   #ca0303;   /* section headings on kcca.go.ug */
   --kcca-red-soft:   #FDECEA;
-  --kcca-green:      #0A6339;
+  --kcca-green:      #0A6339;   /* the seal */
   --kcca-green-soft: #E7F3EC;
-  --kcca-gold:       #EAA515;
+  --kcca-gold:       #f7c401;   /* topbar icons on kcca.go.ug */
+  --kcca-gold-warm:  #EAA515;   /* the amber used on tile badges */
+  --kcca-gold-link:  #C48709;   /* link hover on kcca.go.ug */
   --kcca-gold-soft:  #FDF3DE;
 
   /* Neutrals */
@@ -31,7 +37,7 @@
   --line:      #E3E6EB;
   --line-2:    #EFF1F4;
   --surface:   #FFFFFF;
-  --surface-2: #F7F8FA;
+  --surface-2: #f9f9f9;   /* the field colour kcca.go.ug uses */
   --surface-3: #F1F3F6;
 
   /* Semantic */
@@ -46,11 +52,17 @@
   --topbar:    64px;
   --radius:    10px;
   --radius-sm: 7px;
-  --shadow-1:  0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.06);
-  --shadow-2:  0 4px 12px rgba(16,24,40,.07), 0 2px 4px rgba(16,24,40,.04);
-  --shadow-3:  0 12px 32px rgba(16,24,40,.12), 0 4px 8px rgba(16,24,40,.05);
+  /* The Authority's own depth is 0 1px 2px rgba(0,0,0,.18) on a boxed
+     surface — shallow and tight. The three steps below keep that weight at
+     rest and step down rather than floating free of it. */
+  --shadow-1:  0 1px 2px rgba(0,0,0,.18);
+  --shadow-2:  0 2px 6px rgba(0,0,0,.14), 0 1px 2px rgba(0,0,0,.10);
+  --shadow-3:  0 8px 24px rgba(0,0,0,.16), 0 2px 6px rgba(0,0,0,.10);
 
-  --font: "Segoe UI", Roboto, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  /* Open Sans is what the Authority's own site sets its body and forms in.
+     Self-hosted in assets/fonts — one variable file, 47 KB, all weights. */
+  --font: "Open Sans", "Segoe UI", Roboto, -apple-system, BlinkMacSystemFont,
+          "Helvetica Neue", Arial, sans-serif;
   --mono: "SF Mono", "JetBrains Mono", Consolas, "Liberation Mono", Menlo, monospace;
 }
 
@@ -76,7 +88,10 @@ h2 { font-size: 17px; letter-spacing: -.1px; }
 h3 { font-size: 15px; }
 p  { margin: 0 0 10px; }
 a  { color: var(--kcca-red); text-decoration: none; }
-a:hover { text-decoration: underline; }
+/* The Authority's own site takes links to its gold on hover rather than to
+   the red, which keeps the red meaning "the brand" and the gold meaning
+   "you can act on this". */
+a:hover { text-decoration: underline; color: var(--kcca-gold-link); }
 ul { margin: 0 0 10px; padding-left: 18px; }
 li { margin-bottom: 4px; }
 img { max-width: 100%; }
@@ -1036,18 +1051,21 @@ table.data.compact tbody td, table.data.compact thead th { padding: 7px 10px; }
    Surfaces & typography refinements
    ===================================================================== */
 
-/* A consistent, professional font stack. No webfont download required,
-   so the system still works fully offline. */
+/* Open Sans, as the Authority's own site sets it. This used to name a system
+   stack and avoid a font file altogether; the face is now self-hosted in
+   assets/fonts as one 47 KB variable file, so the offline concern that
+   motivated the earlier stack no longer applies and the type matches. */
 :root {
-  --font-sans: "Avenir Next", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "Open Sans", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
   --font-serif: "Georgia", "Times New Roman", serif;
   --surface-glass: rgba(255, 255, 255, 0.72);
   --surface-sunk: rgba(244, 245, 247, 0.82);
   --line-soft: rgba(15, 23, 42, 0.10);
-  --shadow-soft: 0 1px 2px rgba(15, 23, 42, .05), 0 8px 24px -12px rgba(15, 23, 42, .12);
+  /* Stepped off the Authority's own depth rather than invented beside it. */
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, .18), 0 8px 24px -14px rgba(0, 0, 0, .22);
 }
 
-body { font-family: var(--font-sans); }
+body { font-family: var(--font-sans); font-weight: 400; }
 
 /* Headings get a touch more weight and tighter tracking so the system
    reads as a corporate product rather than a document. */

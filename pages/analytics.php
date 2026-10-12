@@ -75,6 +75,7 @@ $restored = Database::one(
        FROM trade_zones WHERE status = 'cleared'"
 );
 
+page_assets('charts');
 $pageTitle = 'Performance & KPIs';
 require __DIR__ . '/../layouts/header.php';
 ?>

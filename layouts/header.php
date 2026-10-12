@@ -30,10 +30,15 @@ $layoutDivisionId = (int) ($me['division_id'] ?? 0);
 <meta name="theme-color" content="#DC351D">
 <title><?= e($pageTitle ?? 'Dashboard') ?> · <?= e(APP_SHORT) ?></title>
 <link rel="icon" type="image/png" href="../assets/brand/kcca-favicon.png">
+<!-- The text layer cannot be laid out without the face, so it is fetched
+     in parallel with the stylesheets rather than discovered after they parse. -->
+<link rel="preload" as="font" type="font/woff2" crossorigin
+      href="../assets/fonts/open-sans-latin-var.woff2">
+
+<link rel="stylesheet" href="<?= e(APP_REL) ?>assets/css/fonts.css?v=<?= e(APP_VERSION) ?>">
 <link rel="stylesheet" href="<?= e(APP_REL) ?>assets/css/kcca.css?v=<?= e(APP_VERSION) ?>">
 <link rel="stylesheet" href="<?= e(APP_REL) ?>assets/css/activities.css?v=<?= e(APP_VERSION) ?>">
 <link rel="stylesheet" href="<?= e(APP_REL) ?>assets/css/dark.css?v=<?= e(APP_VERSION) ?>">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body>
 <script>

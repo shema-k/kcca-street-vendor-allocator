@@ -136,6 +136,7 @@ $occupancy = $capacity > 0 ? round((int) $market['registered_vendors'] / $capaci
    JS literal, so the page and its behaviour come from one value. */
 $canChooseJs = $canChoose ? 'true' : 'false';
 
+page_assets('map', 'stall', 'charts');
 $pageTitle = $market['name'];
 require __DIR__ . '/../layouts/header.php';
 ?>

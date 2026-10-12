@@ -137,6 +137,7 @@ foreach ($locations as $loc) {
 usort($footfallChart, static fn($a, $b) => $b['value'] <=> $a['value']);
 $footfallChart = array_slice($footfallChart, 0, 12);
 
+page_assets('charts');
 $pageTitle = 'Trading Locations';
 require __DIR__ . '/../layouts/header.php';
 ?>

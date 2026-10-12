@@ -69,6 +69,12 @@ foreach (Auth::roles() as $role) {
 <meta name="theme-color" content="#DC351D">
 <title>Sign in · <?= e(APP_SHORT) ?></title>
 <link rel="icon" type="image/png" href="../assets/brand/kcca-favicon.png">
+<!-- The text layer cannot be laid out without the face, so it is fetched
+     in parallel with the stylesheets rather than discovered after they parse. -->
+<link rel="preload" as="font" type="font/woff2" crossorigin
+      href="../assets/fonts/open-sans-latin-var.woff2">
+
+<link rel="stylesheet" href="../assets/css/fonts.css?v=<?= e(APP_VERSION) ?>">
 <link rel="stylesheet" href="../assets/css/kcca.css">
 <link rel="stylesheet" href="../assets/css/activities.css?v=<?= e(APP_VERSION) ?>">
 <link rel="stylesheet" href="../assets/css/dark.css?v=<?= e(APP_VERSION) ?>">

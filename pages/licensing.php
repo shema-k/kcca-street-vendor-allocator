@@ -44,6 +44,7 @@ $unlicensed = Database::all(
 $total = (int) ($licStats['total'] ?? 0);
 $licensed = (int) ($licStats['licensed'] ?? 0);
 
+page_assets('charts');
 $pageTitle = 'Trade Licensing';
 require __DIR__ . '/../layouts/header.php';
 ?>

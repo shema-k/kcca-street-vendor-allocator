@@ -24,6 +24,38 @@ require_once __DIR__ . '/ChairmanService.php';
 require_once __DIR__ . '/Backup.php';
 require_once __DIR__ . '/ErrorHandler.php';
 
+/**
+ * Declare the optional browser libraries this page actually uses.
+ *
+ * The maps and the chart renderer were loaded by every page, including the
+ * ones that draw neither. That is two requests and about 41 KB on the pages
+ * that need neither, and it put the map library on the critical path of a
+ * sign-in. A page asks for what it needs before the header is included.
+ *
+ * kcca.js and activities.js are never declared: the first carries KCCA.api
+ * and the icons, the second the theme toggle, and every page has both.
+ *
+ * @param string ...$kinds 'charts', 'map', 'stall'
+ */
+function page_assets(string ...$kinds): void
+{
+    $known = ['charts', 'map', 'stall'];
+    foreach ($kinds as $k) {
+        if (!in_array($k, $known, true)) {
+            throw new InvalidArgumentException('Unknown page asset: ' . $k);
+        }
+    }
+    $GLOBALS['__kcca_assets'] = array_values(array_unique(array_merge(
+        $GLOBALS['__kcca_assets'] ?? [], $kinds
+    )));
+}
+
+/** True when the page declared that it needs a given library. */
+function needs_asset(string $kind): bool
+{
+    return in_array($kind, $GLOBALS['__kcca_assets'] ?? [], true);
+}
+
 Auth::startSession();
 ErrorHandler::register();
 

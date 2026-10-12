@@ -28,6 +28,11 @@
   border-right: 1px solid var(--line-2);
   background: var(--surface-2); overflow: hidden;
 }
+.act-plate picture,
+.act-card-plate picture { display: block; width: 100%; height: 100%; }
+.act-plate picture img,
+.act-card-plate picture img { width: 100%; height: 100%; }
+
 .act-plate svg,
 .act-plate img {
   display: block; width: 100%; height: 100%;

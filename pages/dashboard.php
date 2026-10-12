@@ -112,6 +112,7 @@ $topMarkets = Database::all(
       ORDER BY m.vacant_spaces DESC LIMIT 6"
 );
 
+page_assets('charts');
 $pageTitle = 'Dashboard';
 require __DIR__ . '/../layouts/header.php';
 ?>

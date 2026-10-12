@@ -77,6 +77,7 @@ $acceptRate = (($statusCounts['accepted'] ?? 0) + ($statusCounts['occupied'] ?? 
         / ((($statusCounts['accepted'] ?? 0) + ($statusCounts['occupied'] ?? 0)) + ($statusCounts['declined'] ?? 0)) * 100, 1)
     : 0.0;
 
+page_assets('charts');
 $pageTitle = 'Allocation Register';
 require __DIR__ . '/../layouts/header.php';
 ?>

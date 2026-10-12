@@ -72,11 +72,14 @@ $a = $f['authority'];
   </main>
 </div><!-- /.app -->
 
+<?php /* kcca.js carries KCCA.api and the icons, activities.js the theme
+        toggle; both are used by every page, so neither is declared. The
+        rest are drawn by the pages that asked for them. */ ?>
 <script src="../assets/js/kcca.js"></script>
 <script src="../assets/js/activities.js"></script>
-<script src="../assets/js/charts.js"></script>
-<script src="../assets/js/kampala-map.js"></script>
-<script src="../assets/js/stall-map.js"></script>
+<?php if (needs_asset('charts')): ?><script src="../assets/js/charts.js"></script><?php endif; ?>
+<?php if (needs_asset('map')): ?><script src="../assets/js/kampala-map.js"></script><?php endif; ?>
+<?php if (needs_asset('stall')): ?><script src="../assets/js/stall-map.js"></script><?php endif; ?>
 <?php if (!empty($pageScripts)) { echo $pageScripts; } ?>
 <script>
   /* Charts draw on load and again on resize; charts.js also hooks both,

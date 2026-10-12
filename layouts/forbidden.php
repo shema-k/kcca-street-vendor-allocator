@@ -19,6 +19,7 @@ $pageTitle = 'Access not permitted';
 <meta name="robots" content="noindex">
 <title>Access not permitted · <?= e(APP_SHORT) ?></title>
 <link rel="icon" type="image/png" href="../assets/brand/kcca-favicon.png">
+<link rel="stylesheet" href="../assets/css/fonts.css">
 <link rel="stylesheet" href="../assets/css/kcca.css">
 </head>
 <body>

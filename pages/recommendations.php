@@ -144,6 +144,7 @@ $blockedListings = Database::all(
       LIMIT 5"
 );
 
+page_assets('charts');
 $pageTitle = 'AI Recommendations';
 require __DIR__ . '/../layouts/header.php';
 ?>

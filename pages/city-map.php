@@ -141,6 +141,7 @@ $mapPayload = [
     ], $placements),
 ];
 
+page_assets('map');
 $pageTitle = 'City Situation Map';
 require __DIR__ . '/../layouts/header.php';
 ?>

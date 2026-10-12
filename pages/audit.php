@@ -41,9 +41,16 @@ $events = Database::all(
     $params
 );
 
+/* The action filter is built from the reader's own scope rather than the
+   whole log. Handing a self-viewer an empty dropdown made the filter look
+   broken, and an empty dropdown is the one thing a reader cannot tell from a
+   page that failed to load. */
 $byAction = $fullAccess
     ? Database::all('SELECT action, COUNT(*) AS n FROM audit_log GROUP BY action ORDER BY n DESC')
-    : [];
+    : Database::all(
+        'SELECT action, COUNT(*) AS n FROM audit_log WHERE actor = :me GROUP BY action ORDER BY n DESC',
+        ['me' => $meName]
+      );
 $actors   = $fullAccess ? Database::column('SELECT DISTINCT actor FROM audit_log ORDER BY actor') : [];
 
 /* The headline figures obey the same scope as the log below them, so a
@@ -61,6 +68,7 @@ $today  = (int) Database::value(
 $logins   = $fullAccess ? (int) Database::value("SELECT COUNT(*) FROM audit_log WHERE action IN ('login','login-failed') AND DATE(created_at) = CURDATE()") : 0;
 $failures = $fullAccess ? (int) Database::value("SELECT COUNT(*) FROM audit_log WHERE action = 'login-failed'") : 0;
 
+page_assets('charts');
 $pageTitle = 'Audit Trail';
 require __DIR__ . '/../layouts/header.php';
 ?>
