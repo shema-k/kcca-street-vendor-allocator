@@ -44,6 +44,21 @@ final class AccountService
             'division_id' => ['type' => 'int', 'label' => 'Division'],
             'role'        => ['type' => 'enum', 'label' => 'Role', 'required' => true,
                               'options' => Auth::roles()],
+            // Whether the name and title are published by KCCA or invented for
+            // demonstration. The audit trail attributes every action to a
+            // name, so a reader is entitled to know which it is — and the
+            // Administrator is the only person who can say so.
+            'name_basis'  => ['type' => 'enum', 'label' => 'Basis of the name',
+                              'default' => 'illustrative',
+                              'options' => ['published', 'illustrative']],
+            /* The two links that attach an account to the register. A
+               chairman account is scoped by the market it chairs; a trader
+               account reaches its market and chairman through the vendor
+               record it belongs to. Both are optional in the form and
+               checked for consistency afterwards, because a market may not
+               yet have a chairman recorded and a vendor not yet placed. */
+            'chairman_id' => ['type' => 'int', 'label' => 'Market chaired', 'min' => 0],
+            'vendor_id'   => ['type' => 'int', 'label' => 'Vendor record', 'min' => 0],
         ];
 
         if ($creating) {
@@ -92,6 +107,13 @@ final class AccountService
         $data = $v->validated();
         $data['is_active'] = isset($input['is_active']) ? 1 : 0;
 
+        /* The register links are settled after field validation so a
+           refusal names the field rather than aborting the whole save. */
+        $linkErrors = self::settleLinks($data, (string) $data['role']);
+        if ($linkErrors !== []) {
+            return ['ok' => false, 'errors' => $linkErrors];
+        }
+
         $id = Database::insert('users', array_merge($data, [
             'password_hash' => password_hash($password, PASSWORD_DEFAULT),
         ]));
@@ -102,6 +124,51 @@ final class AccountService
         self::logPassword($id, $data['username'], (string) $data['role'], 'set on creation');
 
         return ['ok' => true, 'id' => $id];
+    }
+
+    /**
+     * Settle the two links that attach an account to the register.
+     *
+     * A chairman account is scoped by the market it chairs and a trader
+     * account reaches its market and chairman through the vendor record it
+     * belongs to. Neither link means anything on any other role, so the
+     * field is cleared rather than left holding a value that would quietly
+     * do nothing — and on the two roles where the link *is* the account, a
+     * missing one is refused rather than stored, because a chairman with no
+     * market would be shown nothing and appear to be broken.
+     *
+     * @return array<string,string> field errors
+     */
+    private static function settleLinks(array &$data, string $role): array
+    {
+        $errors = [];
+
+        if ($role === 'chairman') {
+            $data['vendor_id'] = null;
+            $chairmanId = (int) ($data['chairman_id'] ?? 0);
+            if ($chairmanId <= 0) {
+                $errors['chairman_id'] = 'Choose the market this chairman administers.';
+            } elseif (!Database::one('SELECT id FROM market_chairmen WHERE id = ?', [$chairmanId])) {
+                $errors['chairman_id'] = 'That chairman record does not exist.';
+            } else {
+                $data['chairman_id'] = $chairmanId;
+            }
+        } elseif ($role === 'vendor') {
+            $data['chairman_id'] = null;
+            $vendorId = (int) ($data['vendor_id'] ?? 0);
+            if ($vendorId <= 0) {
+                $errors['vendor_id'] = 'Choose the vendor record this account belongs to.';
+            } elseif (!Database::one('SELECT id FROM vendors WHERE id = ?', [$vendorId])) {
+                $errors['vendor_id'] = 'That vendor record does not exist.';
+            } else {
+                $data['vendor_id'] = $vendorId;
+            }
+        } else {
+            $data['chairman_id'] = null;
+            $data['vendor_id']   = null;
+        }
+
+        return $errors;
     }
 
     /**
@@ -151,6 +218,11 @@ final class AccountService
 
         $data = $v->validated();
         $data['is_active'] = isset($input['is_active']) ? 1 : 0;
+
+        $linkErrors = self::settleLinks($data, (string) $data['role']);
+        if ($linkErrors !== []) {
+            return ['ok' => false, 'errors' => $linkErrors];
+        }
 
         /* Nobody is appointed to their own level or above. */
         if ($data['role'] !== 'administrator'

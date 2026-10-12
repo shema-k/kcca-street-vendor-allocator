@@ -509,10 +509,19 @@ require __DIR__ . '/../layouts/header.php';
               Choose a trade and the model will show what a trader selling it could expect at this
               location, with the factors behind the figure.
             </p>
-            <a class="btn btn-primary btn-sm btn-block"
-               href="recommendations.php?location=<?= (int) $detail['id'] ?>">
-              Model reach for this location
-            </a>
+            <?php if (Auth::can('allocate')): ?>
+              <a class="btn btn-primary btn-sm btn-block"
+                 href="recommendations.php?location=<?= (int) $detail['id'] ?>">
+                Model reach for this location
+              </a>
+            <?php else: ?>
+              <!-- The reach model decides where traders are placed, so it is
+                   the planner's instrument. A reader who cannot place anybody
+                   is shown the location and nothing offered. -->
+              <p class="xsmall muted" style="margin:0">
+                The reach model is used by the planners who place traders here.
+              </p>
+            <?php endif; ?>
           </div>
         </div>
       </div>

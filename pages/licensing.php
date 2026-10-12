@@ -245,7 +245,9 @@ require __DIR__ . '/../layouts/header.php';
                   <td class="right num xsmall"><?= ugxShort((int) $v['monthly_turnover_ugx']) ?></td>
                   <td class="right num xsmall"><?= ugxShort((int) $v['startup_capital_ugx']) ?></td>
                   <td class="right">
-                    <a class="btn btn-ghost btn-sm" href="relocation.php?vendor=<?= (int) $v['id'] ?>">Match</a>
+                    <?php if (Auth::can('allocate')): ?>
+                      <a class="btn btn-ghost btn-sm" href="relocation.php?vendor=<?= (int) $v['id'] ?>">Match</a>
+                    <?php endif; ?>
                   </td>
                 </tr>
               <?php endforeach; ?>

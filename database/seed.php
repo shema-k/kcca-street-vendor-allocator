@@ -788,6 +788,10 @@ foreach ($users as [$u,$p,$n,$t,$r,$d,$dv,$e,$ph,$basis]) {
         'division_id' => $dv ? $divId[$dv] : null,
         'chairman_id' => $r === 'chairman' && isset($chairmanIdByMarket['Usafi Market'])
             ? $chairmanIdByMarket['Usafi Market'] : null,
+        /* The trader account belongs to a vendor record, which is how it
+           reaches its market and its chairman. */
+        'vendor_id'   => $r === 'vendor'
+            ? (int) Database::value('SELECT id FROM vendors ORDER BY id LIMIT 1') : null,
         'email' => $e, 'phone' => $ph,
         'name_basis' => $basis ? 'published' : 'illustrative',
         'is_active' => 1,

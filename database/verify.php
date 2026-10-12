@@ -244,6 +244,20 @@ check('Chairman sign-ins bound to a chairman record',
     ),
     0, 'a chairman account without a market would be able to see nothing, so none exists');
 
+check('Trader accounts bound to a vendor record',
+    (int) Database::value(
+        "SELECT COUNT(*) FROM users u
+           LEFT JOIN vendors v ON v.id = u.vendor_id
+          WHERE u.role = 'vendor' AND (u.vendor_id IS NULL OR v.id IS NULL)"
+    ),
+    0, 'a trader cannot reach their market or chairman without a vendor record');
+
+check('Accounts outside the two register roles carrying a vendor link',
+    (int) Database::value(
+        "SELECT COUNT(*) FROM users WHERE role NOT IN ('vendor') AND vendor_id IS NOT NULL"
+    ),
+    0, 'only a trader is reached through a vendor record; a mayor is scoped by division');
+
 check('Non-chairman accounts carrying a chairman',
     (int) Database::value(
         "SELECT COUNT(*) FROM users WHERE role <> 'chairman' AND chairman_id IS NOT NULL"

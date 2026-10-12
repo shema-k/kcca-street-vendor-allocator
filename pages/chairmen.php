@@ -254,7 +254,7 @@ require __DIR__ . '/../layouts/header.php';
   <?php if (!$isChairman): ?>
     <div class="card-foot">
       A chairman is a person recorded against a market, not a login. Granting a
-      sign-in is a separate step in <a href="users.php">Accounts</a>.
+      sign-in is a separate step<?php if (Auth::can('manage')): ?> in <a href="users.php">Accounts</a><?php endif; ?>.
     </div>
   <?php endif; ?>
 </div>

@@ -173,7 +173,7 @@ require __DIR__ . '/../layouts/header.php';
       <h2>How the model reaches its answer</h2>
       <p class="desc">
         Eight factors, each scored 0–100 and combined as a weighted average. The weights are policy
-        settings, editable in <a href="settings.php">Settings</a>.
+        settings<?php if (Auth::can('manage')): ?>, editable in <a href="settings.php">Settings</a><?php endif; ?>.
       </p>
     </div>
     <span class="badge green">Model <?= e(ReachModel::VERSION) ?></span>

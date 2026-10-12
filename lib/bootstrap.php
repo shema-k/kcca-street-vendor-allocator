@@ -50,9 +50,13 @@ function navigation(): array
     return [
         ['group' => 'Work', 'items' => [
             ['id' => 'dashboard',       'file' => 'pages/dashboard.php',       'label' => 'Dashboard',      'icon' => 'gauge',    'audience' => ['all']],
-            ['id' => 'vendors',         'file' => 'pages/vendors.php',         'label' => 'Vendors',        'icon' => 'people',   'audience' => ['administrator', 'executive', 'mayor', 'planner', 'enforcement', 'revenue', 'chairman']],
-            ['id' => 'locations',       'file' => 'pages/locations.php',       'label' => 'Markets',        'icon' => 'store',    'audience' => ['all']],
-            ['id' => 'market-map',      'file' => 'pages/market_map.php',      'label' => 'Stall Map',      'icon' => 'map',      'audience' => ['all']],
+            ['id' => 'vendors',         'file' => 'pages/vendors.php',         'label' => 'Vendors',        'icon' => 'people',   'audience' => ['administrator', 'executive', 'mayor', 'planner', 'enforcement', 'chairman']],
+            ['id' => 'locations',       'file' => 'pages/locations.php',       'label' => 'Markets',        'icon' => 'store',    'audience' => ['administrator', 'executive', 'mayor', 'planner', 'enforcement', 'revenue']],
+            ['id' => 'market-map',      'file' => 'pages/market_map.php',      'label' => 'Stall Map',      'icon' => 'map',      'audience' => ['administrator', 'executive', 'mayor', 'planner', 'enforcement', 'revenue', 'chairman', 'vendor']],
+            /* The one screen that answers "what am I attached to". A chairman
+               arrives at their market and their traders; a trader at their
+               market and their chairman. Nobody else has a "my". */
+            ['id' => 'my-market',       'file' => 'pages/my_market.php',       'label' => 'My Market',      'icon' => 'user',     'audience' => ['chairman', 'vendor']],
         ]],
         ['group' => 'Relocation', 'items' => [
             ['id' => 'relocation',      'file' => 'pages/relocation.php',      'label' => 'Matching',       'icon' => 'list',     'audience' => ['administrator', 'executive', 'mayor', 'planner']],
@@ -60,7 +64,7 @@ function navigation(): array
             ['id' => 'allocations',     'file' => 'pages/allocations.php',      'label' => 'Allocations',    'icon' => 'swap',     'audience' => ['administrator', 'executive', 'mayor', 'planner']],
         ]],
         ['group' => 'Operations', 'items' => [
-            ['id' => 'city-map',        'file' => 'pages/city-map.php',       'label' => 'City Map',       'icon' => 'map',      'audience' => ['all']],
+            ['id' => 'city-map',        'file' => 'pages/city-map.php',       'label' => 'City Map',       'icon' => 'map',      'audience' => ['administrator', 'executive', 'mayor', 'planner', 'enforcement']],
             ['id' => 'congestion',      'file' => 'pages/congestion.php',     'label' => 'Congestion',     'icon' => 'pulse',    'audience' => ['administrator', 'executive', 'mayor', 'planner', 'enforcement']],
             ['id' => 'enforcement',     'file' => 'pages/enforcement.php',     'label' => 'Enforcement',    'icon' => 'shield',   'audience' => ['administrator', 'executive', 'mayor', 'enforcement']],
             ['id' => 'licensing',       'file' => 'pages/licensing.php',       'label' => 'Licensing',      'icon' => 'doc',      'audience' => ['administrator', 'executive', 'mayor', 'revenue']],
@@ -353,7 +357,8 @@ function chairmanLock(): ?array
     }
 
     $mine = Database::one(
-        'SELECT ch.id, ch.full_name, ch.status, ch.market_id, m.name AS market_name,
+        'SELECT ch.id, ch.full_name, ch.phone, ch.email, ch.status, ch.market_id,
+                m.name AS market_name,
                 m.code AS market_code, m.vacant_spaces, m.capacity,
                 d.name AS division_name
            FROM market_chairmen ch
@@ -372,6 +377,7 @@ function chairmanLock(): ?array
         'market_code'  => (string) $mine['market_code'],
         'market_name'  => (string) $mine['market_name'],
         'full_name'    => (string) $mine['full_name'],
+        'phone'        => (string) ($mine['phone'] ?? ''),
         'division'     => (string) $mine['division_name'],
         'status'       => (string) $mine['status'],
         'vacant'       => (int) $mine['vacant_spaces'],
@@ -389,7 +395,8 @@ function chairmanLock(): ?array
 function chairmanForVendor(int $vendorId): ?array
 {
     return Database::one(
-        'SELECT ch.id, ch.full_name, ch.phone, ch.status, m.name AS market_name
+        'SELECT ch.id, ch.full_name, ch.phone, ch.status, ch.since,
+                ch.market_id, m.name AS market_name
            FROM vendors v
            JOIN market_chairmen ch ON ch.id = v.chairman_id
            LEFT JOIN markets m ON m.id = ch.market_id

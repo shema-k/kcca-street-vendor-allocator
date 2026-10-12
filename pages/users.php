@@ -20,9 +20,14 @@ $canEdit = Auth::can('manage');
 /* Who exists, and who this officer may touch. */
 $all = Database::all(
     "SELECT u.id, u.username, u.full_name, u.title, u.directorate, u.role, u.division_id,
-            u.email, u.phone, u.name_basis, u.is_active, u.last_login_at,
-            d.name AS division_name
+            u.chairman_id, u.vendor_id, u.email, u.phone, u.name_basis, u.is_active,
+            u.last_login_at, d.name AS division_name,
+            cmk.name AS chairman_market, cm.full_name AS chairman_full_name,
+            v.full_name AS vendor_name, v.vendor_code
        FROM users u LEFT JOIN divisions d ON d.id = u.division_id
+       LEFT JOIN market_chairmen cm ON cm.id = u.chairman_id
+       LEFT JOIN markets cmk ON cmk.id = cm.market_id
+       LEFT JOIN vendors v ON v.id = u.vendor_id
       ORDER BY FIELD(u.role, 'administrator','executive','mayor','planner',
                       'enforcement','revenue','vendor'), u.id"
 );
@@ -40,6 +45,21 @@ foreach ($all as $u) {
 }
 
 $divisions = Database::all('SELECT id, name, code FROM divisions ORDER BY name');
+
+/* The two register links, offered as choices rather than typed as numbers.
+   A chairman can only be attached to a market that already has a chairman
+   record, and a trader only to a vendor record that exists. */
+$chairmen = Database::all(
+    'SELECT ch.id, ch.full_name, m.name AS market_name
+       FROM market_chairmen ch JOIN markets m ON m.id = ch.market_id
+      ORDER BY m.name'
+);
+$vendorOptions = Database::all(
+    "SELECT id, full_name, vendor_code FROM vendors
+      WHERE chairman_id IS NOT NULL
+         OR id IN (SELECT vendor_id FROM users WHERE vendor_id IS NOT NULL)
+      ORDER BY full_name LIMIT 200"
+);
 
 /* Which account the form shows: a new one, or one already in the list. */
 $formId = (int) ($_GET['user'] ?? $_POST['user_id'] ?? 0);
@@ -73,9 +93,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'creat
         $banner = sprintf('%s has been added. They can sign in with the username and password set here.', $name);
         $all = Database::all(
             'SELECT u.id, u.username, u.full_name, u.title, u.directorate, u.role, u.division_id,
-                    u.email, u.phone, u.name_basis, u.is_active, u.last_login_at,
-                    d.name AS division_name
+                    u.chairman_id, u.vendor_id, u.email, u.phone, u.name_basis,
+                    u.is_active, u.last_login_at, d.name AS division_name,
+                    cmk.name AS chairman_market, cm.full_name AS chairman_full_name,
+                    v.full_name AS vendor_name, v.vendor_code
                FROM users u LEFT JOIN divisions d ON d.id = u.division_id
+       LEFT JOIN market_chairmen cm ON cm.id = u.chairman_id
+       LEFT JOIN markets cmk ON cmk.id = cm.market_id
+               LEFT JOIN vendors v ON v.id = u.vendor_id
               ORDER BY u.id'
         );
         $editable = [];
@@ -108,9 +133,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save'
         $banner = 'The account has been updated.';
         $all = Database::all(
             'SELECT u.id, u.username, u.full_name, u.title, u.directorate, u.role, u.division_id,
-                    u.email, u.phone, u.name_basis, u.is_active, u.last_login_at,
-                    d.name AS division_name
+                    u.chairman_id, u.vendor_id, u.email, u.phone, u.name_basis,
+                    u.is_active, u.last_login_at, d.name AS division_name,
+                    cmk.name AS chairman_market, cm.full_name AS chairman_full_name,
+                    v.full_name AS vendor_name, v.vendor_code
                FROM users u LEFT JOIN divisions d ON d.id = u.division_id
+       LEFT JOIN market_chairmen cm ON cm.id = u.chairman_id
+       LEFT JOIN markets cmk ON cmk.id = cm.market_id
+               LEFT JOIN vendors v ON v.id = u.vendor_id
               ORDER BY u.id'
         );
         $editable = [];
@@ -265,6 +295,58 @@ require __DIR__ . '/../layouts/header.php';
         </div>
 
         <div class="field">
+          <label for="name_basis">Basis of the name</label>
+          <select id="name_basis" name="name_basis">
+            <?php foreach (['published' => 'Published by KCCA',
+                            'illustrative' => 'Illustrative (invented for demonstration)'] as $val => $lbl): ?>
+              <option value="<?= e($val) ?>"
+                <?= (string) $pick('name_basis', 'illustrative') === (string) $val ? 'selected' : '' ?>>
+                <?= e($lbl) ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+          <span class="hint">Every action in the audit trail is attributed to this name.</span>
+        </div>
+
+        <div class="field" data-role-only="chairman">
+          <label for="chairman_id">Market chaired <span class="req">*</span></label>
+          <select id="chairman_id" name="chairman_id"
+                  class="<?= isset($errors['chairman_id']) ? 'invalid' : '' ?>">
+            <option value="">Choose the market</option>
+            <?php foreach ($chairmen as $chm): ?>
+              <option value="<?= (int) $chm['id'] ?>"
+                <?= (string) $pick('chairman_id') === (string) $chm['id'] ? 'selected' : '' ?>>
+                <?= e($chm['market_name']) ?> — <?= e($chm['full_name']) ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+          <?php if (isset($errors['chairman_id'])): ?>
+            <span class="hint error"><?= e($errors['chairman_id']) ?></span>
+          <?php else: ?>
+            <span class="hint">A chairman sees only the traders of this market.</span>
+          <?php endif; ?>
+        </div>
+
+        <div class="field" data-role-only="vendor">
+          <label for="vendor_id">Vendor record <span class="req">*</span></label>
+          <select id="vendor_id" name="vendor_id"
+                  class="<?= isset($errors['vendor_id']) ? 'invalid' : '' ?>">
+            <option value="">Choose the vendor</option>
+            <?php foreach ($vendorOptions as $vo): ?>
+              <option value="<?= (int) $vo['id'] ?>"
+                <?= (string) $pick('vendor_id') === (string) $vo['id'] ? 'selected' : '' ?>>
+                <?= e($vo['full_name']) ?> (<?= e($vo['vendor_code']) ?>)
+              </option>
+            <?php endforeach; ?>
+          </select>
+          <?php if (isset($errors['vendor_id'])): ?>
+            <span class="hint error"><?= e($errors['vendor_id']) ?></span>
+          <?php else: ?>
+            <span class="hint">How the trader reaches their market and their chairman.</span>
+          <?php endif; ?>
+        </div>
+
+        <div class="field">
           <label for="email">Email address</label>
           <input type="email" id="email" name="email" value="<?= e($pick('email')) ?>"
                  class="<?= isset($errors['email']) ? 'invalid' : '' ?>">
@@ -412,7 +494,14 @@ require __DIR__ . '/../layouts/header.php';
               <td class="center">
                 <span class="badge <?= $level >= 6 ? 'bad' : ($level >= 5 ? 'warn' : 'muted') ?>"><?= $level ?></span>
               </td>
-              <td class="xsmall"><?= e($u['division_name'] ?: 'All five') ?></td>
+              <td class="xsmall">
+                <?= e($u['division_name'] ?: 'All five') ?>
+                <?php if (!empty($u['chairman_market'])): ?>
+                  <div class="xsmall muted">chairs <?= e($u['chairman_market']) ?></div>
+                <?php elseif (!empty($u['vendor_name'])): ?>
+                  <div class="xsmall muted"><?= e($u['vendor_name']) ?> (<?= e($u['vendor_code']) ?>)</div>
+                <?php endif; ?>
+              </td>
               <td class="center">
                 <?= $u['is_active'] ? '<span class="badge ok">Yes</span>' : '<span class="badge bad">No</span>' ?>
               </td>
@@ -446,6 +535,25 @@ require __DIR__ . '/../layouts/header.php';
 </div>
 
 <script>
+/* The register links only mean anything on the role they belong to, so the
+   field for the other role is hidden rather than left on screen as an
+   input that would be silently discarded on save. Both are always submitted,
+   so changing the role in the browser and saving is the same thing as
+   choosing the link — the server settles the pair, not the browser. */
+(function () {
+  var role = document.getElementById('role');
+  if (!role) return;
+
+  function sync() {
+    document.querySelectorAll('[data-role-only]').forEach(function (field) {
+      var on = field.getAttribute('data-role-only') === role.value;
+      field.hidden = !on;
+    });
+  }
+  role.addEventListener('change', sync);
+  sync();
+})();
+
 /* Issue a temporary password: shown once, because it cannot be recovered. */
 document.querySelectorAll('[data-reset-pw]').forEach(function (btn) {
   btn.addEventListener('click', function () {

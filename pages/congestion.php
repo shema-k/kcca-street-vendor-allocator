@@ -327,7 +327,11 @@ $criticalCount  = count($bandCounts['Critical'] ?? []);
                 <?php foreach ($dVendors as $v): ?>
                   <tr>
                     <td>
-                      <a href="relocation.php?vendor=<?= (int) $v['id'] ?>"><strong><?= e($v['full_name']) ?></strong></a>
+                      <?php if (Auth::can('allocate')): ?>
+                        <a href="relocation.php?vendor=<?= (int) $v['id'] ?>"><strong><?= e($v['full_name']) ?></strong></a>
+                      <?php else: ?>
+                        <strong><?= e($v['full_name']) ?></strong>
+                      <?php endif; ?>
                       <div class="xsmall muted">
                         <?= e($v['vendor_code']) ?>
                         <?php if ($v['is_single_parent']): ?> · single parent<?php endif; ?>
@@ -545,8 +549,12 @@ $criticalCount  = count($bandCounts['Critical'] ?? []);
     </div>
   </div>
   <div class="card-foot">
-    The score orders the work. A vendor's fate is <a href="relocation.php">the relocation
-    engine's job</a>, on six separate criteria.
+    The score orders the work. A vendor's fate is
+    <?php if (Auth::can('allocate')): ?>
+      <a href="relocation.php">the relocation engine's job</a>, on six separate criteria.
+    <?php else: ?>
+      the relocation engine's job, on six separate criteria.
+    <?php endif; ?>
   </div>
 </div>
 

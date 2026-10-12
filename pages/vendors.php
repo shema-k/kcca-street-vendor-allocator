@@ -164,8 +164,12 @@ require __DIR__ . '/../layouts/header.php';
         <?= KCCA_icon('plus', 15) ?> Register a vendor
       </button>
     <?php endif; ?>
-    <a class="btn btn-ghost" href="relocation.php"><?= KCCA_icon('swap', 15) ?> Match to space</a>
-    <a class="btn btn-ghost" href="reports.php"><?= KCCA_icon('download', 15) ?> Export</a>
+    <?php if (Auth::can('allocate')): ?>
+      <a class="btn btn-ghost" href="relocation.php"><?= KCCA_icon('swap', 15) ?> Match to space</a>
+    <?php endif; ?>
+    <?php if (Auth::can('report')): ?>
+      <a class="btn btn-ghost" href="reports.php"><?= KCCA_icon('download', 15) ?> Export</a>
+    <?php endif; ?>
     <button class="btn btn-ghost" data-print><?= KCCA_icon('print', 15) ?> Print</button>
   </div>
 </div>
@@ -193,7 +197,9 @@ require __DIR__ . '/../layouts/header.php';
         <button class="btn btn-ghost btn-sm"
                 data-modal="api/form.php?form=vendor&amp;vendor_id=<?= (int) $detail['id'] ?>">Edit record</button>
       <?php endif; ?>
-      <a class="btn btn-primary btn-sm" href="relocation.php?vendor=<?= (int) $detail['id'] ?>">Match to space</a>
+      <?php if (Auth::can('allocate')): ?>
+        <a class="btn btn-primary btn-sm" href="relocation.php?vendor=<?= (int) $detail['id'] ?>">Match to space</a>
+      <?php endif; ?>
       <a class="btn btn-quiet btn-sm" href="vendors.php">Close</a>
     </div>
   </div>
@@ -479,7 +485,9 @@ require __DIR__ . '/../layouts/header.php';
                   <a class="btn btn-ghost btn-sm" title="Edit this record"
                      data-modal="api/form.php?form=vendor&amp;vendor_id=<?= (int) $v['id'] ?>">Edit</a>
                 <?php endif; ?>
-                <a class="btn btn-ghost btn-sm" href="relocation.php?vendor=<?= (int) $v['id'] ?>">Match</a>
+                <?php if (Auth::can('allocate')): ?>
+                  <a class="btn btn-ghost btn-sm" href="relocation.php?vendor=<?= (int) $v['id'] ?>">Match</a>
+                <?php endif; ?>
               </td>
             </tr>
           <?php endforeach; ?>

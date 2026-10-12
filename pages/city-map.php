@@ -157,7 +157,9 @@ require __DIR__ . '/../layouts/header.php';
     </p>
   </div>
   <div class="actions">
-    <a class="btn btn-ghost" href="congestion.php"><?= KCCA_icon('pulse', 15) ?> Congestion analysis</a>
+    <?php if (Auth::can('report')): ?>
+      <a class="btn btn-ghost" href="congestion.php"><?= KCCA_icon('pulse', 15) ?> Congestion analysis</a>
+    <?php endif; ?>
     <button class="btn btn-ghost" data-print><?= KCCA_icon('print', 15) ?> Print</button>
   </div>
 </div>
@@ -291,7 +293,9 @@ require __DIR__ . '/../layouts/header.php';
         <h2>Affected trading sites</h2>
         <p class="desc">Ranked by composite congestion score.</p>
       </div>
-      <a class="btn btn-ghost btn-sm" href="congestion.php">Detailed analysis</a>
+      <?php if (Auth::can('report')): ?>
+        <a class="btn btn-ghost btn-sm" href="congestion.php">Detailed analysis</a>
+      <?php endif; ?>
     </div>
     <div class="card-body tight">
       <div class="table-wrap" style="max-height:520px;overflow-y:auto">
@@ -315,7 +319,11 @@ require __DIR__ . '/../layouts/header.php';
                   title="Click to centre the map on this site">
                 <td><span class="rank <?= $i < 3 ? 'top' : '' ?>"><?= $i + 1 ?></span></td>
                 <td>
-                  <a href="congestion.php?zone=<?= (int) $z['id'] ?>"><strong><?= e($z['name']) ?></strong></a>
+                  <?php if (Auth::can('report')): ?>
+                    <a href="congestion.php?zone=<?= (int) $z['id'] ?>"><strong><?= e($z['name']) ?></strong></a>
+                  <?php else: ?>
+                    <strong><?= e($z['name']) ?></strong>
+                  <?php endif; ?>
                   <div class="xsmall muted">
                     <?= e($z['division_name']) ?>
                     <?php if ($z['road_or_feature']): ?> · <?= e($z['road_or_feature']) ?><?php endif; ?>
@@ -328,9 +336,13 @@ require __DIR__ . '/../layouts/header.php';
                 </td>
                 <td class="right num"><?= pct($z['carriageway_encroachment_pct'], 0) ?></td>
                 <td class="center">
-                  <a href="congestion.php?zone=<?= (int) $z['id'] ?>" class="badge <?= e($z['tone']) ?>">
-                    <?= num($z['score'], 1) ?>
-                  </a>
+                  <?php if (Auth::can('report')): ?>
+                    <a href="congestion.php?zone=<?= (int) $z['id'] ?>" class="badge <?= e($z['tone']) ?>">
+                      <?= num($z['score'], 1) ?>
+                    </a>
+                  <?php else: ?>
+                    <span class="badge <?= e($z['tone']) ?>"><?= num($z['score'], 1) ?></span>
+                  <?php endif; ?>
                 </td>
                 <td class="center">
                   <span class="badge <?= e(statusTone($z['status'])) ?>"><?= e(humanise($z['status'])) ?></span>

@@ -176,6 +176,32 @@ KCCA publishes an ICT department and a street-vendor role but names nobody in
 them. Each account states which it is, because the audit trail attributes
 every action to a name and a reader is entitled to know where it came from.
 
+## What each role sees
+
+Every officer's rail is drawn from their own field, and so is what they can
+open. The audience list in `navigation()` and the permission check on each
+page are written to agree — a role is shown a link to a screen it could open,
+and is refused a screen it could not.
+
+| Role | Sees | Refused |
+|---|---|---|
+| System Administrator | every screen | — |
+| Executive Director | every screen | — |
+| Mayor | vendors, markets, stall map, matching, forecast, allocations, city map, congestion, enforcement, licensing, performance, reports, audit, chairmen | accounts, settings |
+| Planner | vendors, markets, stall map, matching, forecast, allocations, city map, congestion, reports | enforcement, licensing, performance, audit, accounts, settings |
+| Enforcement Officer | vendors, markets, stall map, city map, congestion, enforcement, reports | matching, forecast, allocations, licensing, performance, audit, accounts, settings |
+| Revenue Officer | markets, stall map, licensing, reports | matching, forecast, allocations, enforcement, performance, audit, accounts, settings |
+| Market Chairman | their market, their traders, their own record | everything else |
+| Vendor | their market, their chairman, the pitch plan, the portal | the register and every staff screen |
+
+**A link is only shown to a reader who could follow it.** Tightening a page's
+permission is easy to do and easy to leave half-done: the page stops opening,
+but a link to it sitting inside another page that the same role can still read
+does not. The register alone produced forty dead "Match" links per page for the
+chairman and the revenue desk, and the city map linked every zone into the
+congestion profile, which neither may open. Each is now gated on the same
+permission that guards its target, so the two cannot drift apart again.
+
 ## Market chairmen
 
 Every market has a chairman, and every vendor in that market follows them.
@@ -198,6 +224,22 @@ the pool is nobody's responsibility until they are placed again.
 `pages/chairmen.php` is where the assignment is made. Officers with `manage`
 maintain it; a Mayor is narrowed to their own division; a chairman sees their own
 market and may correct their own contact details and nothing else.
+
+`pages/my_market.php` is the other end of the same chain, and the only screen
+with a "my" in it. A chairman arrives at their market, its pitch counts and the
+traders placed in it. A trader arrives at their market, their chairman's name
+and telephone number, and every offer and request they have made. A trader who
+has not been placed is told so and shown where to find a space, because "no
+chairman yet" is a fact about their stage rather than an error to hide.
+
+### Reaching a trader through their account
+
+A trader account holds `vendor_id`, the vendor record it belongs to, which is
+how it reaches its chairman and its market. `AccountService` refuses to store
+one without the other: a `chairman` role with no `chairman_id`, or a `vendor`
+role with no `vendor_id`, is an account that can be signed into and can see
+nothing, so it is not a state worth saving. Both links are cleared on any
+other role, where they would mean nothing.
 
 **The 8,386 existing vendors carry no chairman.** They sit in trade zones and
 have never been allocated to a market, so there is no market to take a chairman
@@ -226,7 +268,7 @@ and a sign-out.
 
 ## The screens
 
-Eighteen, grouped as the rail groups them. A role sees only the screens it
+Nineteen, grouped as the rail groups them. A role sees only the screens it
 operates.
 
 **Work** — *Dashboard* (built per role; see above), *Vendors* (register and
@@ -248,6 +290,15 @@ statements), *Trade Licensing*.
 they may do, set their password, and edit every location in the register),
 *Settings* (engine weights, model calibration, programme policy, and
 backups), *Chairmen* (who administers each market), *Trader Portal*.
+
+**The Administrator's instrument over every account.** `pages/users.php` is
+where the System Administrator adds staff and amends any account: username,
+name, position, directorate, role, division, basis of the name, telephone,
+email, whether sign-in is allowed, and a password that can be set directly as
+well as issued as a temporary one. A chairman account is bound to the market it
+chairs and a trader account to the vendor record it belongs to, from the same
+form. Nobody may edit their own account here — that is the profile — and
+nobody may appoint anybody to their own level of authority or above.
 
 **Editing a location.** `pages/market_edit.php` is the System Administrator's
 instrument over the location register — which is also what the map, the stall

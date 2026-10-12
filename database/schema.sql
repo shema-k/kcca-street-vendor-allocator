@@ -511,6 +511,12 @@ CREATE TABLE `users` (
   -- what confines the account to one market's vendors. NULL for every
   -- other role, including a mayor, whose scope is the division instead.
   `chairman_id`   INT UNSIGNED DEFAULT NULL,
+  -- Which vendor this account belongs to. Set only for role 'vendor'; it is
+  -- how a trader reaches their own market and chairman, and how the
+  -- Authority finds an account for a named trader. NULL for every other
+  -- role. Without it a trader account knows only that it is a trader, and
+  -- the trader cannot be told who their chairman is.
+  `vendor_id`     INT UNSIGNED DEFAULT NULL,
   `email`         VARCHAR(120) DEFAULT NULL,
   `phone`         VARCHAR(40)  DEFAULT NULL,
   -- Whether the name and title are published by KCCA or illustrative. An
@@ -526,7 +532,9 @@ CREATE TABLE `users` (
   CONSTRAINT `fk_user_div` FOREIGN KEY (`division_id`)
     REFERENCES `divisions` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_user_chairman` FOREIGN KEY (`chairman_id`)
-    REFERENCES `market_chairmen` (`id`) ON DELETE SET NULL
+    REFERENCES `market_chairmen` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_user_vendor` FOREIGN KEY (`vendor_id`)
+    REFERENCES `vendors` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
