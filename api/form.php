@@ -561,9 +561,37 @@ switch ($form) {
         $values = $_POST ?: ($existing ?: []);
         $action = $action ?: ($editing ? 'update' : 'create');
 
+        /* A chairman registers into their own market, so the form states that
+           market's division rather than offering a list of five. */
+        $chairmanDivision    = null;
+        $chairmanDivisionId  = null;
+        $chairmanMarketName  = null;
+        $lock = chairmanLock();
+        if ($lock !== null) {
+            $chairmanDivision   = $lock['division'];
+            $chairmanMarketName = $lock['market_name'];
+            $chairmanDivisionId = Database::value(
+                'SELECT m.division_id FROM market_chairmen ch
+                   JOIN markets m ON m.id = ch.market_id WHERE ch.id = ?',
+                [$lock['id']]
+            );
+        }
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['create', 'update'], true)) {
             require_once __DIR__ . '/../lib/VendorService.php';
-            requirePerm('allocate');
+
+            /* This is the path the modal actually submits, and it carried its
+               own 'allocate' check that api/vendor_save.php did not. Opening
+               vendor_save to a chairman therefore did nothing: the button
+               appeared, the form filled in, and the submit was refused. A
+               chairman registers and corrects the traders of their own
+               market — VendorService pins the market to their account and
+               refuses a trader outside it, so admitting them here grants no
+               reach beyond that market. */
+            requireSession();
+            if (!Auth::can('allocate') && Auth::role() !== 'chairman') {
+                requirePerm('allocate');
+            }
 
             /* Called directly rather than over HTTP: the service is the
                single place the rules and the write live, and a loopback
@@ -589,7 +617,13 @@ switch ($form) {
 
         $divisions = Database::all('SELECT id, code, name FROM divisions ORDER BY name');
         $zones     = Database::all(
-            'SELECT id, code, name, division_id FROM trade_zones ORDER BY name'
+            ($lock !== null && $lock['id'] !== null)
+                ? 'SELECT id, code, name, division_id FROM trade_zones
+                    WHERE division_id = ' . (int) Database::value(
+                        'SELECT m.division_id FROM market_chairmen ch
+                           JOIN markets m ON m.id = ch.market_id WHERE ch.id = ?',
+                        [$lock['id']]) . ' ORDER BY name'
+                : 'SELECT id, code, name, division_id FROM trade_zones ORDER BY name'
         );
         $categories = Database::all('SELECT code, name FROM trade_categories ORDER BY demand_index DESC');
         $value = static function (string $k, $default = '') use ($values) {
@@ -609,6 +643,9 @@ switch ($form) {
 
             <div class="modal-head">
               <h3><?= $editing ? 'Edit vendor — ' . e($existing['full_name']) : 'Register a vendor' ?></h3>
+              <?php if ($chairmanMarketName !== null): ?>
+                <p class="desc">Recorded at <?= e($chairmanMarketName) ?>. This trader follows you as chairman of that market.</p>
+              <?php endif; ?>
               <button type="button" class="close" data-modal-close aria-label="Close">&times;</button>
             </div>
 
@@ -687,17 +724,29 @@ switch ($form) {
               <h4 class="mb-1">Where they trade now</h4>
               <div class="grid g3">
                 <div class="field">
-                  <label for="division_id">Division *</label>
-                  <select name="division_id" id="division_id" required<?= $cls('division_id') ?>>
-                    <option value="">Choose a division</option>
-                    <?php foreach ($divisions as $d): ?>
-                      <option value="<?= (int) $d['id'] ?>"
-                        <?= (string) $value('division_id') === (string) $d['id'] ? 'selected' : '' ?>>
-                        <?= e($d['name']) ?>
-                      </option>
-                    <?php endforeach; ?>
-                  </select>
-                  <?= $fieldError('division_id') ?>
+                  <?php /* The asterisk marks a field the reader must fill in.
+                           A chairman fills in nothing here. */ ?>
+                  <label for="division_id">Division<?= $chairmanDivision !== null ? '' : ' *' ?></label>
+                  <?php if ($chairmanDivision !== null): ?>
+                    <!-- A chairman does not choose a division: their market is
+                         in one, and the service replaces whatever arrives here
+                         with it. Asking would be a control that lies. -->
+                    <input type="text" id="division_id" value="<?= e($chairmanDivision) ?>"
+                           readonly aria-readonly="true">
+                    <input type="hidden" name="division_id" value="<?= e((string) $chairmanDivisionId) ?>">
+                    <span class="hint">A trader registered here is recorded in your market’s division.</span>
+                  <?php else: ?>
+                    <select name="division_id" id="division_id" required<?= $cls('division_id') ?>>
+                      <option value="">Choose a division</option>
+                      <?php foreach ($divisions as $d): ?>
+                        <option value="<?= (int) $d['id'] ?>"
+                          <?= (string) $value('division_id') === (string) $d['id'] ? 'selected' : '' ?>>
+                          <?= e($d['name']) ?>
+                        </option>
+                      <?php endforeach; ?>
+                    </select>
+                    <?= $fieldError('division_id') ?>
+                  <?php endif; ?>
                 </div>
                 <div class="field">
                   <label for="parish">Parish</label>
