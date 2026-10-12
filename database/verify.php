@@ -124,16 +124,30 @@ check('Vacant spaces across private markets',
     $vac['private_vacant_spaces'],
     'no allocations have targeted private markets');
 
+/** Traders this system has placed at one market, by its published code. */
+$placedAt = static function (string $code): int {
+    return (int) Database::value(
+        "SELECT COUNT(*) FROM allocations a JOIN markets m ON m.id = a.market_id
+          WHERE a.status IN ('accepted','occupied') AND m.code = ?",
+        [$code]
+    );
+};
+
 check('Usafi Market capacity',
     (int) Database::value("SELECT capacity FROM markets WHERE code='USF-01'"), 3000);
 
 check('Usafi Market registered vendors',
     (int) Database::value("SELECT registered_vendors FROM markets WHERE code='USF-01'"),
-    1600 + $placedInto,
-    sprintf('baseline 1600 %+d traders placed here', $placedInto));
+    1600 + $placedAt('USF-01'),
+    sprintf('baseline 1600 %+d traders placed here', $placedAt('USF-01')));
 
+/* The published figure is the space identified before this system ran.
+   A trader placed here is space no longer vacant, so the expectation is the
+   published figure less what has been placed at this market. */
 check('Kamwokya Market identified spaces',
-    (int) Database::value("SELECT vacant_spaces FROM markets WHERE code='KMW-01'"), 250);
+    (int) Database::value("SELECT vacant_spaces FROM markets WHERE code='KMW-01'"),
+    250 - $placedAt('KMW-01'),
+    sprintf('published 250 less %d placed here', $placedAt('KMW-01')));
 
 /* ------------------------------------------------------------------ */
 echo PHP_EOL . "2. City and division figures" . PHP_EOL;
@@ -157,10 +171,16 @@ check('LC1 wards', (int) Database::value('SELECT COALESCE(SUM(lc1_wards),0) FROM
 echo PHP_EOL . "3. Internal consistency" . PHP_EOL;
 
 /* A committed pitch is neither vacant nor occupied: it is held, by either
-   an open allocation from the Authority or an open request from a trader
-   who chose the pitch themselves. Capacity therefore equals registered +
+   an open offer from the Authority or an open request from a trader who
+   chose the pitch themselves. Capacity therefore equals registered +
    vacant + held. All three terms are counted, or a healthy system would
-   look broken. */
+   look broken.
+
+   Held stops at 'offered'. An 'accepted' allocation has already moved its
+   pitch out of the vacant pool and into registered_vendors, so counting it
+   here as well would take the same space off the ledger twice — and with
+   unsigned columns the resulting negative sum overflows rather than
+   reporting the disagreement. */
 check('Capacity = registered + vacant + space held',
     (int) Database::value(
         "SELECT COALESCE(SUM(ABS(capacity - registered_vendors - vacant_spaces - held)),0)
@@ -168,7 +188,7 @@ check('Capacity = registered + vacant + space held',
              SELECT m.id, m.capacity, m.registered_vendors, m.vacant_spaces,
                     (SELECT COUNT(*) FROM allocations a
                       WHERE a.market_id = m.id
-                        AND a.status IN ('proposed','offered','accepted')
+                        AND a.status IN ('proposed','offered')
                         AND a.market_space_id IS NOT NULL)
                   + (SELECT COUNT(*) FROM stall_requests sr
                       WHERE sr.market_id = m.id

@@ -449,8 +449,14 @@ function chairmanForVendor(int $vendorId): ?array
  */
 function syncVendorChairman(int $vendorId, int $marketId): void
 {
+    /* Active and interim both mean a person is answerable for the market —
+       an interim chairman is the one doing the job until the next election,
+       so traders placed there follow them like anyone else's. Only a record
+       marked vacant means nobody is answerable, and that must not take the
+       chairman from a trader who already has one. */
     $chairmanId = Database::value(
-        "SELECT id FROM market_chairmen WHERE market_id = ? AND status = 'active' LIMIT 1",
+        "SELECT id FROM market_chairmen
+          WHERE market_id = ? AND status IN ('active','interim') LIMIT 1",
         [$marketId]
     );
     if ($chairmanId === null) {

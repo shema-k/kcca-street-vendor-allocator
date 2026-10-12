@@ -163,7 +163,7 @@ final class Auth
         }
         $row = Database::one(
             'SELECT u.id, u.username, u.full_name, u.title, u.directorate, u.role, u.division_id,
-                    u.chairman_id, u.email, u.phone, u.is_active, u.last_login_at,
+                    u.chairman_id, u.vendor_id, u.email, u.phone, u.is_active, u.last_login_at,
                     d.name AS division_name,
                     ch.market_id AS my_market_id, ch.full_name AS chairman_name,
                     m.name AS market_name
