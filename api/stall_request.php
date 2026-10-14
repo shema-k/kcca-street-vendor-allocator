@@ -30,14 +30,27 @@ switch ($action) {
 
     /* ---------------- A trader asks for a pitch ---------------- */
     case 'request': {
+        /* A signed-in trader is already identified by their session, so the
+           identity fields are not required of them. A member of the public,
+           who has no session, must supply them.
+
+           Requiring both at once is what made the vendor's request
+           impossible: they are shown their record rather than a name field,
+           so they send no name — and were then told a detail was missing,
+           about a field the form never asked for. */
+        $signedVendorId = Auth::role() === 'vendor' ? (int) (Auth::user()['vendor_id'] ?? 0) : 0;
+        $namedVendorId  = Auth::can('allocate') ? (int) ($_POST['vendor_id'] ?? 0) : 0;
+        $identified     = $signedVendorId > 0 || $namedVendorId > 0;
+
         /* Validate what the trader supplied. The browser marks these
            required, but a request can reach the endpoint without the
            browser, so the API must not rely on the form. */
         $v = new Validator($_POST, [
             'space_id'         => ['type' => 'int', 'label' => 'Pitch', 'required' => true, 'min' => 1],
-            'full_name'        => ['type' => 'text', 'label' => 'Full name', 'required' => true,
-                                    'min' => 3, 'max' => 140],
-            'phone'            => ['type' => 'phone', 'label' => 'Telephone number', 'required' => true],
+            'full_name'        => ['type' => 'text', 'label' => 'Full name',
+                                    'required' => !$identified, 'min' => 3, 'max' => 140],
+            'phone'            => ['type' => 'phone', 'label' => 'Telephone number',
+                                    'required' => !$identified],
             'national_id'      => ['type' => 'national_id', 'label' => 'National ID number'],
             'business_category' => ['type' => 'enum', 'label' => 'What you sell',
                                     'options' => ['food-cooking','fresh-produce','meat-fish','beverages',
@@ -87,19 +100,42 @@ switch ($action) {
             ), 409);
         }
 
-        /* Is this person already on the vendor register? */
+        /* Is this person already on the vendor register?
+
+           A signed-in trader is their own vendor_id, from the session and
+           never from the request: otherwise anybody could point a request at
+           somebody else's record and take a pitch in their name. The
+           national-ID and telephone lookups are for the member of the public,
+           who has no session. */
         $vendor = null;
-        if (!empty($_POST['national_id'])) {
-            $vendor = Database::one(
-                'SELECT * FROM vendors WHERE national_id = ? LIMIT 1',
-                [preg_replace('/[^0-9]/', '', (string) $_POST['national_id'])]
-            );
+        if ($signedVendorId > 0) {
+            $vendor = Database::one('SELECT * FROM vendors WHERE id = ? LIMIT 1', [$signedVendorId]);
+        }
+        if (!$vendor && $namedVendorId > 0) {
+            $vendor = Database::one('SELECT * FROM vendors WHERE id = ? LIMIT 1', [$namedVendorId]);
         }
         if (!$vendor) {
-            $vendor = Database::one(
-                'SELECT * FROM vendors WHERE phone = ? LIMIT 1',
-                [preg_replace('/[^0-9+]/', '', (string) ($_POST['phone'] ?? ''))]
-            );
+            /* The validated value has been normalised — upper-cased, with
+               spaces and punctuation stripped — so matching on it is matching
+               on what the system itself would have stored. Re-stripping the
+               raw post here would look for 8 digits where a NIN has 13
+               characters, and would miss the record it was meant to find. */
+            $typedId = (string) $v->value('national_id');
+            if ($typedId !== '' && strlen($typedId) >= 6) {
+                $vendor = Database::one(
+                    'SELECT * FROM vendors WHERE national_id = ? LIMIT 1',
+                    [$typedId]
+                );
+            }
+        }
+        if (!$vendor) {
+            $phoneDigits = preg_replace('/[^0-9+]/', '', (string) ($_POST['phone'] ?? ''));
+            if (strlen($phoneDigits) >= 9) {
+                $vendor = Database::one(
+                    'SELECT * FROM vendors WHERE phone = ? LIMIT 1',
+                    [$phoneDigits]
+                );
+            }
         }
 
         /* Already got space? Then they do not need to ask. */
@@ -120,13 +156,19 @@ switch ($action) {
 
         $reference = 'REQ-' . date('ymd') . '-' . strtoupper(substr(bin2hex(random_bytes(3)), 0, 5));
 
+        /* The row records who actually asked. Where the trader is already on
+           the register that is their record — name, telephone, ID and trade —
+           not what was typed into a form, and not what a member of the public
+           supplied. A snapshot of a real person beats a re-typed one, and
+           full_name is NOT NULL: storing the typed value, which is empty for
+           an identified trader, failed the insert outright. */
         $id = Database::insert('stall_requests', [
             'reference'        => $reference,
             'space_id'         => $spaceId,
             'market_id'        => (int) $space['market_id'],
             'vendor_id'        => $vendor ? (int) $vendor['id'] : null,
-            'full_name'        => $v->value('full_name'),
-            'phone'            => $v->value('phone'),
+            'full_name'        => $vendor ? $vendor['full_name'] : $v->value('full_name'),
+            'phone'            => $vendor ? $vendor['phone'] : $v->value('phone'),
             'national_id'      => $vendor ? $vendor['national_id'] : $v->value('national_id'),
             'business_category'=> $vendor ? $vendor['business_category'] : $v->value('business_category'),
             'trade_detail'     => $v->value('trade_detail') ?: null,

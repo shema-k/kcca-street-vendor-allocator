@@ -74,6 +74,10 @@ require __DIR__ . '/../layouts/header.php';
 </section>
 
 <?php if ($isChairman): ?>
+  <div class="page-head-actions">
+    <?php require __DIR__ . '/../partials/live_watch.php'; ?>
+  </div>
+
 
   <section class="rd-stats">
     <div class="rd-stat"><span class="num"><?= num(count($mine_notices)) ?></span><span>Notices to you</span></div>
@@ -111,6 +115,10 @@ require __DIR__ . '/../layouts/header.php';
   </section>
 
 <?php else: ?>
+
+  <div class="page-head-actions">
+    <?php require __DIR__ . '/../partials/live_watch.php'; ?>
+  </div>
 
   <section class="rd-stats">
     <div class="rd-stat"><span class="num"><?= num(count($register)) ?></span><span>Notices issued</span></div>

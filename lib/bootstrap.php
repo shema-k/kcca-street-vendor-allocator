@@ -31,7 +31,13 @@ require_once __DIR__ . '/Lang.php';
    records who actually handed it over. */
 require_once __DIR__ . '/TraderSupport.php';
 require_once __DIR__ . '/Notices.php';
-require_once __DIR__ . '/Complaints.php';require_once __DIR__ . '/Backup.php';
+require_once __DIR__ . '/Complaints.php';
+/* The live queue counts. Beside the others because it reads all three: one
+   definition of what is waiting on a reader, used both by the poller and by
+   the pages it refreshes. Two definitions would drift, and drift here shows
+   as "1 new" on every poll or as nothing ever arriving. */
+require_once __DIR__ . '/LiveCounts.php';
+require_once __DIR__ . '/Backup.php';
 require_once __DIR__ . '/ErrorHandler.php';
 
 /**
@@ -164,6 +170,20 @@ function navigation(): array
  * The result: no two roles see the same rail, and no role is shown a link
  * to somewhere it has no standing to act.
  */
+/**
+ * Ask the footer for the live-queue poller.
+ *
+ * Called by the pages that carry a queue somebody watches: the chairman's
+ * complaints and notices, the officer's complaint register, the workwear
+ * follow-up list. Every other page keeps its existing weight, because asking
+ * every page to poll a count nobody is looking at is exactly the sort of
+ * idle request that makes a system feel slow.
+ */
+function watchLive(): void
+{
+    $GLOBALS['liveWatch'] = true;
+}
+
 function navigationFor(string $role): array
 {
     $out = [];

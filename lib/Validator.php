@@ -90,11 +90,26 @@ final class Validator
                 return ['ok' => true, 'value' => $digits];
 
             case 'national_id':
-                $digits = preg_replace('/[^0-9]/', '', (string) $value);
-                if (strlen($digits) < 10 || strlen($digits) > 16) {
-                    return ['ok' => false, 'message' => $label . ' must be 10 to 16 digits.'];
+                /* A Ugandan national ID number is alphanumeric — NINs are
+                   issued as CF12345678PQXA — and stripping the letters before
+                   counting them left eight digits, which the previous rule
+                   rejected as "must be 10 to 16 digits". A trader who typed
+                   their own genuine NIN was told a detail was missing, for a
+                   field that is optional.
+
+                   So the number is taken as given, upper-cased with spaces
+                   and punctuation removed, and judged on its length rather
+                   than on how many digits happen to survive. Only a value
+                   under six characters is refused: anything that short is a
+                   mis-type, not an ID. */
+                $id = strtoupper((string) preg_replace('/[^A-Z0-9]/i', '', (string) $value));
+                if ($id === '') {
+                    return ['ok' => true, 'value' => null];
                 }
-                return ['ok' => true, 'value' => $digits];
+                if (strlen($id) < 6 || strlen($id) > 20) {
+                    return ['ok' => false, 'message' => $label . ' does not look like a national ID number. Leave it blank if you would rather not give it.'];
+                }
+                return ['ok' => true, 'value' => $id];
 
             case 'email':
                 if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {

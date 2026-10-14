@@ -89,6 +89,10 @@ require __DIR__ . '/../layouts/header.php';
   </div>
 </section>
 
+  <div class="page-head-actions">
+    <?php require __DIR__ . '/../partials/live_watch.php'; ?>
+  </div>
+
 <section class="rd-stats">
   <div class="rd-stat"><span class="num"><?= num($counts['issued']) ?></span><span>Handed over</span></div>
   <div class="rd-stat"><span class="num"><?= num($counts['received']) ?></span><span>Confirmed received</span></div>

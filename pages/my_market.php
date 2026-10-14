@@ -171,6 +171,10 @@ require __DIR__ . '/../layouts/header.php';
 ?>
 
 <div class="page-head">
+  <div class="page-head-actions">
+    <?php require __DIR__ . '/../partials/live_watch.php'; ?>
+  </div>
+
   <div class="grow">
     <div class="breadcrumb">
       <a href="dashboard.php">Command</a><span class="sep">/</span>My market

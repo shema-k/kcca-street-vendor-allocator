@@ -130,6 +130,37 @@ if (Auth::can('allocate')) {
    vendor's core function, so it must not sit behind a staff permission. */
 $canChoose = !Auth::check() || Auth::can('allocate') || Auth::role() === 'vendor';
 
+/* The trader's own record, so the request form is not a blank slate asking
+   them to retype what the Authority already holds.
+
+   This was a real bug: the modal rendered every field empty, so a signed-in
+   vendor had to type their name, telephone and national ID again, and any
+   formatting difference produced "Some details are missing" — for a field
+   they were never obliged to fill. They gave these details when they
+   registered. A vendor_id is also sent, so the request is matched against
+   their record rather than against a phone number they have just typed. */
+$meVendor = null;
+if (Auth::role() === 'vendor') {
+    $meVendorId = (int) (Auth::user()['vendor_id'] ?? 0);
+    if ($meVendorId > 0) {
+        $meVendor = Database::one(
+            'SELECT id, vendor_code, full_name, phone, national_id, business_category,
+                    division_id, current_zone_id
+               FROM vendors WHERE id = ? LIMIT 1',
+            [$meVendorId]
+        );
+    }
+}
+$meVendorCanSeek = true;
+if ($meVendor) {
+    /* A trader already holding space does not need to ask for more. */
+    $meVendorCanSeek = (int) Database::value(
+        "SELECT COUNT(*) FROM allocations
+          WHERE vendor_id = ? AND status IN ('proposed','offered','accepted','occupied')",
+        [(int) $meVendor['id']]
+    ) === 0;
+}
+
 $occupancy = $capacity > 0 ? round((int) $market['registered_vendors'] / $capacity * 100, 1) : 0.0;
 
 /* Whether a trader may pick a pitch. Rendered into the script below as a
@@ -512,35 +543,68 @@ require __DIR__ . '/../layouts/header.php';
       <input type="hidden" name="csrf" value="<?= e(Auth::csrfToken()) ?>">
       <input type="hidden" name="action" value="request">
       <input type="hidden" name="space_id" id="req-space-id" value="">
+      <?php if ($meVendor): ?>
+        <input type="hidden" name="vendor_id" id="req-vendor-id" value="<?= (int) $meVendor['id'] ?>">
+      <?php endif; ?>
       <div class="modal-head">
         <h3 id="req-title">Request this pitch</h3>
         <button type="button" class="close" data-modal-close aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <div class="alert alert-info" id="req-summary"></div>
+
+        <?php if ($meVendor && !$meVendorCanSeek): ?>
+          <div class="alert alert-warn">
+            You are recorded as holding space already. If you want to move, speak to the market
+            administrator first so the current allocation can be closed.
+          </div>
+        <?php endif; ?>
+
+        <?php if ($meVendor): ?>
+          <?php /* Already supplied at registration, so they are shown as a
+                   record rather than asked for again. */ ?>
+          <div class="kv">
+            <div class="row-tight"><span class="cl">Requesting as</span>
+              <span class="strong"><?= e($meVendor['full_name']) ?></span></div>
+            <div class="row-tight"><span class="cl">Vendor code</span>
+              <span><?= e($meVendor['vendor_code']) ?></span></div>
+            <div class="row-tight"><span class="cl">Telephone</span>
+              <span><?= e($meVendor['phone']) ?></span></div>
+            <div class="row-tight"><span class="cl">On the register</span>
+              <span><?= e($meVendor['national_id'] ?: 'not recorded') ?></span></div>
+          </div>
+          <p class="xsmall muted">
+            These are the details you gave when you registered. If any of them are wrong,
+            <a href="profile.php">correct them on your record</a> before you send this.
+          </p>
+        <?php endif; ?>
+
         <div class="grid g2">
-          <div class="field">
-            <label for="req-name">Full name <span class="req">*</span></label>
-            <input type="text" id="req-name" name="full_name" required maxlength="140">
-          </div>
-          <div class="field">
-            <label for="req-phone">Telephone <span class="req">*</span></label>
-            <input type="text" id="req-phone" name="phone" required placeholder="07…">
-            <span class="hint">We will only use this to tell you about your request.</span>
-          </div>
-          <div class="field">
-            <label for="req-nid">National ID number</label>
-            <input type="text" id="req-nid" name="national_id" maxlength="20">
-          </div>
-          <div class="field">
-            <label for="req-trade">What do you sell?</label>
-            <select id="req-trade" name="business_category">
-              <option value="">Choose a trade</option>
-              <?php foreach (Database::all('SELECT code, name FROM trade_categories ORDER BY demand_index DESC') as $c): ?>
-                <option value="<?= e($c['code']) ?>"><?= e($c['name']) ?></option>
-              <?php endforeach; ?>
-            </select>
-          </div>
+          <?php if (!$meVendor): ?>
+            <div class="field">
+              <label for="req-name">Full name <span class="req">*</span></label>
+              <input type="text" id="req-name" name="full_name" required maxlength="140">
+            </div>
+            <div class="field">
+              <label for="req-phone">Telephone <span class="req">*</span></label>
+              <input type="text" id="req-phone" name="phone" required placeholder="07…">
+              <span class="hint">We will only use this to tell you about your request.</span>
+            </div>
+            <div class="field">
+              <label for="req-nid">National ID number</label>
+              <input type="text" id="req-nid" name="national_id" maxlength="20">
+              <span class="hint">Optional. We use it to match you to your record.</span>
+            </div>
+            <div class="field">
+              <label for="req-trade">What do you sell?</label>
+              <select id="req-trade" name="business_category">
+                <option value="">Choose a trade</option>
+                <?php foreach (Database::all('SELECT code, name FROM trade_categories ORDER BY demand_index DESC') as $c): ?>
+                  <option value="<?= e($c['code']) ?>"><?= e($c['name']) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+          <?php endif; ?>
           <div class="field" style="grid-column:1/-1">
             <label for="req-detail">Describe your goods</label>
             <input type="text" id="req-detail" name="trade_detail" maxlength="200"
@@ -555,7 +619,10 @@ require __DIR__ . '/../layouts/header.php';
       </div>
       <div class="modal-foot">
         <button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>
-        <button type="submit" class="btn btn-primary">Send request</button>
+        <button type="submit" class="btn btn-primary"
+          <?= $meVendor && !$meVendorCanSeek ? 'disabled title="You already hold space"' : '' ?>>
+          Send request
+        </button>
       </div>
     </form>
   </div>
@@ -700,15 +767,31 @@ $pageScripts = <<<HTML
     var btn = this.querySelector('[type=submit]');
     btn.disabled = true; btn.textContent = 'Sending…';
 
+    /* Read the form through a helper that returns '' for a field the form
+       does not have. A signed-in trader is shown their record instead of
+       the identity inputs, so those ids do not exist — and reading .value
+       off a missing id throws, which takes the whole submit with it and
+       leaves the button spinning with nothing sent. That is exactly the
+       "some details are missing" a trader meets when the form has silently
+       sent none of them. */
+    var val = function (id) {
+      var el = document.getElementById(id);
+      return el ? el.value : '';
+    };
+
     KCCA.post(KCCA.api('api/stall_request.php'), {
       action: 'request',
-      space_id: document.getElementById('req-space-id').value,
-      full_name: document.getElementById('req-name').value,
-      phone: document.getElementById('req-phone').value,
-      national_id: document.getElementById('req-nid').value,
-      business_category: document.getElementById('req-trade').value,
-      trade_detail: document.getElementById('req-detail').value,
-      reason: document.getElementById('req-reason').value
+      space_id: val('req-space-id'),
+      /* Only sent when the form actually asks for it. A vendor's identity
+         travels as vendor_id, so the request is matched to their existing
+         record rather than to a phone number just typed by hand. */
+      vendor_id: val('req-vendor-id'),
+      full_name: val('req-name'),
+      phone: val('req-phone'),
+      national_id: val('req-nid'),
+      business_category: val('req-trade'),
+      trade_detail: val('req-detail'),
+      reason: val('req-reason')
     }).then(function (res) {
       btn.disabled = false; btn.textContent = 'Send request';
       if (res && res.ok) {
@@ -717,7 +800,12 @@ $pageScripts = <<<HTML
         KCCA.flash(res.message, 'ok', 9000);
         loadStalls();
       } else if (res && res.errors) {
-        KCCA.flash(res.error, 'bad', 9000);
+        /* Name the field, not just "details are missing". A trader told
+           which line to look at can fix it; one told a category cannot. */
+        var list = Object.keys(res.errors).map(function (k) {
+          return res.errors[k];
+        });
+        KCCA.flash(res.error + ' ' + list.join(' '), 'bad', 9000);
         Object.keys(res.errors).forEach(function (k) {
           var el = document.querySelector('[name=' + k + ']');
           if (el) el.classList.add('invalid');

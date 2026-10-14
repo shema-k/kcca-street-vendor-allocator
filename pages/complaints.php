@@ -71,6 +71,10 @@ require __DIR__ . '/../layouts/header.php';
 
 <section class="rd-stats">
   <?php if ($isChairman): ?>
+  <div class="page-head-actions">
+    <?php require __DIR__ . '/../partials/live_watch.php'; ?>
+  </div>
+
     <div class="rd-stat"><span class="num"><?= num($counts['open']) ?></span><span>Open with you</span></div>
     <div class="rd-stat"><span class="num"><?= num($counts['awaiting_reply']) ?></span><span>Awaiting our reply</span></div>
     <div class="rd-stat"><span class="num"><?= num($counts['resolved']) ?></span><span>Resolved</span></div>
@@ -127,6 +131,10 @@ require __DIR__ . '/../layouts/header.php';
         ? 'Nothing open.'
         : 'Nothing closed.' ?></p>
   <?php else: ?>
+  <div class="page-head-actions">
+    <?php require __DIR__ . '/../partials/live_watch.php'; ?>
+  </div>
+
     <div class="table-wrap">
     <table class="table">
       <thead>

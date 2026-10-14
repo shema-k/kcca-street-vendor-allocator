@@ -681,7 +681,7 @@ switch ($form) {
                   <label for="national_id">National ID</label>
                   <input type="text" id="national_id" name="national_id" maxlength="20"<?= $cls('national_id') ?>
                          value="<?= e($value('national_id')) ?>">
-                  <?= $fieldError('national_id') ?: '<span class="hint">10 to 16 digits.</span>' ?>
+                  <?= $fieldError('national_id') ?: '<span class="hint">Alphanumeric, as printed on the card.</span>' ?>
                 </div>
                 <div class="field">
                   <label for="phone">Telephone *</label>

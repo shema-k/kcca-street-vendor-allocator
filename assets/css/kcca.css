@@ -1295,3 +1295,46 @@ tr.row-alert > td:first-child { box-shadow: inset 3px 0 0 var(--kcca-red); }
 .notice-mini:last-child { border-bottom: 0; padding-bottom: 0; }
 .notice-mini:first-child { padding-top: 0; }
 .notice-mini p { margin: 5px 0 0; color: var(--ink-3); line-height: 1.5; }
+
+/* ===================================================================
+   THE LIVE QUEUE
+   -------------------------------------------------------------------
+   The poller itself is deliberately quiet: one small request on an interval,
+   an off-by-default toggle, and a banner that waits to be clicked. What is
+   styled here is only the control and that banner.
+   =================================================================== */
+.live-watch {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 5px 11px; border-radius: 20px;
+  background: var(--surface-2); border: 1px solid var(--line);
+}
+.live-watch .btn { padding: 3px 10px; font-size: 11.5px; }
+.live-watch [data-live-toggle][aria-pressed="true"] {
+  background: var(--kcca-green-soft); color: var(--kcca-green);
+  border-color: rgba(27, 127, 77, .35);
+}
+
+/* Announced, not forced. It sits out of the way at the foot of the viewport
+   and does not move the page, because a page that reloads itself under
+   somebody reading it is a page people stop trusting. */
+.live-bar {
+  position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+  z-index: 200; display: flex; align-items: center; gap: 12px;
+  padding: 9px 11px 9px 15px; max-width: calc(100vw - 32px);
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 24px;
+  box-shadow: var(--shadow-3);
+  animation: lcca-rise .18s ease-out;
+}
+.live-bar[hidden] { display: none; }
+@keyframes lcca-rise { from { opacity: 0; transform: translate(-50%, 8px); } }
+.live-what { font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.live-close {
+  border: 0; background: none; color: var(--ink-4); cursor: pointer;
+  font-size: 17px; line-height: 1; padding: 2px 5px;
+}
+.live-close:hover { color: var(--ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  .live-bar { animation: none; }
+}

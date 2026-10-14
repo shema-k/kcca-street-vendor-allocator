@@ -77,6 +77,10 @@ $a = $f['authority'];
         rest are drawn by the pages that asked for them. */ ?>
 <script src="../assets/js/kcca.js"></script>
 <script src="../assets/js/activities.js"></script>
+<?php /* The live-queue poller, loaded only where a page has asked for it with
+         [data-live]. Pages that carry no queue cost nothing, which is the
+         reason this is not in the always-loaded pair above. */ ?>
+<?php if (!empty($liveWatch)): ?><script src="../assets/js/live.js?v=<?= e(APP_VERSION) ?>"></script><?php endif; ?>
 <?php if (needs_asset('charts')): ?><script src="../assets/js/charts.js"></script><?php endif; ?>
 <?php if (needs_asset('map')): ?><script src="../assets/js/kampala-map.js"></script><?php endif; ?>
 <?php if (needs_asset('stall')): ?><script src="../assets/js/stall-map.js"></script><?php endif; ?>

@@ -101,8 +101,21 @@ $closed     = (int) Database::value(
       WHERE a.status IN ('declined','withdrawn','expired') AND m.category = 'public'"
 );
 
+/* A trader's own request holds a pitch out of the pool exactly as an offer
+   does — the application reserves the pitch and reduces the market's vacancy
+   on the request, deliberately, because a pitch somebody has asked for is
+   committed to them until it is decided. This figure has to be declared here,
+   before the checks that use it: it was noted in the summary further down but
+   never subtracted, so any pending request failed three checks at once and
+   made a working system look broken. */
+$requestsLive = (int) Database::value(
+    "SELECT COUNT(*) FROM stall_requests sr
+       JOIN markets m ON m.id = sr.market_id
+      WHERE sr.status IN ('pending','reviewing') AND m.category = 'public'"
+);
+
 /* Space still out of the pool because of something this system did. */
-$publicDelta = -($placedInto + $heldOffers);
+$publicDelta = -($placedInto + $heldOffers + $requestsLive);
 
 echo PHP_EOL . "1. Official KCCA figures, adjusted for this system's own activity" . PHP_EOL;
 
@@ -113,8 +126,8 @@ check('Public markets in the register',
 check('Vacant spaces across public markets',
     (int) Database::value("SELECT COALESCE(SUM(vacant_spaces),0) FROM markets WHERE category='public'"),
     $vac['public_vacant_spaces'] + $publicDelta,
-    sprintf('baseline %d, less %d placed and %d offered',
-        $vac['public_vacant_spaces'], $placedInto, $heldOffers));
+    sprintf('baseline %d, less %d placed, %d offered and %d requested',
+        $vac['public_vacant_spaces'], $placedInto, $heldOffers, $requestsLive));
 
 check('Private markets in the register',
     (int) Database::value("SELECT COUNT(*) FROM markets WHERE category='private'"), $vac['private_markets']);
@@ -296,16 +309,22 @@ check('Allocations pointing at a real market',
     ),
     0);
 
-check('A pitch tied to a live offer is reserved, not free',
+check('A reserved pitch is held by somebody, not merely marked',
     (int) Database::value(
         "SELECT COUNT(*) FROM market_spaces s
            WHERE s.status = 'reserved'
              AND NOT EXISTS (
                  SELECT 1 FROM allocations a
                   WHERE a.market_space_id = s.id
-                    AND a.status IN ('proposed','offered','accepted'))"
+                    AND a.status IN ('proposed','offered','accepted'))
+             AND NOT EXISTS (
+                 SELECT 1 FROM stall_requests sr
+                  WHERE sr.space_id = s.id
+                    AND sr.status IN ('pending','reviewing'))"
     ),
-    0, 'every reserved pitch is held by exactly one live offer');
+    0,
+    'a reserved pitch is held by a live offer or by a trader still awaiting a '
+    . 'decision; one held by neither was reserved and then forgotten');
 
 check('No pitch is double-booked',
     (int) Database::value(
@@ -336,11 +355,6 @@ $privateNow = (int) Database::value("SELECT COALESCE(SUM(vacant_spaces),0) FROM 
 
 note('Published public vacancy',            num($vac['public_vacant_spaces']));
 note('Traders placed into public markets',  num($placedInto) . ' — space no longer vacant');
-$requestsLive = (int) Database::value(
-    "SELECT COUNT(*) FROM stall_requests sr
-       JOIN markets m ON m.id = sr.market_id
-      WHERE sr.status IN ('pending','reviewing') AND m.category = 'public'");
-
 note('Offers live, holding space',          num($heldOffers) . ' — reserved by the Authority, not yet available');
 note('Trader requests live, holding space', num($requestsLive) . ' — a trader chose this pitch and is awaiting a decision');
 note('Offers declined or withdrawn',        num($closed) . ' — space returned to the pool, no net effect');
