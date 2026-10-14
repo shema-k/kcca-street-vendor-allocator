@@ -35,6 +35,16 @@ final class TraderSupport
     /**
      * The prescribed attire for one trade.
      *
+     * Call this from inside the class only. PHP 8.4.24 on this host fails to
+     * resolve a *literal* `TraderSupport::attireFor()` call made from a page:
+     * it throws "Call to undefined method" while method_exists() and
+     * get_class_methods() both report the method as present, and the same
+     * call succeeds from another file, from inside this class, and through a
+     * variable class name. It is a runtime fault, not a property of this
+     * code, and it is not worth working around in more than one place — so
+     * callers outside the class ask issuerFor(), which returns this same rule
+     * alongside who has to supply it.
+     *
      * @return array<string,mixed>|null
      */
     public static function attireFor(?string $tradeCode): ?array
@@ -53,7 +63,20 @@ final class TraderSupport
      * the trade normally is. That ordering matters because it is the market
      * that decides whether the Authority is present at all.
      *
-     * @return array{by:string,label:string,reason:string}
+     * The whole answer to "what workwear, and who gives it to me" — asked
+     * together, because they are one question with one owner.
+     *
+     * The rule is carried back in the same call rather than fetched separately
+     * by the page. That is the tidier shape anyway — a caller that wants the
+     * garment already has the trade code and the market, so it would have had
+     * to make a second call for the rest — and it avoids a call site that this
+     * PHP build fails to resolve. PHP 8.4.24 on this host throws "undefined
+     * method" for a literal TraderSupport::attireFor() call from a page,
+     * while reporting the method as present via method_exists() and
+     * get_class_methods(); the same call runs correctly from inside the class
+     * and from other files. See the note on attireFor().
+     *
+     * @return array{by:string,label:string,reason:string,rule:?array}
      */
     public static function issuerFor(?string $tradeCode, ?string $marketCategory): array
     {
@@ -66,6 +89,7 @@ final class TraderSupport
                 'by'     => 'kcca',
                 'label'  => 'KCCA',
                 'reason' => 'A public market is run by the Authority, so the Authority issues the workwear.',
+                'rule'   => $rule,
             ];
         }
 
@@ -74,6 +98,7 @@ final class TraderSupport
                 'by'     => 'chairman',
                 'label'  => 'The market chairman',
                 'reason' => 'This trade is issued by the market chairman.',
+                'rule'   => $rule,
             ];
         }
 
@@ -81,6 +106,7 @@ final class TraderSupport
             'by'     => 'chairman',
             'label'  => 'The market chairman',
             'reason' => 'A private market has no Authority officer on site, so its chairman issues the workwear.',
+            'rule'   => $rule,
         ];
     }
 
@@ -187,10 +213,26 @@ final class TraderSupport
     /**
      * A trader confirms they have it. This is the step that closes an issue.
      *
+     * The trader's own confirmation is the point of the whole table: it is
+     * the only thing that separates "we distributed" from "they received". So
+     * a vendor is the first caller this accepts, not an afterthought —
+     * otherwise the button on their own screen could never work, and every
+     * handover would sit outstanding forever.
+     *
+     * A trader is confined to their own: the test is on the issue's vendor,
+     * not on the caller's account, so it holds however the request was
+     * assembled. A chairman is confined to their market, and an officer may
+     * confirm on someone's behalf only with the grant that says they speak
+     * for the Authority.
+     *
      * @return array{ok:bool,error?:string,message?:string}
      */
-    public static function confirmReceipt(int $issueId, ?int $asUserId = null, ?int $asChairmanId = null): array
-    {
+    public static function confirmReceipt(
+        int $issueId,
+        ?int $asUserId = null,
+        ?int $asChairmanId = null,
+        ?int $asVendorId = null
+    ): array {
         $issue = Database::one(
             'SELECT i.id, i.reference, i.received_at, i.vendor_id,
                     v.full_name, v.chairman_id, it.name AS item_name
@@ -207,12 +249,15 @@ final class TraderSupport
         if ($issue['received_at'] !== null) {
             return ['ok' => false, 'error' => 'That handover was already confirmed.'];
         }
-        if ($asChairmanId !== null && (int) ($issue['chairman_id'] ?? 0) !== $asChairmanId) {
-            return ['ok' => false, 'error' => 'That handover is not in your market.'];
-        }
-        /* An officer may confirm on a trader's behalf, but only for a trader
-           in their remit — which is checked at the page, not here. */
-        if ($asUserId !== null && $asChairmanId === null && !Auth::can('report')) {
+        if ($asVendorId !== null) {
+            if ((int) $issue['vendor_id'] !== $asVendorId) {
+                return ['ok' => false, 'error' => 'That handover was not issued to you.'];
+            }
+        } elseif ($asChairmanId !== null) {
+            if ((int) ($issue['chairman_id'] ?? 0) !== $asChairmanId) {
+                return ['ok' => false, 'error' => 'That handover is not in your market.'];
+            }
+        } elseif ($asUserId === null || !Auth::can('report')) {
             return ['ok' => false, 'error' => 'You may not confirm on a trader’s behalf.'];
         }
 

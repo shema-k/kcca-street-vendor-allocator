@@ -1277,3 +1277,21 @@ tr.row-alert > td:first-child { box-shadow: inset 3px 0 0 var(--kcca-red); }
 
 .check { display: flex; align-items: center; gap: 8px; font-size: 13.5px; margin-top: 10px; }
 .check input { width: auto; }
+
+/* ===================================================================
+   WORKWEAR AND NOTICES — the trader's own screens
+   =================================================================== */
+.attire { display: flex; align-items: center; gap: 12px; }
+/* The chip is the colour rule itself, shown at a size a trader can recognise
+   on someone else across a market — which is what the rule is for. */
+.attire-chip {
+  flex: none; width: 40px; height: 40px; border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, .18);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, .3), 0 1px 3px rgba(0, 0, 0, .12);
+}
+.attire .strong { font-size: 15px; }
+
+.notice-mini { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.notice-mini:last-child { border-bottom: 0; padding-bottom: 0; }
+.notice-mini:first-child { padding-top: 0; }
+.notice-mini p { margin: 5px 0 0; color: var(--ink-3); line-height: 1.5; }

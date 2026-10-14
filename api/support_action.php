@@ -22,19 +22,34 @@ $action = (string) ($_POST['action'] ?? '');
 $mine   = chairmanLock();
 $isChairman = $mine !== null;
 
+/* A trader's own account. Their confirmation is what closes a handover, so
+   the one action they may take here is 'confirm' — and only for themselves,
+   which TraderSupport::confirmReceipt enforces against the issue's vendor. */
+$vendorId = 0;
+if (Auth::role() === 'vendor') {
+    $vendorId = (int) (Auth::user()['vendor_id'] ?? 0);
+}
+
 /* An officer needs 'report' to hand things over — it is the grant that says
    you speak for the Authority. A chairman needs only their own market, which
-   the service checks per trader. */
-if (!$isChairman) {
-    if (!Auth::can('report')) {
-        jsonOut(['ok' => false, 'error' => 'Your role does not permit this action.'], 403);
-    }
+   the service checks per trader. A trader may only confirm their own receipt,
+   so they are let through here and confined below. */
+if (!$isChairman && Auth::role() !== 'vendor' && !Auth::can('report')) {
+    jsonOut(['ok' => false, 'error' => 'Your role does not permit this action.'], 403);
+}
+if (Auth::role() === 'vendor' && $vendorId <= 0) {
+    jsonOut(['ok' => false, 'error' => 'Your account is not linked to a trader record.'], 403);
 }
 
 try {
     switch ($action) {
 
         case 'issue':
+            /* A trader has nothing to issue; the earlier gate lets them reach
+               this switch so they can confirm, and not so they can hand out. */
+            if (Auth::role() === 'vendor') {
+                jsonOut(['ok' => false, 'error' => 'Only the Authority or a market chairman can issue support.'], 403);
+            }
             $result = TraderSupport::issue([
                 'vendor_id'    => (int) ($_POST['vendor_id'] ?? 0),
                 'item_id'      => (int) ($_POST['item_id'] ?? 0),
@@ -50,7 +65,8 @@ try {
             $result = TraderSupport::confirmReceipt(
                 (int) ($_POST['issue_id'] ?? 0),
                 $isChairman ? null : Auth::id(),
-                $isChairman ? (int) $mine['id'] : null
+                $isChairman ? (int) $mine['id'] : null,
+                $vendorId > 0 ? $vendorId : null
             );
             break;
 

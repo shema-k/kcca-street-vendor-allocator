@@ -88,7 +88,12 @@ require __DIR__ . '/../layouts/header.php';
   </div>
 
   <?php if ($shown): ?>
-    <?php require __DIR__ . '/../partials/notice_card.php'; ?>
+    <?php
+    /* The partial reads $notice. Naming it here is what makes the card render;
+       expecting it to guess is how it came to be silently absent. */
+    $notice = $shown;
+    require __DIR__ . '/../partials/notice_card.php';
+    ?>
   <?php endif; ?>
 
   <section class="card">
@@ -117,7 +122,12 @@ require __DIR__ . '/../layouts/header.php';
   </section>
 
   <?php if ($shown): ?>
-    <?php require __DIR__ . '/../partials/notice_card.php'; ?>
+    <?php
+    /* The partial reads $notice. Naming it here is what makes the card render;
+       expecting it to guess is how it came to be silently absent. */
+    $notice = $shown;
+    require __DIR__ . '/../partials/notice_card.php';
+    ?>
   <?php endif; ?>
 
   <?php if ($canWrite): ?>

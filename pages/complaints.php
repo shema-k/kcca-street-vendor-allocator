@@ -83,7 +83,14 @@ require __DIR__ . '/../layouts/header.php';
 </section>
 
 <?php if ($shown): ?>
-  <?php require __DIR__ . '/../partials/complaint_card.php'; ?>
+  <?php
+  /* The partial reads $complaint. Handing it the row under that name rather
+     than expecting it to guess is the whole difference between the card
+     rendering and the page quietly omitting it — which is what happened,
+     and which no error would have reported. */
+  $complaint = $shown;
+  require __DIR__ . '/../partials/complaint_card.php';
+  ?>
 <?php endif; ?>
 
 <div class="filters">
