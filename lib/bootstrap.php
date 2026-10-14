@@ -111,8 +111,17 @@ function navigation(): array
             ['id' => 'congestion',      'file' => 'pages/congestion.php',     'label' => 'Congestion',     'icon' => 'pulse',    'audience' => ['administrator', 'executive', 'mayor', 'planner', 'enforcement']],
             ['id' => 'enforcement',     'file' => 'pages/enforcement.php',     'label' => 'Enforcement',    'icon' => 'shield',   'audience' => ['administrator', 'executive', 'mayor', 'enforcement']],
             ['id' => 'licensing',       'file' => 'pages/licensing.php',       'label' => 'Licensing',      'icon' => 'doc',      'audience' => ['administrator', 'executive', 'mayor', 'revenue']],
+            /* What the Authority hands a trader, and whether it arrived. A
+               chairman reaches this for their own market; the vendor reaches
+               their own copy of it on My Market. */
+            ['id' => 'support',         'file' => 'pages/support.php',         'label' => 'Workwear',       'icon' => 'store',    'audience' => ['administrator', 'executive', 'mayor', 'planner', 'revenue', 'enforcement', 'chairman']],
         ]],
         ['group' => 'Records', 'items' => [
+            ['id' => 'notices',         'file' => 'pages/notices.php',         'label' => 'Notices',        'icon' => 'bell',     'audience' => ['administrator', 'executive', 'mayor', 'chairman']],
+            /* Everyone holding 'report', which is the grant the complaint
+               register gates on — so the rail and the page agree, and nobody
+               can open a screen the rail does not offer. */
+            ['id' => 'complaints',      'file' => 'pages/complaints.php',      'label' => 'Complaints',     'icon' => 'mail',     'audience' => ['administrator', 'executive', 'mayor', 'planner', 'enforcement', 'revenue', 'chairman']],
             ['id' => 'analytics',       'file' => 'pages/analytics.php',       'label' => 'Performance',    'icon' => 'trend',    'audience' => ['administrator', 'executive', 'mayor']],
             ['id' => 'reports',         'file' => 'pages/reports.php',         'label' => 'Reports',        'icon' => 'download', 'audience' => ['administrator', 'executive', 'mayor', 'planner', 'enforcement', 'revenue']],
             ['id' => 'audit',           'file' => 'pages/audit.php',           'label' => 'Audit Trail',    'icon' => 'log',      'audience' => ['administrator', 'executive', 'mayor']],

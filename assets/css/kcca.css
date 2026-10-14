@@ -1171,3 +1171,109 @@ h1, h2, h3, h4 { letter-spacing: -0.01em; }
   .langpick-menu { animation: kcca-pop .12s ease-out; }
 }
 @keyframes kcca-pop { from { opacity: 0; transform: translateY(-4px); } }
+
+/* ===================================================================
+   VISUALLY HIDDEN — for the label on a control whose meaning is
+   carried by its own options (a market filter, a language picker).
+   =================================================================== */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+
+/* ===================================================================
+   WORKWEAR AND SUPPORT
+   =================================================================== */
+/* The colour IS the rule — a butcher's red apron and a cook's white one are
+   the point — so the swatch is not decoration and is given real presence
+   rather than being a 10px dot beside a word. */
+.swatch {
+  display: inline-block; width: 15px; height: 15px; border-radius: 3px;
+  vertical-align: -2px; margin-right: 6px;
+  border: 1px solid rgba(0, 0, 0, .18);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, .35);
+}
+
+/* A row that has waited past its follow-up date. The whole row, not one cell:
+   the point of the follow-up view is that the overdue rows read as overdue
+   before the eye reaches the date column. */
+tr.row-alert > td { background: rgba(220, 53, 29, .05); }
+tr.row-alert > td:first-child { box-shadow: inset 3px 0 0 var(--kcca-red); }
+
+/* ===================================================================
+   NOTICES
+   =================================================================== */
+.notice .card-body > * + * { margin-top: 11px; }
+.notice-meta code { font-size: .92em; }
+.notice-body { white-space: normal; line-height: 1.6; margin: 0; color: var(--ink-2); }
+
+.notice-progress, .notice-state {
+  display: flex; gap: 7px; flex-wrap: wrap; align-items: center;
+}
+.notice-progress .chip, .notice-state .chip { cursor: default; }
+.notice-progress .chip.warn, .notice-state .chip.warn {
+  background: rgba(247, 196, 1, .16); border-color: rgba(196, 135, 9, .4); color: var(--ink);
+}
+
+/* An unread notice is the chairman's to-do, not decoration: it is the only
+   thing on this screen that is waiting on them. */
+.notice-unread { box-shadow: var(--shadow-2), inset 3px 0 0 var(--kcca-red); }
+.notice-unread .card-head h2 { color: var(--kcca-red); }
+
+.notice-note {
+  font-size: 13px; background: var(--surface-2);
+  border-left: 3px solid var(--line); padding: 9px 12px; border-radius: 0 6px 6px 0;
+  margin: 0;
+}
+
+.notice-receipts { text-align: left; }
+.notice-receipts > summary {
+  cursor: pointer; font-size: 12.5px; color: var(--ink-3); list-style: none;
+}
+.notice-receipts > summary::-webkit-details-marker { display: none; }
+.notice-receipts > summary::before { content: "▸ "; }
+.notice-receipts[open] > summary::before { content: "▾ "; }
+.notice-receipts .table { margin-top: 10px; }
+
+/* ===================================================================
+   COMPLAINTS
+   =================================================================== */
+.complaint-said {
+  margin: 0; padding: 11px 14px;
+  background: var(--surface-2); border-left: 3px solid var(--line);
+  border-radius: 0 6px 6px 0; line-height: 1.6; color: var(--ink-2);
+}
+
+/* The chain: what the trader said, what the chairman did, what the Authority
+   replied. A complaint is a sequence of hands, so it reads as one — and the
+   step that is current is the one still waiting on somebody. */
+.chain { list-style: none; margin: 0; padding: 0; }
+.chain li {
+  position: relative; padding: 0 0 13px 22px; line-height: 1.5;
+}
+.chain li::before {
+  content: ""; position: absolute; left: 3px; top: 5px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--line); box-shadow: 0 0 0 3px var(--surface);
+}
+.chain li::after {
+  content: ""; position: absolute; left: 7px; top: 17px; bottom: 0;
+  width: 1px; background: var(--line);
+}
+.chain li:last-child { padding-bottom: 0; }
+.chain li:last-child::after { display: none; }
+.chain li.done::before { background: var(--kcca-green); }
+.chain li.now::before   { background: var(--kcca-red); }
+.chain-when {
+  display: block; font-size: 10.5px; text-transform: uppercase;
+  letter-spacing: .5px; color: var(--ink-4);
+}
+.chain-what { font-size: 13.5px; color: var(--ink-2); }
+.chain-what b { color: var(--ink); }
+
+/* An escalated complaint nobody has answered is the thing on this screen that
+   is genuinely late. */
+.complaint-forwarded { box-shadow: var(--shadow-2), inset 3px 0 0 var(--kcca-red); }
+
+.check { display: flex; align-items: center; gap: 8px; font-size: 13.5px; margin-top: 10px; }
+.check input { width: auto; }

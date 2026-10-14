@@ -285,12 +285,41 @@ final class Notices
         $params = [];
 
         if ($divisionId !== null) {
-            $where[]  = '(n.division_id = :div OR m.division_id = :div)';
-            $params['div'] = $divisionId;
+            /* A notice belongs to a mayor's division if it reached any
+               chairman in it, not if the notice's own division_id says so. A
+               citywide notice has division_id NULL, yet it plainly concerns a
+               mayor whose chairmen received it, and filtering on the notice's
+               own division would hide it from every mayor who must act on it.
+               The test is therefore over the receipts, which are the record of
+               who was actually reached.
+
+               Two placeholders rather than one used twice: prepares are native
+               here (PDO::ATTR_EMULATE_PREPARES is false), and a native prepare
+               binds a named parameter exactly once. Repeating :div fails at
+               prepare time rather than at query time, which is why this showed
+               as a 500 only for a mayor, the one role taking this branch.
+
+               The subquery matches on the chairman's DIVISION, not their
+               market. Projecting markets.id here looks right and is wrong: a
+               division and a market both count from 1, so division 3 silently
+               matched market 3 and a mayor was shown notices addressed to a
+               part of the city they have no reach over. */
+            $where[] = '(:div_n = n.division_id OR EXISTS (
+                            SELECT 1
+                              FROM chairman_notice_receipts r2
+                              JOIN market_chairmen ch2 ON ch2.id = r2.chairman_id
+                              JOIN markets md ON md.id = ch2.market_id
+                             WHERE r2.notice_id = n.id
+                               AND md.division_id = :div_r))';
+            $params['div_n'] = $divisionId;
+            $params['div_r'] = $divisionId;
         }
         if ($q !== '') {
-            $where[]  = '(n.subject LIKE :q OR n.reference LIKE :q)';
-            $params['q'] = '%' . $q . '%';
+            /* :q twice needs :q1 and :q2 for the same reason as the division
+               scope above — a native prepare binds a named parameter once. */
+            $where[]  = '(n.subject LIKE :q1 OR n.reference LIKE :q2)';
+            $params['q1'] = '%' . $q . '%';
+            $params['q2'] = '%' . $q . '%';
         }
 
         return Database::all(

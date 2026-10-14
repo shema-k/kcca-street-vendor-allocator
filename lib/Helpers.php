@@ -60,6 +60,7 @@ function KCCA_icon(string $name, int $size = 18): string
             'print'    => '<path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="1"/><path d="M6 15h12v6H6z"/>',
             'phone'    => '<path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6A19.8 19.8 0 012 4.2 2 2 0 014 2h3a2 2 0 012 1.7c.1 1 .4 1.9.7 2.8a2 2 0 01-.5 2.1L8 9.9a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.8.6 2.8.7A2 2 0 0122 16.9z"/>',
             'mail'     => '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/>',
+            'bell'     => '<path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/>',
             'clock'    => '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
             'alert'    => '<path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/>',
             'check'    => '<path d="M20 6L9 17l-5-5"/>',
@@ -324,6 +325,27 @@ function langUrl(string $code, ?string $path = null): string
         'lang' => $code,
         'back' => $path,
     ]);
+}
+
+/**
+ * Tone for a complaint's stage.
+ *
+ * A separate mapping rather than a reuse of statusTone(): a complaint's stages
+ * are not allocation stages, and borrowing that table would have meant
+ * reading across it to work out what "with-authority" should look like. The
+ * one thing worth sharing is the rule — waiting on somebody is amber, done is
+ * green, and "we decided not to act" is not green.
+ */
+function complaintTone(?string $status): string
+{
+    return match ($status) {
+        'with-chairman' => 'warn',       // the trader's chairman owes them an answer
+        'forwarded'     => 'bad',        // escalated and the Authority has not answered
+        'with-authority'=> 'info',       // answered, not yet closed
+        'resolved'      => 'ok',
+        'declined'      => 'muted',      // closed without escalation: not a success
+        default         => 'muted',
+    };
 }
 
 /** Label for the trading zone / status / business category enums. */

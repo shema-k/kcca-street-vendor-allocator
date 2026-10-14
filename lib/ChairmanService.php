@@ -136,8 +136,13 @@ final class ChairmanService
             $params['div'] = $divisionCode;
         }
         if ($q !== '') {
-            $where[] = '(m.name LIKE :q OR ch.full_name LIKE :q)';
-            $params['q'] = '%' . $q . '%';
+            /* :q1 and :q2 rather than :q twice: prepares are native here, and
+               a named parameter binds exactly once per statement. Using one
+               name twice meant the search box threw as soon as anybody typed
+               in it — found by database/param_check.php. */
+            $where[] = '(m.name LIKE :q1 OR ch.full_name LIKE :q2)';
+            $params['q1'] = '%' . $q . '%';
+            $params['q2'] = '%' . $q . '%';
         }
 
         return Database::all(
