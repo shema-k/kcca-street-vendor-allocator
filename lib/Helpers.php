@@ -83,6 +83,54 @@ function KCCA_icon(string $name, int $size = 18): string
 }
 
 /**
+ * Length in characters, not bytes.
+ *
+ * Counts UTF-8 characters correctly without mbstring, which is not installed
+ * on this host and is not something a deployment can assume is present. The
+ * mb_* functions are used where they exist because they are faster and
+ * battle-tested; the fallback is here because mb_strlen() was being called
+ * directly in three services and every one of them died the moment it was
+ * reached on a host without the extension.
+ *
+ * This matters more than it looks now that a catalogue can be in Luganda or
+ * Runyankole: a byte count would tell you a 40-character name is "140 long"
+ * and reject it, or worse, cut a name in half down the middle of a character.
+ */
+function str_len(?string $s): int
+{
+    if ($s === null || $s === '') {
+        return 0;
+    }
+    if (function_exists('mb_strlen')) {
+        return (int) mb_strlen($s, 'UTF-8');
+    }
+    $n = preg_match_all('/./us', $s);
+    return $n === false ? strlen($s) : $n;
+}
+
+/**
+ * Substring by character rather than by byte.
+ *
+ * Same reasoning as str_len(): a byte-based substr() on a Luganda string cuts
+ * a multibyte character in half and emits a replacement character, which then
+ * goes into the database and comes back as a question mark in the trader's own
+ * name.
+ */
+function str_cut(?string $s, int $start, ?int $length = null): string
+{
+    if ($s === null || $s === '') {
+        return '';
+    }
+    if (function_exists('mb_substr')) {
+        return (string) mb_substr($s, $start, $length, 'UTF-8');
+    }
+    if (preg_match_all('/./us', $s, $m) === false) {
+        return $length === null ? substr($s, $start) : substr($s, $start, $length);
+    }
+    return implode('', array_slice($m[0], $start, $length));
+}
+
+/**
  * Truncate on a word boundary, appending an ellipsis if it was shortened.
  * Written without mbstring so it runs on a bare PHP install.
  */

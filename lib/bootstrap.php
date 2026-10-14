@@ -25,7 +25,13 @@ require_once __DIR__ . '/ChairmanService.php';
    remembered in the session, and settled right after it so a catalogue is
    loaded once per request rather than once per string. */
 require_once __DIR__ . '/Lang.php';
-require_once __DIR__ . '/Backup.php';
+/* Prescribed workwear and trader support, notices to chairmen, and complaints
+   routed through them. Loaded together because they share one idea: what the
+   Authority hands a trader goes through the chairman, and each of the three
+   records who actually handed it over. */
+require_once __DIR__ . '/TraderSupport.php';
+require_once __DIR__ . '/Notices.php';
+require_once __DIR__ . '/Complaints.php';require_once __DIR__ . '/Backup.php';
 require_once __DIR__ . '/ErrorHandler.php';
 
 /**

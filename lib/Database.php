@@ -142,11 +142,37 @@ final class Database
         return count($rows);
     }
 
+    /**
+     * Update rows.
+     *
+     * The SET clause is built from the data, so its placeholders are fixed by
+     * the column list. The WHERE is the caller's, and callers write it both
+     * ways — 'id = :id' with ['id' => $id], or 'id = ?' with [$id]. Binding
+     * the two together as it stood produced "mixed named and positional
+     * parameters" for the positional callers, which is a runtime error with a
+     * message that points at PDO rather than at the call that caused it.
+     *
+     * So the SET clause follows the caller: named WHERE params get named SET
+     * placeholders, positional WHERE params get positional ones and the two
+     * lists are concatenated in the order the statement binds them.
+     *
+     * @param array<string,mixed> $data
+     * @param array<int|string,mixed> $whereParams
+     */
     public static function update(string $table, array $data, string $where, array $whereParams = []): int
     {
-        $sets = array_map(static fn($c) => "`$c` = :$c", array_keys($data));
+        $positional = $whereParams === [] || array_is_list($whereParams);
+
+        if ($positional) {
+            $sets = array_map(static fn($c) => "`$c` = ?", array_keys($data));
+            $params = array_merge(array_values($data), array_values($whereParams));
+        } else {
+            $sets = array_map(static fn($c) => "`$c` = :$c", array_keys($data));
+            $params = array_merge($data, $whereParams);
+        }
+
         $sql = sprintf('UPDATE `%s` SET %s WHERE %s', $table, implode(', ', $sets), $where);
-        return self::run($sql, array_merge($data, $whereParams))->rowCount();
+        return self::run($sql, $params)->rowCount();
     }
 
     /**

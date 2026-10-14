@@ -51,10 +51,10 @@ final class ChairmanService
 
         $name  = trim($input['full_name']);
         $phone = trim($input['phone']);
-        if ($name === '' || mb_strlen($name) < 3) {
+        if ($name === '' || str_len($name) < 3) {
             return ['ok' => false, 'error' => 'Give the chairman’s full name.'];
         }
-        if (mb_strlen($name) > 140) {
+        if (str_len($name) > 140) {
             return ['ok' => false, 'error' => 'The name is too long. Use 140 characters or fewer.'];
         }
         if ($phone === '') {
