@@ -26,6 +26,21 @@ function refuse(string $message, int $code = 400): never
     jsonOut(['ok' => false, 'error' => $message], $code);
 }
 
+/* A CSRF token is required of everyone who is signed in, and of nobody who is
+   not. Cross-site request forgery needs the victim to be authenticated: an
+   anonymous visitor's request for a pitch is a public act they are choosing
+   to make, and demanding a token of them would require a session they should
+   not have to open just to ask about space.
+
+   That leaves the officer and trader actions — review, approve, reject,
+   cancel — which change state on behalf of somebody authenticated. Those were
+   the open ones: a token-less POST to api/stall_request.php got a pending
+   request marked as under review, so a page an officer merely visited could
+   have moved their work along without them. */
+if (Auth::check() && !Auth::checkCsrf($_POST['csrf'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null)) {
+    refuse('CSRF token mismatch — reload the page', 419);
+}
+
 switch ($action) {
 
     /* ---------------- A trader asks for a pitch ---------------- */

@@ -580,15 +580,15 @@ switch ($form) {
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['create', 'update'], true)) {
             require_once __DIR__ . '/../lib/VendorService.php';
 
-            /* This is the path the modal actually submits, and it carried its
-               own 'allocate' check that api/vendor_save.php did not. Opening
-               vendor_save to a chairman therefore did nothing: the button
-               appeared, the form filled in, and the submit was refused. A
-               chairman registers and corrects the traders of their own
-               market — VendorService pins the market to their account and
-               refuses a trader outside it, so admitting them here grants no
-               reach beyond that market. */
+            /* The token is checked here rather than in requireSession(),
+               because this endpoint both renders a modal over GET and saves
+               over POST. A check placed at the top would refuse the GET, and
+               one placed nowhere left the save open: this is the path the
+               vendor and chairman forms actually submit through, so a
+               cross-site post could create or edit a trader in another
+               officer's session. */
             requireSession();
+            requireToken();
             if (!Auth::can('allocate') && Auth::role() !== 'chairman') {
                 requirePerm('allocate');
             }

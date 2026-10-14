@@ -28,9 +28,9 @@ switch ($action) {
 
         $vendorId = (int) ($_POST['vendor_id'] ?? 0);
         $marketId = (int) ($_POST['market_id'] ?? 0);
-        /* An offer may name a specific pitch or the market as a whole, and
-           the form leaves the field out entirely in the second case. Read it
-           once, through a default, rather than three times unguarded. */
+        /* Read once, through a default. The pitch is resolved further down,
+           against the market, but it is read here so that a missing field and
+           an empty field behave the same. */
         $spaceRaw = trim((string) ($_POST['market_space_id'] ?? ''));
         $spaceId  = $spaceRaw !== '' ? (int) $spaceRaw : null;
 
@@ -45,6 +45,47 @@ switch ($action) {
         }
         if ((int) $market['vacant_spaces'] <= 0) {
             badRequest($market['name'] . ' has no vacant space to offer.');
+        }
+
+        /* Which pitch. An offer may name one, or leave it out and let the
+           system choose the market's next free pitch.
+
+           The pitch used to be taken straight from the request and used
+           without checking it was in the chosen market, and the market's
+           vacancy was then decremented whatever happened. Naming a pitch
+           belonging to another market therefore reserved that other market's
+           pitch while taking the vacancy from this one, and naming no pitch
+           at all silently reduced an advertised count with no pitch held
+           against it. Both left a figure nobody could reconcile.
+
+           So: a named pitch must belong to this market and be vacant, and a
+           missing one is filled from this market's own vacancies. */
+        if ($spaceId !== null) {
+            $space = Database::one(
+                "SELECT id, space_code, status FROM market_spaces
+                  WHERE id = ? AND market_id = ? LIMIT 1",
+                [$spaceId, $marketId]
+            );
+            if (!$space) {
+                badRequest('That pitch is not in ' . $market['name'] . '. Choose a pitch from the market you are offering.');
+            }
+            if ($space['status'] !== 'vacant') {
+                badRequest(sprintf(
+                    '%s is already %s. Choose a vacant pitch.',
+                    $space['space_code'], $space['status']
+                ));
+            }
+        } else {
+            $space = Database::one(
+                "SELECT id, space_code, status FROM market_spaces
+                  WHERE market_id = ? AND status = 'vacant'
+                  ORDER BY space_code LIMIT 1",
+                [$marketId]
+            );
+            if (!$space) {
+                badRequest($market['name'] . ' has no vacant pitch to offer, though its count says otherwise. The register needs reconciling.');
+            }
+            $spaceId = (int) $space['id'];
         }
 
         /* Duplicate open offer for the same vendor? */
@@ -108,13 +149,15 @@ switch ($action) {
                 'created_by'      => Auth::id(),
             ]);
 
-            // Reserve the pitch so it cannot be offered twice.
-            if ($spaceId !== null) {
-                Database::run(
-                    "UPDATE market_spaces SET status = 'reserved' WHERE id = ? AND status = 'vacant'",
-                    [$spaceId]
-                );
-            }
+            // Reserve the pitch so it cannot be offered twice. $spaceId is
+            // always resolved by now, and always belongs to $marketId, so this
+            // reservation and the vacancy decrement below describe the same
+            // market. That was not true before: the pitch could be elsewhere,
+            // or absent entirely.
+            Database::run(
+                "UPDATE market_spaces SET status = 'reserved' WHERE id = ? AND status = 'vacant'",
+                [$spaceId]
+            );
 
             Database::run(
                 "UPDATE vendors SET status = 'offered-space' WHERE id = ? AND status IN ('surveyed','notified')",
