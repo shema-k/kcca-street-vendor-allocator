@@ -27,14 +27,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $old = ['username' => (string) ($_POST['username'] ?? '')];
 
     if (!Auth::checkCsrf($_POST['csrf'] ?? null)) {
-        $error = 'Your session has expired. Please try again.';
+        $error = t('login.expired');
     } else {
         $ok = Auth::attempt((string) ($_POST['username'] ?? ''), (string) ($_POST['password'] ?? ''));
         if ($ok) {
             header('Location: ../pages/dashboard.php');
             exit;
         }
-        $error = 'That username and password do not match. Please try again.';
+        $error = t('login.failed');
     }
 }
 
@@ -61,13 +61,13 @@ foreach (Auth::roles() as $role) {
 }
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= e(Lang::code()) ?>">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#DC351D">
-<title>Sign in · <?= e(APP_SHORT) ?></title>
+<title><?= e(t('login.title')) ?> · <?= e(APP_SHORT) ?></title>
 <link rel="icon" type="image/png" href="../assets/brand/kcca-favicon.png">
 <!-- The text layer cannot be laid out without the face, so it is fetched
      in parallel with the stylesheets rather than discovered after they parse. -->
@@ -99,8 +99,10 @@ if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)
 
       <img class="login-logo" src="../assets/brand/kcca-logo.png" alt="Kampala Capital City Authority">
 
-      <h2>Sign in</h2>
-      <p class="sub">Kampala Capital City Authority · Vendor Relocation</p>
+      <?php require_once __DIR__ . '/../partials/lang_switcher.php'; ?>
+
+      <h2><?= e(t('login.title')) ?></h2>
+      <p class="sub"><?= e(t('login.subtitle')) ?></p>
 
       <?php if ($error): ?>
         <div class="alert alert-bad" role="alert"><?= e($error) ?></div>
@@ -110,23 +112,23 @@ if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)
         <input type="hidden" name="csrf" value="<?= e(Auth::csrfToken()) ?>">
 
         <div class="field">
-          <label for="username">Username</label>
+          <label for="username"><?= e(t('login.username')) ?></label>
           <input type="text" id="username" name="username" autocomplete="username"
                  value="<?= e($old['username']) ?>" required autofocus>
         </div>
 
         <div class="field">
-          <label for="password">Password</label>
+          <label for="password"><?= e(t('login.password')) ?></label>
           <input type="password" id="password" name="password"
                  autocomplete="current-password" required>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+        <button type="submit" class="btn btn-primary btn-block"><?= e(t('login.submit')) ?></button>
       </form>
 
       <?php if ($accounts): ?>
         <div class="role-pick">
-          <h3>Sign in as</h3>
+          <h3><?= e(t('login.as')) ?></h3>
           <div class="role-grid">
             <?php foreach ($accounts as $ac): ?>
               <button type="button" class="role-card" data-login
@@ -142,7 +144,7 @@ if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)
       <?php endif; ?>
 
       <p class="xsmall mt-2" style="text-align:center">
-        <a href="../pages/portal.php">I am a trader — find gazetted space near me</a>
+        <a href="../pages/portal.php"><?= e(t('login.portal')) ?></a>
       </p>
 
       <div class="login-footer">

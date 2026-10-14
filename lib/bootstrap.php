@@ -21,6 +21,10 @@ require_once __DIR__ . '/Activities.php';
 /* Read wherever a market is named, so a page can show a market's chairman
    without reaching into the market register itself. */
 require_once __DIR__ . '/ChairmanService.php';
+/* Languages. Required before the session starts because the language is
+   remembered in the session, and settled right after it so a catalogue is
+   loaded once per request rather than once per string. */
+require_once __DIR__ . '/Lang.php';
 require_once __DIR__ . '/Backup.php';
 require_once __DIR__ . '/ErrorHandler.php';
 
@@ -58,6 +62,7 @@ function needs_asset(string $kind): bool
 
 Auth::startSession();
 ErrorHandler::register();
+Lang::boot();
 
 /** Official KCCA facts, loaded once per request. */
 function facts(): array

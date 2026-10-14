@@ -18,7 +18,7 @@ $meId  = Auth::check() ? Auth::id() : 0;
 $layoutDivisionId = (int) ($me['division_id'] ?? 0);
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= e(Lang::code()) ?>">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -83,6 +83,8 @@ if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)
       <?= KCCA_icon('moon', 14) ?><span class="moon-text" aria-hidden="true">Dark</span>
       <?= KCCA_icon('sun', 14) ?><span class="sun-text" aria-hidden="true">Light</span>
     </button>
+
+    <?php require_once __DIR__ . '/../partials/lang_switcher.php'; ?>
 
     <?php if (Auth::check()): ?>
       <?php

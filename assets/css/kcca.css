@@ -1117,3 +1117,57 @@ h1, h2, h3, h4 { letter-spacing: -0.01em; }
   background: var(--surface-sunk); border: 1px solid var(--line-soft);
   text-transform: uppercase; color: var(--ink-3);
 }
+
+/* ===================================================================
+   LANGUAGE SWITCHER
+   -------------------------------------------------------------------
+   A <details> element, so the open state, the keyboard behaviour and the
+   accessibility wiring are the browser's rather than 30 lines of script.
+   The summary is an .icon-link because it sits in the top bar beside the
+   theme toggle, but the disclosure marker is hidden so the control matches
+   its neighbours instead of showing a browser-default triangle.
+   =================================================================== */
+.langpick { position: relative; }
+
+.langpick > summary {
+  list-style: none;
+  cursor: pointer;
+  gap: 5px;
+}
+/* WebKit keeps the marker on a summary even with list-style:none. */
+.langpick > summary::-webkit-details-marker { display: none; }
+.langpick > summary::marker { content: ""; }
+
+.langpick .langcode {
+  font-size: 10px; font-weight: 700; letter-spacing: .5px;
+  opacity: .85; line-height: 1;
+}
+
+.langpick-menu {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 90;
+  min-width: 178px; padding: 4px 0 6px;
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow-3);
+}
+.langpick-head {
+  display: block; padding: 8px 13px 6px;
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .6px;
+  color: var(--ink-4); border-bottom: 1px solid var(--line);
+  margin-bottom: 3px;
+}
+.langpick-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 7px 13px; font-size: 13px; color: var(--ink); text-decoration: none;
+}
+.langpick-item:hover { background: var(--surface-2); color: var(--ink); }
+.langpick-item .ico { flex: none; opacity: 0; color: var(--kcca-red); }
+.langpick-item.is-current { font-weight: 700; color: var(--kcca-red); }
+.langpick-item.is-current .ico { opacity: 1; }
+
+/* The top bar is white; the control inherits that. On the dark theme the
+   summary needs the same treatment as the other bar controls. */
+@media (prefers-reduced-motion: no-preference) {
+  .langpick-menu { animation: kcca-pop .12s ease-out; }
+}
+@keyframes kcca-pop { from { opacity: 0; transform: translateY(-4px); } }

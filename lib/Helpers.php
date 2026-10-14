@@ -262,6 +262,22 @@ function currentPage(): string
     return basename($_SERVER['PHP_SELF'] ?? '', '.php');
 }
 
+/**
+ * Link that switches the language and returns the reader to this page.
+ *
+ * Carries the current path so the switcher works from any screen without a
+ * form post, and so the "back" it asks for is this site and not whatever a
+ * caller supplied.
+ */
+function langUrl(string $code, ?string $path = null): string
+{
+    $path = $path ?? (currentPage() !== '' ? 'pages/' . currentPage() . '.php' : 'index.php');
+    return '/api/language.php?' . http_build_query([
+        'lang' => $code,
+        'back' => $path,
+    ]);
+}
+
 /** Label for the trading zone / status / business category enums. */
 function humanise(?string $v): string
 {
