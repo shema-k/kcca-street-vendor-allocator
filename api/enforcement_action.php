@@ -54,7 +54,13 @@ switch ($action) {
                 'issued_date'   => date('Y-m-d'),
                 'deadline_date' => $deadline,
                 'vendors_affected' => (int) $zone['estimated_vendors'],
-                'authorised_by' => $_POST['authorised_by'] ?? 'KCCA Office of the Executive Director',
+                /* Trimmed with a fallback, not ??. A browser sends the field
+                   empty when the officer left it alone, and ?? passes that
+                   through, so an empty string would be stored as the authority
+                   that authorised the action where the default was meant. */
+                'authorised_by' => trim((string) ($_POST['authorised_by'] ?? '')) !== ''
+                                    ? trim((string) $_POST['authorised_by'])
+                                    : 'KCCA Office of the Executive Director',
                 'officer_name'  => $_POST['officer_name'] ?? null,
                 'officer_number'=> $_POST['officer_number'] ?? null,
                 'outcome'       => $isUltimatum
@@ -107,7 +113,9 @@ switch ($action) {
             'vendors_relocated' => (int) ($_POST['vendors_relocated'] ?? 0),
             'verandas_cleared'  => (int) ($_POST['verandas_cleared'] ?? 0),
             'materials_removed_m3' => (float) ($_POST['materials_removed_m3'] ?? 0),
-            'authorised_by'  => $_POST['authorised_by'] ?? 'KCCA Office of the Executive Director',
+            'authorised_by'  => trim((string) ($_POST['authorised_by'] ?? '')) !== ''
+                                ? trim((string) $_POST['authorised_by'])
+                                : 'KCCA Office of the Executive Director',
             'officer_name'   => trim((string) ($_POST['officer_name'] ?? '')) ?: null,
             'officer_number' => trim((string) ($_POST['officer_number'] ?? '')) ?: null,
             'outcome'        => trim((string) ($_POST['outcome'] ?? '')) ?: null,

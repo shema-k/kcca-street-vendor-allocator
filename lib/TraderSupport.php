@@ -176,6 +176,13 @@ final class TraderSupport
 
         $size = trim((string) ($input['size'] ?? ''));
 
+        /* Trimmed, and defaulted if the browser sent the field empty. See the
+           note at the insert. */
+        $followUp = trim((string) ($input['follow_up_on'] ?? ''));
+        if ($followUp !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $followUp)) {
+            return ['ok' => false, 'error' => 'Give the follow-up date as a date.'];
+        }
+
         $reference = self::nextReference('SUP');
         $id = Database::insert('support_issues', [
             'reference'          => $reference,
@@ -187,9 +194,16 @@ final class TraderSupport
             'issued_by'          => $asUserId,
             'issued_by_chairman' => $asChairmanId,
             /* Scheduled by default, not left open. An item that needs a
-               signature should be chased; one with no date tends to sit. */
+               signature should be chased; one with no date tends to sit.
+
+               Read with a trim and an ?? fallback, not with ??. A browser
+               sends every field in the form, including an empty one, so
+               $_POST['follow_up_on'] is '' rather than absent — and ??
+               treats '' as supplied and passes it straight through, where
+               MySQL rejects it as an invalid date. Every officer's handover
+               failed on this because of one operator. */
             'follow_up_on'       => $item['requires_receipt']
-                ? (string) ($input['follow_up_on'] ?? date('Y-m-d', strtotime($issuedOn . ' +7 days')))
+                ? ($followUp !== '' ? $followUp : date('Y-m-d', strtotime($issuedOn . ' +7 days')))
                 : null,
             'notes'              => trim((string) ($input['notes'] ?? '')) ?: null,
         ]);
