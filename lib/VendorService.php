@@ -147,8 +147,53 @@ final class VendorService
 
     /* ------------------------------------------------------------------ */
 
+    /**
+     * Is this trader already in the register?
+     *
+     * The same person registered twice can be offered two pitches, and counted
+     * twice in every figure the Authority reports. National ID numbers and
+     * telephone numbers identify a person, so a second record carrying either
+     * is refused, naming the record that already holds it.
+     *
+     * @return array<string,string> field => message, empty when there is no clash
+     */
+    private static function duplicateErrors(array $data, int $exceptId = 0): array
+    {
+        $errors = [];
+
+        $nin = strtoupper(trim((string) ($data['national_id'] ?? '')));
+        if ($nin !== '') {
+            $hit = Database::one(
+                'SELECT vendor_code FROM vendors WHERE UPPER(TRIM(national_id)) = ? AND id <> ? LIMIT 1',
+                [$nin, $exceptId]
+            );
+            if ($hit) {
+                $errors['national_id'] = 'This National ID is already registered as ' . $hit['vendor_code'] . '.';
+            }
+        }
+
+        $phone = preg_replace('/[\s\-]+/', '', (string) ($data['phone'] ?? ''));
+        if ($phone !== '') {
+            $hit = Database::one(
+                "SELECT vendor_code FROM vendors
+                  WHERE REPLACE(REPLACE(phone, ' ', ''), '-', '') = ? AND id <> ? LIMIT 1",
+                [$phone, $exceptId]
+            );
+            if ($hit) {
+                $errors['phone'] = 'This telephone number already belongs to ' . $hit['vendor_code'] . '.';
+            }
+        }
+
+        return $errors;
+    }
+
     private static function create(array $data): array
     {
+        $clash = self::duplicateErrors($data);
+        if ($clash !== []) {
+            return ['ok' => false, 'status' => 422, 'errors' => $clash];
+        }
+
         $data['business_description'] = ($data['business_description'] ?? '')
             ?: tradeDescription((string) $data['business_category']);
         $data['registered_at'] = date('Y-m-d H:i:s');
@@ -198,6 +243,22 @@ final class VendorService
         $existing = Database::one('SELECT * FROM vendors WHERE id = ?', [$id]);
         if (!$existing) {
             return ['ok' => false, 'status' => 404, 'error' => 'That vendor is not in the register.', 'errors' => []];
+        }
+
+        /* Only a number the officer is actually changing is checked, so a
+           duplicate that is already in the register does not stop an
+           unrelated correction to the same record. */
+        $toCheck = $data;
+        foreach (['national_id', 'phone'] as $field) {
+            if (isset($toCheck[$field])
+                && preg_replace('/[\\s\\-]+/', '', strtoupper((string) $toCheck[$field]))
+                   === preg_replace('/[\\s\\-]+/', '', strtoupper((string) ($existing[$field] ?? '')))) {
+                unset($toCheck[$field]);
+            }
+        }
+        $clash = self::duplicateErrors($toCheck, $id);
+        if ($clash !== []) {
+            return ['ok' => false, 'status' => 422, 'errors' => $clash];
         }
 
         /* A chairman may correct a trader in their own market and nobody

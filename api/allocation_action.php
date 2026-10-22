@@ -38,6 +38,7 @@ switch ($action) {
             badRequest('Choose both a vendor and a market.');
         }
 
+        requireVendorInScope($vendorId);
         $vendor = vendorForMatching($vendorId);
         $market = Database::one('SELECT * FROM markets WHERE id = ? LIMIT 1', [$marketId]);
         if (!$vendor || !$market) {
@@ -187,6 +188,7 @@ switch ($action) {
     case 'accept': {
         requirePerm('allocate');
         $id = (int) ($_POST['allocation_id'] ?? 0);
+        requireAllocationInScope($id);
         $a  = Database::one(
             'SELECT a.*, m.name AS market_name, m.lat, m.lng, m.vacant_spaces,
                     v.full_name, v.current_zone_id
@@ -231,6 +233,7 @@ switch ($action) {
     case 'decline': {
         requirePerm('allocate');
         $id     = (int) ($_POST['allocation_id'] ?? 0);
+        requireAllocationInScope($id);
         $reason = trim((string) ($_POST['reason'] ?? ''));
         $a = Database::one(
             'SELECT a.*, m.name AS market_name, v.full_name FROM allocations a
@@ -273,6 +276,7 @@ switch ($action) {
     case 'withdraw': {
         requirePerm('manage');
         $id     = (int) ($_POST['allocation_id'] ?? 0);
+        requireAllocationInScope($id);
         $reason = trim((string) ($_POST['reason'] ?? ''));
         $a = Database::one('SELECT * FROM allocations WHERE id = ? LIMIT 1', [$id]);
         if (!$a) {
@@ -307,6 +311,7 @@ switch ($action) {
     case 'occupy': {
         requirePerm('manage');
         $id = (int) ($_POST['allocation_id'] ?? 0);
+        requireAllocationInScope($id);
         $a = Database::one(
             'SELECT a.*, m.name AS market_name, v.full_name FROM allocations a
                JOIN markets m ON m.id = a.market_id JOIN vendors v ON v.id = a.vendor_id

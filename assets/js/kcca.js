@@ -376,7 +376,12 @@
     opts = opts || {};
     fetch(url, { headers: { 'X-Requested-With': 'fetch' } })
       .then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
+        if (!r.ok) {
+          /* Say why, in the server's own words, instead of a status number. */
+          return r.json().catch(function () { return {}; }).then(function (j) {
+            throw new Error((j && j.error) || ('The server answered ' + r.status + '.'));
+          });
+        }
         return r.text();
       })
       .then(function (html) {
@@ -391,7 +396,8 @@
         var back = document.createElement('div');
         back.className = 'modal-back';
         back.innerHTML = '<div class="modal"><div class="modal-body">' +
-          '<div class="alert alert-bad">Could not load this panel. ' + KCCA.icon('alert') + ' ' + err.message + '</div>' +
+          '<div class="alert alert-bad">' + KCCA.icon('alert') + ' ' + escapeHtml(err.message) + '</div>' +
+          '<div class="row mt-2"><button type="button" class="btn btn-ghost" data-modal-close>Close</button></div>' +
           '</div></div>';
         document.body.appendChild(back);
       });
@@ -437,8 +443,15 @@
     var el = document.createElement('div');
     el.className = 'flash flash-' + tone;
     el.setAttribute('role', tone === 'bad' ? 'alert' : 'status');
-    el.innerHTML = '<span class="flash-icon">' + (tone === 'ok' ? '&#10003;' : '!') + '</span>' +
-                   '<span>' + message + '</span>';
+    /* The message is text. It often carries a trader's name, and a name is
+       data, never markup. */
+    var icon = document.createElement('span');
+    icon.className = 'flash-icon';
+    icon.textContent = tone === 'ok' ? '\u2713' : '!';
+    var text = document.createElement('span');
+    text.textContent = String(message === null || message === undefined ? '' : message);
+    el.appendChild(icon);
+    el.appendChild(text);
     document.body.appendChild(el);
 
     setTimeout(function () { el.classList.add('out'); }, ms || 4200);
@@ -518,6 +531,92 @@
   }
 
   /* ---------------------------------------------------------------- */
+  /* Modal forms: save in place, never leave the page                  */
+  /* ---------------------------------------------------------------- */
+  /**
+   * The forms served by api/form.php (register or edit a trader, record a
+   * footfall count, edit a pitch, record a land-use restriction) arrive as
+   * HTML and are put into the page with innerHTML. A browser does not run a
+   * <script> that arrives that way, so the script each form carried to catch
+   * its own save never ran, and the form fell back to an ordinary submit:
+   * the save happened, then the browser navigated to the API address and
+   * showed the raw reply, {"ok":true,...}, on a blank page.
+   *
+   * One handler, here, in the page's own script, which does run. It posts
+   * the form in the background and then either
+   *   - closes the panel, confirms, and refreshes the page behind it, when
+   *     the endpoint answers with JSON that says ok;
+   *   - tells the user why, when it answers with JSON that says it failed;
+   *   - or swaps the form in place, with its messages beside the fields that
+   *     caused them, when the endpoint answers with the form again. What the
+   *     person typed is kept.
+   * Only forms that post to api/form.php are handled here; a page that has
+   * its own handler for its own form is left alone.
+   */
+  function initModalForms() {
+    document.addEventListener('submit', function (e) {
+      var form = e.target;
+      if (!form || !form.matches || !form.matches('form.modal-form')) return;
+      if (String(form.getAttribute('action') || '').indexOf('api/form.php') === -1) return;
+      if (e.defaultPrevented) return;
+
+      e.preventDefault();
+      if (form.getAttribute('data-saving') === '1') return;     // a double click saves once
+      form.setAttribute('data-saving', '1');
+
+      var btn = form.querySelector('[type="submit"]');
+      var label = btn ? btn.innerHTML : '';
+      if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+
+      function reopen() {
+        form.removeAttribute('data-saving');
+        if (btn) { btn.disabled = false; btn.innerHTML = label; }
+      }
+
+      fetch(form.getAttribute('action'), {
+        method: 'POST',
+        body: new FormData(form),
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'fetch', 'Accept': 'application/json, text/html' }
+      })
+        .then(function (r) {
+          var type = r.headers.get('content-type') || '';
+          if (type.indexOf('application/json') !== -1) {
+            return r.json().then(function (j) { return { json: j, status: r.status }; });
+          }
+          return r.text().then(function (html) { return { html: html, status: r.status }; });
+        })
+        .then(function (res) {
+          if (res.json) {
+            if (res.json.ok) {
+              KCCA.closeModal();
+              KCCA.flash(res.json.message || 'Saved.', 'ok');
+              setTimeout(function () { location.reload(); }, 800);
+              return;
+            }
+            KCCA.flash(res.json.error || 'That could not be saved. Nothing was changed.', 'bad');
+            reopen();
+            return;
+          }
+          /* The endpoint sent the form back with its messages. */
+          var host = form.closest('.modal-back');
+          if (host && res.html && res.html.indexOf('modal') !== -1) {
+            host.innerHTML = res.html;
+            var bad = host.querySelector('.alert-bad, .field-error, .err');
+            if (bad && bad.scrollIntoView) bad.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            return;
+          }
+          KCCA.flash('The server answered unexpectedly. Please try again.', 'bad');
+          reopen();
+        })
+        .catch(function () {
+          KCCA.flash('Could not reach the server. Nothing was saved.', 'bad');
+          reopen();
+        });
+    });
+  }
+
+  /* ---------------------------------------------------------------- */
   /* Confirm before a destructive POST                                 */
   /* ---------------------------------------------------------------- */
   function initConfirms() {
@@ -587,6 +686,7 @@
     initAccount();
     initModals();
     initFilters();
+    initModalForms();
     initConfirms();
     initSelectAll();
     initChips();

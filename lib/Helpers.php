@@ -466,8 +466,133 @@ function orLike(string $prefix, array $columns, string $term): array
     return ['(' . implode(' OR ', $frag) . ')', $params];
 }
 
+/* ---------------------------------------------------------------------
+   Messages that survive a redirect, and replies a person can read.
+
+   An API endpoint answers in JSON, because the page's own script asked for
+   it and will show the answer nicely. But the browser can also reach an
+   endpoint by itself: a form whose script did not run submits the ordinary
+   way, a link is followed, an address is typed. The answer then fills the
+   whole window as {"ok":true,...} or {"error":...}, which is correct for a
+   program and baffling for a person, and it strands them off the page they
+   were working on, with no way forward but the Back button.
+
+   jsonOut() therefore tells the two apart. When the browser is navigating,
+   a success sends the person back to the page they came from with a message
+   shown there, and a failure shows an ordinary page, in the system's own
+   look, saying what happened and where to go next. Scripts get JSON as before.
+   --------------------------------------------------------------------- */
+
+/** Is the browser itself navigating here, rather than a script asking? */
+function isBrowserNavigation(): bool
+{
+    if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== '') {
+        return false;                                   // KCCA.post / KCCA.modalFrom
+    }
+    $mode = $_SERVER['HTTP_SEC_FETCH_MODE'] ?? '';
+    if ($mode !== '') {
+        return $mode === 'navigate';
+    }
+    $accept = (string) ($_SERVER['HTTP_ACCEPT'] ?? '');
+    return stripos($accept, 'text/html') !== false;
+}
+
+/** Keep a message for the next page that is drawn. */
+function flashSet(string $message, string $tone = 'ok'): void
+{
+    if ($message !== '' && session_status() === PHP_SESSION_ACTIVE) {
+        $_SESSION['kcca_flash'] = ['message' => $message, 'tone' => $tone === 'bad' ? 'bad' : 'ok'];
+    }
+}
+
+/** Take (and clear) the kept message, if there is one. */
+function flashTake(): ?array
+{
+    if (session_status() !== PHP_SESSION_ACTIVE || empty($_SESSION['kcca_flash'])) {
+        return null;
+    }
+    $f = $_SESSION['kcca_flash'];
+    unset($_SESSION['kcca_flash']);
+    return $f;
+}
+
+/** Where to send a person after a background action: the page they were on. */
+function returnAddress(): string
+{
+    $ref = (string) ($_SERVER['HTTP_REFERER'] ?? '');
+    $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
+    $parts = $ref !== '' ? parse_url($ref) : false;
+    if ($parts && !empty($parts['host']) && $host !== '') {
+        $refHost = $parts['host'] . (isset($parts['port']) ? ':' . $parts['port'] : '');
+        if (strcasecmp($refHost, $host) === 0) {
+            return $ref;
+        }
+    }
+    return APP_REL . 'pages/dashboard.php';
+}
+
+/** An ordinary page for a failed request the browser made by itself. */
+function friendlyErrorPage(int $status, string $message): never
+{
+    http_response_code($status);
+    header('Content-Type: text/html; charset=utf-8');
+    header('Cache-Control: no-store');
+
+    $titles = [
+        400 => 'That could not be completed',
+        401 => 'Please sign in',
+        403 => 'That is not part of your role',
+        404 => 'We could not find that',
+        409 => 'That changed while you were working',
+        422 => 'Some details need another look',
+    ];
+    $title = $titles[$status] ?? ($status >= 500 ? 'Something went wrong on our side' : 'That could not be completed');
+    if ($message === '') {
+        $message = $status >= 500
+            ? 'Nothing was changed. Please try again in a moment.'
+            : 'Please go back and try again.';
+    }
+
+    $uid   = class_exists('Auth') && Auth::check() ? Auth::id() : 0;
+    $glass = ($uid > 0 && class_exists('Preferences')) ? Preferences::get($uid)['glass'] : 'on';
+    $home  = $uid > 0 ? APP_REL . 'pages/dashboard.php' : APP_REL . 'auth/login.php';
+    $v     = defined('APP_VERSION') ? APP_VERSION : '1';
+    $css   = ['kcca', 'civic', 'alive', 'dark'];
+
+    echo '<!doctype html><html lang="en" data-glass="' . htmlspecialchars($glass, ENT_QUOTES) . '"><head><meta charset="utf-8">'
+       . '<meta name="viewport" content="width=device-width, initial-scale=1"><title>' . htmlspecialchars($title) . '</title>';
+    foreach ($css as $c) {
+        echo '<link rel="stylesheet" href="' . APP_REL . 'assets/css/' . $c . '.css?v=' . $v . '">';
+    }
+    echo '<script>(function(){try{var c=document.cookie.match(/(^| )kcca-theme=([^;]+)/),t=c?c[2]:localStorage.getItem("kcca-theme");'
+       . 'if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>'
+       . '</head><body style="display:grid;place-items:center;min-height:100vh;padding:24px">'
+       . '<main class="card" style="max-width:520px;width:100%;margin:0"><div class="card-body" style="padding:34px;text-align:center">'
+       . '<div class="eyebrow" style="display:inline-block;margin-bottom:12px">' . (int) $status . '</div>'
+       . '<h1 style="margin:0 0 10px">' . htmlspecialchars($title) . '</h1>'
+       . '<p style="color:var(--ink-3);margin:0 0 22px;font-size:15px">' . htmlspecialchars($message) . '</p>'
+       . '<div class="row" style="justify-content:center;gap:10px">'
+       . '<a class="btn btn-primary" href="' . htmlspecialchars(returnAddress(), ENT_QUOTES) . '">Go back</a>'
+       . '<a class="btn btn-ghost" href="' . htmlspecialchars($home, ENT_QUOTES) . '">' . ($uid > 0 ? 'Dashboard' : 'Sign in') . '</a>'
+       . '</div></div></main></body></html>';
+    exit;
+}
+
 function jsonOut(mixed $data, int $status = 200): never
 {
+    if (isBrowserNavigation()) {
+        $msg = is_array($data) ? (string) ($data['error'] ?? $data['message'] ?? '') : '';
+        if ($status >= 400) {
+            friendlyErrorPage($status, $msg);
+        }
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+            $ok = !is_array($data) || ($data['ok'] ?? true) !== false;
+            flashSet($ok ? ((string) ($data['message'] ?? 'Saved.')) : ($msg !== '' ? $msg : 'That could not be saved.'), $ok ? 'ok' : 'bad');
+            header('Location: ' . returnAddress());
+            exit;
+        }
+    }
+
     http_response_code($status);
     header('Content-Type: application/json; charset=utf-8');
     header('X-Content-Type-Options: nosniff');

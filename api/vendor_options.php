@@ -10,7 +10,10 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/bootstrap.php';
-requireSession();
+/* Names a trader's equity profile (single parent, disability, dependants), so it
+   is the matching desk's tool and not every signed-in account's. */
+requirePerm('allocate');
+requireScreenApi('relocation');
 
 $vendorId = qInt('vendor_id', 0);
 $limit    = qInt('limit', 5, 1, 12);

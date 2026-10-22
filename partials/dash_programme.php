@@ -21,7 +21,9 @@ $total = (int) array_sum(array_column($funnel, 'value'));
         <?= num($total) ?> surveyed vendors. Where each has reached, and what happens next.
       </p>
     </div>
-    <a class="btn btn-ghost btn-sm" href="allocations.php">Allocation register</a>
+    <?php if (Auth::screenAllows('allocations')): ?>
+      <a class="btn btn-ghost btn-sm" href="allocations.php">Allocation register</a>
+    <?php endif; ?>
   </div>
   <div class="card-body">
     <div class="grid g4 mb-2">

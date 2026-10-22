@@ -111,8 +111,40 @@ final class Auth
         session_start();
     }
 
+    /**
+     * Has this username failed to sign in too often, too recently?
+     *
+     * Five failures in ten minutes locks the name out for the rest of that
+     * window. Without it a password can be guessed at the speed of the
+     * network. The count is read from the audit trail, so there is no new
+     * table, and a lockout is itself visible to the Administrator. It
+     * expires by itself, so a mistyping officer waits, and is not locked out
+     * of the system for good.
+     */
+    public static function lockedOut(string $username): bool
+    {
+        $username = strtolower(trim($username));
+        if ($username === '') {
+            return false;
+        }
+        try {
+            return (int) Database::value(
+                "SELECT COUNT(*) FROM audit_log
+                  WHERE action = 'login-failed' AND detail = ?
+                    AND created_at > (NOW() - INTERVAL 10 MINUTE)",
+                ['user:' . $username]
+            ) >= 5;
+        } catch (Throwable $e) {
+            return false;   // never lock everyone out because the count failed
+        }
+    }
+
     public static function attempt(string $username, string $password): bool
     {
+        if (self::lockedOut($username)) {
+            return false;
+        }
+
         $row = Database::one(
             'SELECT id, username, password_hash, full_name, title, directorate, role, division_id, is_active
                FROM users WHERE username = ? LIMIT 1',
@@ -120,10 +152,12 @@ final class Auth
         );
 
         if (!$row || (int) $row['is_active'] !== 1 || !password_verify($password, $row['password_hash'])) {
+            self::log('login-failed', 'users', null, 'user:' . strtolower(trim($username)));
             return false;
         }
 
         session_regenerate_id(true);
+        self::$valid = null;
         $_SESSION['user_id'] = (int) $row['id'];
         $_SESSION['role']     = $row['role'];
         $_SESSION['name']     = $row['full_name'];
@@ -151,9 +185,49 @@ final class Auth
         self::$user = null;
     }
 
+    /** Whether this request's session has been checked against the account, and the answer. */
+    private static ?bool $valid = null;
+
+    /**
+     * Is somebody signed in, AND is their account still allowed to be?
+     *
+     * A session flag alone outlives the account: an officer who is
+     * deactivated, deleted or demoted would keep working, with their old
+     * authority, on every device that was already signed in. So the first
+     * call in each request confirms the account is still active, and
+     * refreshes the role from the database, so a change an administrator
+     * makes takes effect on the person's next click, not at their next login.
+     * One small query per request; the answer is remembered for the rest of it.
+     */
     public static function check(): bool
     {
-        return isset($_SESSION['user_id']);
+        if (!isset($_SESSION['user_id'])) {
+            return false;
+        }
+
+        if (self::$valid === null) {
+            try {
+                $row = Database::one(
+                    'SELECT is_active, role FROM users WHERE id = ? LIMIT 1',
+                    [(int) $_SESSION['user_id']]
+                );
+                if (!$row || (int) $row['is_active'] !== 1) {
+                    self::$valid = false;
+                    self::$user  = null;
+                    $_SESSION    = [];      // end the session: the account is gone or switched off
+                } else {
+                    if (($row['role'] ?? '') !== ($_SESSION['role'] ?? '')) {
+                        $_SESSION['role'] = (string) $row['role'];
+                        self::$user = null;
+                    }
+                    self::$valid = true;
+                }
+            } catch (Throwable $e) {
+                self::$valid = true;        // a database hiccup must not sign everyone out
+            }
+        }
+
+        return self::$valid === true && isset($_SESSION['user_id']);
     }
 
     public static function user(): array
@@ -197,6 +271,7 @@ final class Auth
 
     public static function role(): string
     {
+        self::check();      // so the role is the account's current one, not the one at sign-in
         return (string) ($_SESSION['role'] ?? 'guest');
     }
 
@@ -208,7 +283,7 @@ final class Auth
     }
 
     /** This role's position in the order of authority; 0 if unknown. */
-    public static function rank(string $role = null): int
+    public static function rank(?string $role = null): int
     {
         return self::HIERARCHY[$role ?? self::role()] ?? 0;
     }
@@ -218,7 +293,7 @@ final class Auth
      *
      * @return array{label:string,scope:string,blurb:string}
      */
-    public static function remit(string $role = null): array
+    public static function remit(?string $role = null): array
     {
         $key = $role ?? self::role();
         return self::REMIT[$key]
@@ -279,14 +354,84 @@ final class Auth
         }
     }
 
+    /**
+     * The person asked for something that is not part of their role.
+     *
+     * A signed-in officer who follows an old link, or types an address, onto
+     * another desk's screen used to meet a red "Access not permitted" page: a
+     * dead end that reads as a fault. A browser that is simply navigating is
+     * now returned to its own dashboard with a short note, so the work carries
+     * on. The refusal is exactly as strict as before; only what the person
+     * sees changed. Anything that is not a plain page view (a form posted by
+     * script, a command-line client) still receives the real 403.
+     */
+    private static function deny(string $note = ''): never
+    {
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && function_exists('isBrowserNavigation') && isBrowserNavigation()) {
+            flashSet(
+                $note !== '' ? $note : 'That screen belongs to a different desk, so it is not part of your role. You are back on your dashboard.',
+                'info'
+            );
+            header('Location: ' . APP_REL . 'pages/dashboard.php');
+            exit;
+        }
+
+        http_response_code(403);
+        $facts = require __DIR__ . '/../config/kcca_facts.php';
+        require __DIR__ . '/../layouts/forbidden.php';
+        exit;
+    }
+
+    /** The same refusal, for a page that makes its own decision (see my_market.php). */
+    public static function refuseScreen(string $note = ''): never
+    {
+        self::deny($note);
+    }
+
     public static function requirePermission(string $permission): void
     {
         self::requireLogin();
         if (!self::can($permission)) {
-            http_response_code(403);
-            $facts = require __DIR__ . '/../config/kcca_facts.php';
-            require __DIR__ . '/../layouts/forbidden.php';
-            exit;
+            self::deny();
+        }
+    }
+
+    /**
+     * Is this screen one this role is meant to hold?
+     *
+     * The rail is drawn from the audience each screen declares in
+     * navigation(). A page that only checks a broad grant such as 'report'
+     * is open to every role holding that grant, whether or not the rail
+     * offers it, so a planner who types /pages/licensing.php was let in to
+     * a screen the system itself says is not theirs. This asks the one
+     * source the rail already uses, so a link and a page cannot disagree.
+     */
+    public static function screenAllows(string $screenId, ?string $role = null): bool
+    {
+        $role = $role ?? self::role();
+
+        foreach (navigation() as $group) {
+            foreach ($group['items'] as $item) {
+                if (($item['id'] ?? '') !== $screenId) {
+                    continue;
+                }
+                $audience = $item['audience'] ?? ['all'];
+                return in_array('all', $audience, true) || in_array($role, $audience, true);
+            }
+        }
+
+        /* A screen that is not in the catalogue has no audience to enforce;
+           the permission gate on the page itself still applies. */
+        return true;
+    }
+
+    /** Refuse the request unless this role is in the screen's audience. */
+    public static function requireScreen(string $screenId): void
+    {
+        self::requireLogin();
+        if (!self::screenAllows($screenId)) {
+            self::log('denied-screen', 'screen', null, $screenId . ' refused to ' . self::role());
+            self::deny();
         }
     }
 

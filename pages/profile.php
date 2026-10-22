@@ -38,7 +38,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'detai
         $data = $v->validated();
         Database::update('users', $data, 'id = :id', ['id' => $meId]);
         Auth::log('update-own-account', 'users', $meId, implode(', ', array_keys($data)));
-        $saved = 'Your contact details have been updated.';
+        flashSet('Your contact details have been updated.', 'ok');
+        header('Location: profile.php');
+        exit;
     }
 }
 
@@ -71,7 +73,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'passw
             [password_hash($next, PASSWORD_DEFAULT), $meId]
         );
         Auth::log('change-own-password', 'users', $meId, 'Password changed by the account holder');
-        $saved = 'Your password has been changed.';
+        flashSet('Your password has been changed.', 'ok');
+        header('Location: profile.php');
+        exit;
     }
 }
 
@@ -214,6 +218,101 @@ require __DIR__ . '/../layouts/header.php';
     </form>
   </div>
 
+  <!-- ==================== APPEARANCE (every account) ============= -->
+  <div class="card" style="grid-column:1/-1">
+    <div class="card-head">
+      <div class="grow">
+        <h2>Appearance</h2>
+        <p class="desc">How your own account looks. It is saved to your account and follows you to any device; nobody else is affected.</p>
+      </div>
+      <span class="small muted" id="pref-status" role="status" aria-live="polite"></span>
+    </div>
+    <div class="card-body">
+      <div class="pref-list">
+        <label class="pref-row">
+          <span class="pref-text"><b>Glass appearance</b><small>Frosted panels over the colour background. Turn off for plain, solid panels.</small></span>
+          <span class="switch"><input type="checkbox" data-pref="glass" <?= $layoutPrefs['glass'] === 'on' ? 'checked' : '' ?>><i></i></span>
+        </label>
+        <label class="pref-row">
+          <span class="pref-text"><b>Animations</b><small>Entrances, counting figures, the photo slider and the moving background.</small></span>
+          <span class="switch"><input type="checkbox" data-pref="motion" <?= $layoutPrefs['motion'] === 'on' ? 'checked' : '' ?>><i></i></span>
+        </label>
+        <label class="pref-row">
+          <span class="pref-text"><b>Guidance text</b><small>Show the explanatory sentences under headings and fields.</small></span>
+          <span class="switch"><input type="checkbox" data-pref="guide" <?= $layoutPrefs['guide'] === 'on' ? 'checked' : '' ?>><i></i></span>
+        </label>
+        <label class="pref-row">
+          <span class="pref-text"><b>Compact layout</b><small>Tighter spacing, so more fits on the screen.</small></span>
+          <span class="switch"><input type="checkbox" data-pref="density" <?= $layoutPrefs['density'] === 'compact' ? 'checked' : '' ?>><i></i></span>
+        </label>
+        <div class="pref-row">
+          <span class="pref-text"><b>Light or dark</b><small>Switch between the light and dark colour schemes.</small></span>
+          <button type="button" class="btn btn-ghost btn-sm" id="pref-theme"><?= KCCA_icon('moon', 14) ?> Switch</button>
+        </div>
+      </div>
+    </div>
+    <div class="card-foot">
+      <button type="button" class="btn btn-ghost btn-sm" id="pref-reset">Restore the defaults</button>
+    </div>
+  </div>
+
+  <?php if (ChangeFeed::allowed()): ?>
+  <!-- ==================== NOTIFICATIONS (officers) ============= -->
+  <div class="card" style="grid-column:1/-1">
+    <div class="card-head">
+      <div class="grow">
+        <h2>Alerts from colleagues</h2>
+        <p class="desc">When another officer changes something in the shared register, the bell in the top bar tells you.</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="pref-list">
+        <label class="pref-row">
+          <span class="pref-text"><b>Pop-up alerts</b><small>Show a small notice when a colleague makes a change. The bell and its list stay on either way.</small></span>
+          <span class="switch"><input type="checkbox" data-pref="notify" <?= $layoutPrefs['notify'] === 'on' ? 'checked' : '' ?>><i></i></span>
+        </label>
+      </div>
+    </div>
+  </div>
+  <?php endif; ?>
+
+  <!-- ==================== YOUR DATA AND ACCOUNT (every account) ============= -->
+  <div class="card" style="grid-column:1/-1">
+    <div class="card-head">
+      <div class="grow">
+        <h2>Your data and account</h2>
+        <p class="desc">Keep a copy of what the system holds about you, or close your account.</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="pref-list">
+        <div class="pref-row">
+          <span class="pref-text"><b>Download my data</b><small>Your details, your settings and your recent activity, as one file.</small></span>
+          <a class="btn btn-ghost btn-sm" data-no-fade href="../api/self_account.php?action=export"><?= KCCA_icon('download', 14) ?> Download</a>
+        </div>
+        <div class="pref-row">
+          <span class="pref-text"><b>Delete my account</b>
+            <small>You will be signed out and the account can never sign in again. Your contact details are erased. Work you did in the register stays, so the audit trail remains complete.</small></span>
+          <button type="button" class="btn btn-danger btn-sm" id="del-open">Delete&hellip;</button>
+        </div>
+      </div>
+
+      <form class="del-box" id="del-box" hidden autocomplete="off">
+        <p class="small"><b>This cannot be undone.</b> Confirm it is you, then type <code>DELETE</code> to go ahead.</p>
+        <div class="grid g2">
+          <div class="field"><label for="del-pass">Your password</label>
+            <input id="del-pass" type="password" autocomplete="current-password"></div>
+          <div class="field"><label for="del-word">Type DELETE</label>
+            <input id="del-word" type="text" autocomplete="off" spellcheck="false" placeholder="DELETE"></div>
+        </div>
+        <div class="row">
+          <button type="button" class="btn btn-danger" id="del-go">Delete my account permanently</button>
+          <button type="button" class="btn btn-quiet" id="del-cancel">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- ==================== WHAT THIS ACCOUNT CAN DO ============= -->
   <div class="card" style="grid-column:1/-1">
     <div class="card-head">
@@ -260,5 +359,49 @@ require __DIR__ . '/../layouts/header.php';
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var status = document.getElementById('pref-status');
+  function say(ok) {
+    if (!status) { return; }
+    status.textContent = ok ? 'Saved' : 'Could not be saved. It is applied here for now.';
+    clearTimeout(say.t); say.t = setTimeout(function () { status.textContent = ''; }, 2600);
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('[data-pref]'), function (box) {
+    box.addEventListener('change', function () {
+      var key = box.getAttribute('data-pref');
+      var val = key === 'density' ? (box.checked ? 'compact' : 'comfortable') : (box.checked ? 'on' : 'off');
+      window.KCCAPrefs.set(key, val, say);
+    });
+  });
+  var theme = document.getElementById('pref-theme');
+  if (theme) { theme.addEventListener('click', function () {
+    var t = document.querySelector('[data-theme-toggle]'); if (t) { t.click(); }
+  }); }
+  var box = document.getElementById('del-box'), open = document.getElementById('del-open');
+  if (open && box) {
+    open.addEventListener('click', function () { box.hidden = false; open.disabled = true; document.getElementById('del-pass').focus(); });
+    document.getElementById('del-cancel').addEventListener('click', function () { box.hidden = true; open.disabled = false; });
+    document.getElementById('del-go').addEventListener('click', function () {
+      var btn = this;
+      KCCA.postAction(KCCA.api('api/self_account.php'), {
+        action: 'delete',
+        password: document.getElementById('del-pass').value,
+        confirm: document.getElementById('del-word').value
+      }, { button: btn, busyLabel: 'Deleting…', reload: false,
+           confirm: 'Delete your account permanently? You will be signed out and cannot sign in again.' })
+      .then(function (res) {
+        if (res && res.ok) { setTimeout(function () { location.href = '../auth/login.php'; }, 1200); }
+      });
+    });
+  }
+  var reset = document.getElementById('pref-reset');
+  if (reset) { reset.addEventListener('click', function () {
+    window.KCCAPrefs.set('glass', 'on'); window.KCCAPrefs.set('motion', 'on'); window.KCCAPrefs.set('guide', 'off');
+    window.KCCAPrefs.set('notify', 'on'); window.KCCAPrefs.set('density', 'comfortable', say);
+  }); }
+});
+</script>
 
 <?php require __DIR__ . '/../layouts/footer.php'; ?>

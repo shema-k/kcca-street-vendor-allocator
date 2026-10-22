@@ -7,6 +7,9 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../lib/bootstrap.php';
 Auth::requirePermission('report');
+/* The rail offers this screen only to the roles that operate it; the page now
+   agrees, so typing the address does not open what the rail withholds. */
+Auth::requireScreen('licensing');
 
 $f = facts();
 $a = $f['authority'];

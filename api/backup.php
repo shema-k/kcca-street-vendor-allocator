@@ -11,6 +11,12 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/bootstrap.php';
 requireToken();
+/* A backup is a complete copy of every record, personal data included, and
+   deleting one removes a way back. Both belong to the roles that manage the
+   system, the same ones who can open Settings where backups are made. Before
+   this check, any signed-in account could do either. */
+requirePerm('manage');
+requireScreenApi('settings');
 require_once __DIR__ . '/../lib/Backup.php';
 
 $action = (string) ($_POST['action'] ?? '');

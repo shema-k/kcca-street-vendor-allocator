@@ -33,6 +33,21 @@ if ($action === 'delete') {
     }
 }
 
+/* A Division Mayor registers and amends traders in their own division only. */
+$mayorLock = divisionLock();
+if ($mayorLock !== null) {
+    if ($action === 'create') {
+        $postedDivision = (int) ($_POST['division_id'] ?? 0);
+        if ($postedDivision === 0) {
+            $_POST['division_id'] = (string) $mayorLock['id'];   // pinned, not left to be derived
+        } elseif ($postedDivision !== (int) $mayorLock['id']) {
+            jsonOut(['ok' => false, 'error' => 'A trader can only be registered in your own division.', 'code' => 403], 403);
+        }
+    } else {
+        requireVendorInScope((int) ($_POST['vendor_id'] ?? 0));
+    }
+}
+
 $result = VendorService::save($_POST, $action);
 
 if (!$result['ok']) {

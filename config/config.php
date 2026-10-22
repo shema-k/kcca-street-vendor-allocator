@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 define('APP_NAME',    'KCCA Vendor Relocation & Space Allocation System');
 define('APP_SHORT',   'KCCA VRSP');
-define('APP_VERSION', '1.0.0');
+define('APP_VERSION', '4.1.0');
 define('APP_BASENAME', 'kcca-vendor-relocation');
 
 /* ---------------------------------------------------------------------

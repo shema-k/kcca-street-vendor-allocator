@@ -381,6 +381,40 @@ if (!isset($reports[$report])) {
 
 $spec = $reports[$report];
 
+/* ---------------- Who may download what ----------------
+   `report` is held by six roles, so on its own it let any of them download
+   any register: a revenue officer could take the vendor register with its
+   National ID numbers, and a Division Mayor could take every division's.
+   Each report now names the desks that operate it - the same audiences the
+   rail uses for the matching screen - and a Mayor's download is confined to
+   their own division, in the query, before a row is fetched. */
+$exportRoles = exportRoles();
+
+if (!in_array(Auth::role(), $exportRoles[$report] ?? [], true)) {
+    Auth::log('denied-export', 'reports', null, $report . ' refused to ' . Auth::role());
+    jsonOut(['error' => 'Your desk does not hold this register, so it cannot be exported from your account.', 'code' => 403], 403);
+}
+
+/* The column that carries a division in each report's own query. */
+$exportDivisionColumn = [
+    'zones' => 'z.division_id',        'vendors' => 'v.division_id',
+    'markets' => 'm.division_id',      'pitches' => 'm.division_id',
+    'footfall' => 'm.division_id',     'restrictions' => 'm.division_id',
+    'allocations' => 'v.division_id',  'recommendations' => 'v.division_id',
+    'relocation-history' => 'v.division_id', 'stall-requests' => 'm.division_id',
+    'enforcement' => 'z.division_id',  'licensing' => 'v.division_id',
+    'summary' => 'd.id',
+];
+$exportLock = divisionLock();
+if ($exportLock !== null && isset($exportDivisionColumn[$report])) {
+    $spec['sql'] = preg_replace(
+        '/\sORDER BY\s/',
+        ' WHERE ' . $exportDivisionColumn[$report] . ' = ' . (int) $exportLock['id'] . ' ORDER BY ',
+        $spec['sql'],
+        1
+    );
+}
+
 /* ---------------- Build the query ----------------
    Alias each selected column by its heading, not by its SQL expression:
    two columns can select the same bare column name (the zone register

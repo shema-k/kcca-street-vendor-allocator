@@ -290,10 +290,13 @@ final class RelocationEngine
      * Score one vendor against one market on all six criteria.
      * @return array<int,array{key:string,label:string,raw:float,weight:float,note:string}>
      */
-    public static function criteriaFor(array $vendor, array $m): array
+    public static function criteriaFor(array $vendor, array $m, ?array $weights = null): array
     {
-        // Weights come from Settings; RELOCATION_WEIGHTS is the fallback.
-        $w = class_exists(Settings::class) ? Settings::relocationWeights() : RELOCATION_WEIGHTS;
+        /* Weights come from Settings; RELOCATION_WEIGHTS is the fallback. The
+           allocation planner passes its own, so that a policy such as
+           "equity first" is a choice made for one run and not a change to the
+           Authority's standing settings. */
+        $w = $weights ?? (class_exists(Settings::class) ? Settings::relocationWeights() : RELOCATION_WEIGHTS);
 
         /* --- 1. Proximity ---------------------------------------------
            A vendor who loses their customers overnight will not survive a

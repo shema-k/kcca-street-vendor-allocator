@@ -22,7 +22,11 @@ switch ($form) {
 
     /* ---------------- Record a footfall count ---------------- */
     case 'footfall': {
+        /* Counting visitors feeds the reach model, so it is a reporting act,
+           held by the roles that report - not by every signed-in account. */
+        requirePerm('report');
         $locationId = (int) ($_GET['location'] ?? $_POST['market_id'] ?? 0);
+        requireMarketInScope($locationId);
         $values     = $_POST;
         $errors     = [];
 
@@ -197,27 +201,14 @@ switch ($form) {
           </form>
         </div>
         </div>
-        <script>
-        document.querySelector('[data-modal-form="footfall"]') ||
-          document.addEventListener('submit', function (e) {
-            var f = e.target;
-            if (f.id !== 'footfall-form') return;
-            e.preventDefault();
-            var fd = new FormData(f);
-            KCCA.post(KCCA.api('api/form.php'), Object.fromEntries(fd.entries()))
-              .then(function (res) {
-                if (res && res.ok) { KCCA.closeModal(); KCCA.flash(res.message, 'ok');
-                                     setTimeout(function(){ location.reload(); }, 800); }
-                else { KCCA.flash(res && res.error, 'bad'); }
-              });
-          });
-        </script>
         <?php
         break;
     }
 
     /* ---------------- Edit a pitch ---------------- */
     case 'space': {
+        /* Changing a pitch changes what can be offered, so it is a management act. */
+        requirePerm('manage');
         $spaceId = (int) ($_GET['space_id'] ?? $_POST['space_id'] ?? 0);
         $space   = Database::one(
             'SELECT s.*, m.name AS market_name FROM market_spaces s
@@ -333,24 +324,14 @@ switch ($form) {
           </form>
         </div>
         </div>
-        <script>
-        document.addEventListener('submit', function (e) {
-          if (!e.target.matches('.modal-form') || e.target.querySelector('[name=form]').value !== 'space') return;
-          e.preventDefault();
-          KCCA.post(KCCA.api('api/form.php'), Object.fromEntries(new FormData(e.target).entries()))
-            .then(function (res) {
-              if (res && res.ok) { KCCA.closeModal(); KCCA.flash(res.message, 'ok');
-                                   setTimeout(function(){ location.reload(); }, 800); }
-              else { KCCA.flash(res && res.error, 'bad'); }
-            });
-        });
-        </script>
         <?php
         break;
     }
 
     /* ---------------- Land-use restriction ---------------- */
     case 'restriction': {
+        /* A land-use restriction decides which trades may be placed in a market. */
+        requirePerm('manage');
         $marketId = (int) ($_GET['market_id'] ?? $_POST['market_id'] ?? 0);
         $errors   = [];
         $values   = $_POST;
@@ -528,19 +509,6 @@ switch ($form) {
           </form>
         </div>
         </div>
-        <script>
-        document.addEventListener('submit', function (e) {
-          if (!e.target.matches('.modal-form')) return;
-          if (e.target.querySelector('[name=form]').value !== 'restriction') return;
-          e.preventDefault();
-          KCCA.post(KCCA.api('api/form.php'), Object.fromEntries(new FormData(e.target).entries()))
-            .then(function (res) {
-              if (res && res.ok) { KCCA.closeModal(); KCCA.flash(res.message, 'ok');
-                                   setTimeout(function(){ location.reload(); }, 800); }
-              else { KCCA.flash(res && res.error, 'bad'); }
-            });
-        });
-        </script>
         <?php
         break;
     }
@@ -898,57 +866,6 @@ switch ($form) {
           </form>
         </div>
         </div>
-        <script>
-        /* The form posts to itself. On success the endpoint answers with
-           JSON; on a validation failure it answers with the same form
-           again, carrying the messages beside the fields that caused them.
-           Swapping the markup in place keeps what the trader already
-           typed, which is the whole point of validating field by field. */
-        document.addEventListener('submit', function (e) {
-          if (!e.target.matches('.modal-form')) return;
-          var form = e.target;
-          if (!form.querySelector('[name="action"][value="create"], [name="action"][value="update"]')) return;
-
-          e.preventDefault();
-          var btn = form.querySelector('[type="submit"]');
-          var label = btn ? btn.textContent : '';
-          if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
-
-          fetch(KCCA.api('api/form.php'), {
-            method: 'POST',
-            body: new FormData(form),
-            headers: { 'X-Requested-With': 'fetch' }
-          })
-            .then(function (r) {
-              var type = r.headers.get('content-type') || '';
-              if (type.indexOf('application/json') !== -1) return r.json();
-              /* Re-rendered form: swap it in and scroll the summary into view. */
-              var host = document.querySelector('.modal-back');
-              return r.text().then(function (html) {
-                if (host) {
-                  host.innerHTML = html;
-                  var alert = host.querySelector('.alert-bad');
-                  if (alert) alert.scrollIntoView({ block: 'start', behavior: 'smooth' });
-                }
-                return { reRendered: true };
-              });
-            })
-            .then(function (res) {
-              if (res && res.ok) {
-                KCCA.closeModal();
-                KCCA.flash(res.message, 'ok');
-                setTimeout(function () { location.reload(); }, 900);
-              } else if (!res || !res.reRendered) {
-                KCCA.flash((res && res.error) || 'The vendor could not be saved.', 'bad');
-                if (btn) { btn.disabled = false; btn.textContent = label; }
-              }
-            })
-            .catch(function () {
-              KCCA.flash('Could not reach the server. Nothing was saved.', 'bad');
-              if (btn) { btn.disabled = false; btn.textContent = label; }
-            });
-        });
-        </script>
         <?php
         break;
     }

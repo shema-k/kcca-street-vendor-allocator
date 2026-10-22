@@ -35,6 +35,7 @@ switch ($action) {
         if (!$vendor) {
             refuse('That vendor is not in the register.', 404);
         }
+        requireVendorInScope($vendorId);
 
         $division = (string) ($_POST['division'] ?? '');
         $markets  = RecommendationService::candidateMarkets();
@@ -88,6 +89,7 @@ switch ($action) {
         $recId   = (int) ($_POST['recommendation_id'] ?? 0);
         $spaceId = (int) ($_POST['market_space_id'] ?? 0);
         $note    = trim((string) ($_POST['note'] ?? ''));
+        requireRecommendationInScope($recId);
 
         try {
             $result = RecommendationService::approve($recId, $spaceId, $note);
@@ -108,6 +110,7 @@ switch ($action) {
 
         $recId  = (int) ($_POST['recommendation_id'] ?? 0);
         $reason = trim((string) ($_POST['reason'] ?? ''));
+        requireRecommendationInScope($recId);
 
         if ($reason === '') {
             refuse('A rejection must give a reason. The trader and Internal Audit both need it.', 422);

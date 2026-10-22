@@ -46,6 +46,16 @@ kcca-vendor-relocation/
                             stall-map.js, activities.js
 ```
 
+
+## v2.0 additions
+
+See `CHANGES_v2.md` for the full review. In short: an **AI Planner** that places a
+whole batch of traders at once (exact joint optimum, four policies, four-eyes
+approval), a **security pass** that makes every screen, export and action endpoint
+agree with the role and division the rail promises, and a new **Civic** interface
+layer (`assets/css/civic.css`). The planner appears as *AI Planner* under
+Relocation for the Administrator, Executive Director, Mayor and Planner.
+
 ## Requirements
 
 PHP 8.0+ with `pdo_mysql`, and MySQL 8 or MariaDB 10.4+ (`mariadbd` and

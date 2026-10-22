@@ -89,26 +89,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'creat
         $values = $_POST;
         $isNew  = true;
     } else {
+        /* Post, then redirect: a refresh must not post the form a second time. */
         $name = $_POST['full_name'] ?? 'The account';
-        $banner = sprintf('%s has been added. They can sign in with the username and password set here.', $name);
-        $all = Database::all(
-            'SELECT u.id, u.username, u.full_name, u.title, u.directorate, u.role, u.division_id,
-                    u.chairman_id, u.vendor_id, u.email, u.phone, u.name_basis,
-                    u.is_active, u.last_login_at, d.name AS division_name,
-                    cmk.name AS chairman_market, cm.full_name AS chairman_full_name,
-                    v.full_name AS vendor_name, v.vendor_code
-               FROM users u LEFT JOIN divisions d ON d.id = u.division_id
-       LEFT JOIN market_chairmen cm ON cm.id = u.chairman_id
-       LEFT JOIN markets cmk ON cmk.id = cm.market_id
-               LEFT JOIN vendors v ON v.id = u.vendor_id
-              ORDER BY u.id'
-        );
-        $editable = [];
-        $mine     = null;
-        foreach ($all as $u) {
-            if ((int) $u['id'] === Auth::id()) { $mine = $u; continue; }
-            if ($canEdit && Auth::rank() > Auth::rank((string) $u['role'])) { $editable[] = $u; }
-        }
+        flashSet(sprintf('%s has been added. They can sign in with the username and password set here.', $name), 'ok');
+        header('Location: users.php');
+        exit;
     }
 }
 
@@ -130,25 +115,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save'
                LEFT JOIN divisions d ON d.id = u.division_id WHERE u.id = ?', [$id]
         );
     } else {
-        $banner = 'The account has been updated.';
-        $all = Database::all(
-            'SELECT u.id, u.username, u.full_name, u.title, u.directorate, u.role, u.division_id,
-                    u.chairman_id, u.vendor_id, u.email, u.phone, u.name_basis,
-                    u.is_active, u.last_login_at, d.name AS division_name,
-                    cmk.name AS chairman_market, cm.full_name AS chairman_full_name,
-                    v.full_name AS vendor_name, v.vendor_code
-               FROM users u LEFT JOIN divisions d ON d.id = u.division_id
-       LEFT JOIN market_chairmen cm ON cm.id = u.chairman_id
-       LEFT JOIN markets cmk ON cmk.id = cm.market_id
-               LEFT JOIN vendors v ON v.id = u.vendor_id
-              ORDER BY u.id'
-        );
-        $editable = [];
-        $mine     = null;
-        foreach ($all as $u) {
-            if ((int) $u['id'] === Auth::id()) { $mine = $u; continue; }
-            if ($canEdit && Auth::rank() > Auth::rank((string) $u['role'])) { $editable[] = $u; }
-        }
+        flashSet('The account has been updated.', 'ok');
+        header('Location: users.php');
+        exit;
     }
 }
 

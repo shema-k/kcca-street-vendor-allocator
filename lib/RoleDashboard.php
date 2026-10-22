@@ -210,6 +210,8 @@ final class RoleDashboard
         switch ($role) {
 
             case 'administrator':
+                $out[] = ['id' => 'aiplanner', 'title' => 'AI Planner',
+                          'desc' => 'Place a whole batch of traders at once.', 'render' => 'aiplanner'];
                 $out[] = ['id' => 'accounts', 'title' => 'Accounts and access',
                           'desc' => 'Who can sign in, and at what level of authority.', 'render' => 'accounts'];
                 $out[] = ['id' => 'divisions', 'title' => 'Progress by division',
@@ -221,6 +223,8 @@ final class RoleDashboard
                 break;
 
             case 'executive':
+                $out[] = ['id' => 'aiplanner', 'title' => 'AI Planner',
+                          'desc' => 'Place a whole batch of traders at once.', 'render' => 'aiplanner'];
                 /* The Executive Director's screen is a summary first: what is
                    moving, what is not, and what is waiting on them. */
                 $out[] = ['id' => 'divisions', 'title' => 'Progress by division',
@@ -234,6 +238,8 @@ final class RoleDashboard
                 break;
 
             case 'mayor':
+                $out[] = ['id' => 'aiplanner', 'title' => 'AI Planner',
+                          'desc' => 'Place a whole batch of traders at once.', 'render' => 'aiplanner'];
                 $out[] = ['id' => 'divisions', 'title' => 'Your division',
                           'desc' => 'Sites, clearance and space where you have authority.', 'render' => 'divisions'];
                 $out[] = ['id' => 'myzone', 'title' => 'Sites in your division',
@@ -245,6 +251,8 @@ final class RoleDashboard
                 break;
 
             case 'planner':
+                $out[] = ['id' => 'aiplanner', 'title' => 'AI Planner',
+                          'desc' => 'Place a whole batch of traders at once.', 'render' => 'aiplanner'];
                 /* The Planner's screen leads with the forecast, because that
                    is the tool they asked for. */
                 $out[] = ['id' => 'ai', 'title' => 'Forecast',
@@ -298,7 +306,13 @@ final class RoleDashboard
         $role = Auth::role();
 
         if (in_array($role, ['administrator', 'executive', 'mayor'], true)) {
-            $n = (int) Database::value("SELECT COUNT(*) FROM recommendations WHERE status = 'proposed'");
+            /* A Mayor is told about their own division's queue. The list beneath this
+               figure was already scoped; the figure itself was citywide, so the two
+               disagreed and a Mayor was shown another division's workload. */
+            $recScope = isset($scope['division_id'])
+                ? ' AND vendor_id IN (SELECT id FROM vendors WHERE division_id = ' . (int) $scope['division_id'] . ')'
+                : '';
+            $n = (int) Database::value("SELECT COUNT(*) FROM recommendations WHERE status = 'proposed'" . $recScope);
             if ($n > 0) {
                 $out[] = ['label' => num($n) . ' recommendation' . ($n === 1 ? '' : 's') . ' awaiting approval',
                           'href' => 'recommendations.php?status=proposed', 'tone' => 'info'];
@@ -306,8 +320,11 @@ final class RoleDashboard
         }
 
         if (in_array($role, ['administrator', 'executive', 'mayor'], true)) {
+            $reqScope = isset($scope['division_id'])
+                ? ' AND market_id IN (SELECT id FROM markets WHERE division_id = ' . (int) $scope['division_id'] . ')'
+                : '';
             $n = (int) Database::value(
-                "SELECT COUNT(*) FROM stall_requests WHERE status IN ('pending','reviewing')"
+                "SELECT COUNT(*) FROM stall_requests WHERE status IN ('pending','reviewing')" . $reqScope
             );
             if ($n > 0) {
                 $out[] = ['label' => num($n) . ' stall request' . ($n === 1 ? '' : 's') . ' to decide',
@@ -320,6 +337,7 @@ final class RoleDashboard
                 "SELECT COUNT(*) FROM markets m
                   WHERE m.vacant_spaces > 0
                     AND NOT EXISTS (SELECT 1 FROM footfall_observations o WHERE o.market_id = m.id)"
+                  . self::scopeFor('markets', $scope, 'm')
             );
             if ($n > 0) {
                 $out[] = ['label' => num($n) . ' market' . ($n === 1 ? '' : 's')

@@ -77,6 +77,11 @@ $a = $f['authority'];
         rest are drawn by the pages that asked for them. */ ?>
 <script src="../assets/js/kcca.js"></script>
 <script src="../assets/js/activities.js"></script>
+<script src="../assets/js/alive.js?v=<?= e(APP_VERSION) ?>"></script>
+<?php if ($kept = flashTake()): ?>
+<script>document.addEventListener('DOMContentLoaded', function () { if (window.KCCA && KCCA.flash) { KCCA.flash(<?= json_encode($kept['message'], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>, <?= json_encode($kept['tone']) ?>); } });</script>
+<?php endif; ?>
+<script src="../assets/js/feed.js?v=<?= e(APP_VERSION) ?>"></script>
 <?php /* The live-queue poller, loaded only where a page has asked for it with
          [data-live]. Pages that carry no queue cost nothing, which is the
          reason this is not in the always-loaded pair above. */ ?>

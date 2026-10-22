@@ -9,7 +9,9 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/bootstrap.php';
-requireSession();
+/* Returns the traders of a zone by name, with telephone and disability status. */
+requirePerm('report');
+requireScreenApi('congestion');
 
 $zoneId = qInt('id', 0);
 if ($zoneId <= 0) {

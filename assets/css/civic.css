@@ -1,0 +1,387 @@
+/* =====================================================================
+   KCCA VRSP - "Glass" interface layer
+
+   Loaded after kcca.css and before dark.css.
+
+   Palette: the Authority's own, as recorded from kcca.go.ug in kcca.css -
+   yellow #F7C401 (the theme colour), seal green #0A6339, and the red
+   #DC351D / #F12D24 kept for the logo and for warnings only. There is no
+   orange in the interface: the amber #EAA515 and its red-to-amber blends
+   are gone, because they read as orange.
+   They sit behind the interface as soft colour fields; every panel on top
+   is frosted glass, so the work stays legible and the Authority's colours
+   frame it rather than fill it.
+
+   Shell architecture: a floating top bar and a floating dock-style rail,
+   inset from the window edges, with the content scrolling between them.
+   Panels that carry text or forms (menus, dialogs, drawer) are the more
+   opaque "strong" glass so contrast never depends on what is behind them.
+   Without backdrop-filter support, panels fall back to near-solid fills.
+   ===================================================================== */
+
+:root {
+  /* The theme colour. Yellow surfaces carry dark ink, never white. */
+  --accent:       #F7C401;
+  --accent-hi:    #FFE066;
+  --accent-deep:  #E0B000;
+  --accent-ink:   #2B2200;
+  --accent-text:  #6B5200;      /* yellow-family text on light panels, 7:1 */
+  --accent-rgb:   247,196,1;
+  --kcca-gold-warm: #F7C401;
+
+  --glass:        rgba(255,255,255,.58);
+  --glass-strong: rgba(255,255,255,.86);
+  --glass-line:   rgba(255,255,255,.75);
+  --glass-edge:   rgba(70,70,70,.08);
+  --glass-shadow: 0 10px 34px rgba(90,45,20,.10), 0 2px 6px rgba(90,45,20,.06);
+  --blur:         blur(20px) saturate(165%);
+
+  --surface-2: #F6F3EE;
+  --surface-3: rgba(70,70,70,.07);
+  --line:      rgba(70,70,70,.14);
+  --line-2:    rgba(70,70,70,.08);
+  --ink:       #23262B;
+  --ink-2:     #464646;     /* the Authority's body text */
+  --ink-3:     #6A6F78;
+
+  --radius:    18px;
+  --radius-sm: 12px;
+  --rail:      236px;
+  --topbar:    76px;
+  --shadow-1:  var(--glass-shadow);
+  --shadow-2:  0 14px 40px rgba(90,45,20,.14), 0 3px 8px rgba(90,45,20,.07);
+  --shadow-3:  0 24px 60px rgba(60,30,10,.24), 0 6px 14px rgba(60,30,10,.10);
+}
+
+[data-theme="dark"] {
+  --accent-text:  #FFE066;
+  --glass:        rgba(30,32,39,.56);
+  --glass-strong: rgba(26,28,34,.88);
+  --glass-line:   rgba(255,255,255,.11);
+  --glass-edge:   rgba(255,255,255,.06);
+  --glass-shadow: 0 10px 34px rgba(0,0,0,.40), 0 2px 6px rgba(0,0,0,.30);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent-text:  #FFE066;
+    --glass:        rgba(30,32,39,.56);
+    --glass-strong: rgba(26,28,34,.88);
+    --glass-line:   rgba(255,255,255,.11);
+    --glass-edge:   rgba(255,255,255,.06);
+    --glass-shadow: 0 10px 34px rgba(0,0,0,.40), 0 2px 6px rgba(0,0,0,.30);
+  }
+}
+
+/* ------------------------------------------------------- Body and field */
+body {
+  min-height: 100vh;
+  background-color: #F6F3EE;
+  background-image:
+    radial-gradient(620px 440px at 6% 4%,   rgba(var(--accent-rgb),.50), transparent 70%),
+    radial-gradient(720px 520px at 96% 2%,  rgba(var(--accent-rgb),.26),  transparent 70%),
+    radial-gradient(780px 560px at 92% 98%, rgba(10,99,57,.30),   transparent 70%),
+    radial-gradient(560px 480px at 4% 94%,  rgba(255,224,102,.34), transparent 70%);
+  background-attachment: fixed;
+  letter-spacing: -.003em;
+  font-feature-settings: "tnum" 1, "cv11" 1;
+}
+html[data-theme="dark"] body {
+  background-color: #14151A;
+  background-image:
+    radial-gradient(620px 440px at 6% 4%,   rgba(var(--accent-rgb),.20), transparent 70%),
+    radial-gradient(720px 520px at 96% 2%,  rgba(var(--accent-rgb),.14),  transparent 70%),
+    radial-gradient(780px 560px at 92% 98%, rgba(10,99,57,.26),   transparent 70%),
+    radial-gradient(560px 480px at 4% 94%,  rgba(247,196,1,.10),  transparent 70%);
+}
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) body {
+    background-color: #14151A;
+    background-image:
+      radial-gradient(620px 440px at 6% 4%,   rgba(var(--accent-rgb),.20), transparent 70%),
+      radial-gradient(720px 520px at 96% 2%,  rgba(var(--accent-rgb),.14),  transparent 70%),
+      radial-gradient(780px 560px at 92% 98%, rgba(10,99,57,.26),   transparent 70%),
+      radial-gradient(560px 480px at 4% 94%,  rgba(247,196,1,.10),  transparent 70%);
+  }
+}
+/* The body design: a fine dot grid under everything, so the glass has
+   something to refract. */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background-image: radial-gradient(rgba(70,70,70,.13) 1px, transparent 1.2px);
+  background-size: 24px 24px;
+  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,.9), rgba(0,0,0,.25));
+          mask-image: linear-gradient(180deg, rgba(0,0,0,.9), rgba(0,0,0,.25));
+}
+[data-theme="dark"] body::before { background-image: radial-gradient(rgba(255,255,255,.10) 1px, transparent 1.2px); }
+
+h1 { font-size: 24px; font-weight: 800; letter-spacing: -.5px; }
+h2 { font-weight: 700; letter-spacing: -.25px; }
+
+/* -------------------------------------------------------- Glass surfaces */
+.card, .stat, .topbar, .rail, .foot, .login-card, .flash {
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--glass-shadow);
+}
+.modal, .acct-menu, .roledash-sheet {
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--shadow-3);
+}
+.modal-back { background: rgba(35,25,20,.38); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root { --glass: rgba(255,255,255,.92); --glass-strong: rgba(255,255,255,.98); }
+  [data-theme="dark"] { --glass: rgba(30,32,39,.94); --glass-strong: rgba(26,28,34,.98); }
+}
+
+/* Soft top-light on every glass panel */
+.card, .stat { position: relative; }
+.card::before, .stat::after {
+  content: ""; position: absolute; left: 14px; right: 14px; top: 0; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.95), transparent);
+}
+[data-theme="dark"] .card::before, [data-theme="dark"] .stat::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent); }
+.card { border-radius: var(--radius); transition: box-shadow .2s, transform .2s; }
+.card:hover { box-shadow: var(--shadow-2); }
+.card-head { border-bottom: 1px solid var(--glass-edge); }
+.card-foot { background: color-mix(in srgb, var(--surface) 35%, transparent); border-top: 1px solid var(--glass-edge); border-radius: 0 0 var(--radius) var(--radius); }
+
+/* ------------------------------------------------ Shell: floating top bar */
+.topbar {
+  top: 10px; left: 12px; right: 12px; height: 56px; border-radius: 20px;
+  color: var(--ink); padding: 0 12px 0 16px;
+}
+.topbar::after {            /* the Authority's red-amber-gold, along the foot */
+  content: ""; position: absolute; left: 22px; right: 22px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0;
+  background: linear-gradient(90deg, #F7C401 0%, #FFE066 55%, #0A6339 100%);
+}
+.topbar .brand img { height: 30px; }
+.topbar .brand .logo-on-dark { display: none; }
+[data-theme="dark"] .topbar .brand .logo-on-dark { display: block; }
+[data-theme="dark"] .topbar .brand .logo-on-light { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .topbar .brand .logo-on-dark { display: block; }
+  :root:not([data-theme="light"]) .topbar .brand .logo-on-light { display: none; }
+}
+.topbar .brand .sep { background: var(--line); }
+.topbar .brand .sys b { color: var(--ink); font-size: 14px; font-weight: 700; }
+.topbar .brand .sys span { color: var(--ink-3); letter-spacing: 1.1px; }
+.topbar .icon-link, [data-guide-toggle] {
+  color: var(--ink-2); background: var(--surface-3); border: 1px solid var(--glass-edge);
+}
+.topbar .icon-link:hover { background: rgba(var(--accent-rgb),.28); color: var(--ink); }
+[data-guide-toggle] { font-weight: 800; font-size: 15px; cursor: pointer; }
+html[data-guide="on"] [data-guide-toggle], html[data-glass="on"] [data-glass-toggle][aria-pressed="true"] { background: var(--accent) !important; color: var(--accent-ink) !important; border-color: var(--accent-deep) !important; }
+.userchip { color: var(--ink); background: var(--surface-3); border: 1px solid var(--glass-edge); }
+.userchip:hover { background: rgba(var(--accent-rgb),.24); }
+.userchip .who span { color: var(--ink-3); }
+.avatar { background: linear-gradient(135deg, #FFE066, #F7C401); color: var(--accent-ink); }
+.theme-toggle { color: var(--ink-2); }
+
+/* ------------------------------------------------- Shell: floating dock */
+.rail {
+  top: 78px; left: 12px; bottom: 12px; width: var(--rail); border-radius: 22px;
+  padding: 12px 10px 18px;
+}
+.rail::-webkit-scrollbar-thumb { background: var(--line); border-color: transparent; }
+.rail-level {
+  background: linear-gradient(135deg, rgba(var(--accent-rgb),.22), rgba(var(--accent-rgb),.08));
+  border: 1px solid var(--glass-edge); border-radius: 14px; margin: 0 2px 6px;
+}
+.rail-group { padding: 8px 0 2px; }
+.rail-group h4 { color: var(--ink-3); padding: 0 12px; letter-spacing: 1.3px; }
+.rail a {
+  color: var(--ink-2); border-left: 0; border-radius: 12px;
+  padding: 7px 12px; margin: 1px 0; position: relative; font-size: 13px;
+}
+.rail a:hover { background: rgba(var(--accent-rgb),.22); color: var(--ink); }
+.rail a.active {
+  color: var(--accent-ink); font-weight: 700;
+  background: linear-gradient(135deg, var(--accent-hi) 0%, var(--accent) 55%, var(--accent-deep) 100%);
+  box-shadow: 0 6px 16px rgba(var(--accent-rgb),.45), inset 0 1px 0 rgba(255,255,255,.5);
+}
+.rail a.active .pill { background: rgba(43,34,0,.16); color: var(--accent-ink); }
+.rail .pill { background: var(--surface-3); color: var(--ink-3); }
+.rail-foot { border-top-color: var(--glass-edge); }
+.rail-foot .site-link { color: var(--kcca-green); }
+.rail a.active .ico { color: var(--accent-ink); }
+
+/* ----------------------------------------------------------- Main column */
+.main { margin-left: calc(var(--rail) + 24px); padding-top: var(--topbar); }
+.content { padding: 14px 22px 40px 6px; max-width: 1480px; }
+.page-head .eyebrow {
+  display: inline-block; padding: 3px 11px; border-radius: 999px; margin-bottom: 4px;
+  background: rgba(var(--accent-rgb),.28);
+  color: var(--accent-text); letter-spacing: 1px; font-weight: 700; font-size: 10.5px;
+  border: 1px solid var(--glass-edge);
+}
+.foot { margin: 8px 22px 14px 6px; border-radius: var(--radius); }
+
+/* ------------------------------------------------- Stat tiles (palette) */
+.stat { border-radius: var(--radius); }
+.stat::before { left: 18px; right: 18px; top: 0; bottom: auto; width: auto; height: 3px; border-radius: 0 0 4px 4px; background: var(--accent); }
+.stat.green::before, .stat.ok::before { background: var(--kcca-green); }
+.stat.gold::before, .stat.info::before { background: linear-gradient(90deg, var(--accent-deep), var(--accent-hi)); }
+.stat.warn::before { background: var(--accent-deep); }
+.stat .label { letter-spacing: 1px; }
+.stat .value { font-variant-numeric: tabular-nums; letter-spacing: -1.2px; }
+
+/* ----------------------------------------------------------- Controls */
+.btn { border-radius: 999px; padding: 9px 18px; font-weight: 600; box-shadow: none; }
+.btn-sm { padding: 6px 13px; }
+.btn-primary {
+  color: var(--accent-ink); font-weight: 700;
+  background: linear-gradient(135deg, var(--accent-hi), var(--accent) 55%, var(--accent-deep));
+  box-shadow: 0 6px 16px rgba(var(--accent-rgb),.45), inset 0 1px 0 rgba(255,255,255,.55);
+}
+.btn-primary:hover { color: var(--accent-ink); background: linear-gradient(135deg, var(--accent), var(--accent-deep)); }
+.btn-green {
+  background: linear-gradient(135deg, #12804D, #0A6339);
+  box-shadow: 0 6px 16px rgba(10,99,57,.28), inset 0 1px 0 rgba(255,255,255,.25);
+}
+.btn-ghost { background: color-mix(in srgb, var(--surface) 55%, transparent); border: 1px solid var(--glass-line);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.btn-ghost:hover { background: color-mix(in srgb, var(--surface) 80%, transparent); border-color: var(--kcca-gold-warm); }
+.chip { background: color-mix(in srgb, var(--surface) 55%, transparent); border-color: var(--glass-line); }
+.chip.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent-deep); }
+
+.field input, .field select, .field textarea {
+  border-radius: var(--radius-sm); background: color-mix(in srgb, var(--surface) 70%, transparent);
+  border: 1px solid var(--line);
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--kcca-gold-warm); box-shadow: 0 0 0 3px rgba(var(--accent-rgb),.40);
+}
+
+/* ------------------------------------------------------------- Tables */
+table.data thead th {
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--glass-edge); letter-spacing: .8px;
+}
+table.data tbody td { border-bottom-color: var(--glass-edge); }
+table.data tbody tr:hover { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.badge { border-radius: 999px; }
+.meter .track { height: 7px; background: var(--surface-3); }
+.meter .fill { background: linear-gradient(90deg, var(--accent-deep), var(--accent-hi)); }
+.meter .fill.ok { background: linear-gradient(90deg, #0A6339, #3FA776); }
+.alert { border-radius: var(--radius-sm); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.rank { border-radius: 50%; }
+
+/* ------------------------------------------------------------ Sign-in */
+.login-card { border-radius: 26px; padding: 30px; }
+.role-card { background: color-mix(in srgb, var(--surface) 60%, transparent); border-color: var(--glass-line); border-radius: 14px; }
+
+/* ----------------------------------------------------- Small screens */
+@media (max-width: 1024px) {
+  .rail { transform: translateX(-120%); box-shadow: var(--shadow-3); background: var(--glass-strong); }
+  .rail.open { transform: none; }
+  .main { margin-left: 0; }
+  .content { padding: 12px 12px 34px; }
+  .foot { margin: 8px 12px 14px; }
+}
+
+@media print {
+  body, body::before { background: #fff !important; }
+  .topbar, .rail, .foot, .actions, [data-print] { display: none !important; }
+  .main { margin-left: 0 !important; padding-top: 0 !important; }
+  .card, .stat { background: #fff; box-shadow: none; border-color: #ccc; -webkit-backdrop-filter: none; backdrop-filter: none; break-inside: avoid; }
+}
+
+/* =====================================================================
+   Concise mode (default)
+   Explanatory sentences are hidden until the reader asks for them with
+   the "?" button in the top bar. Nothing is removed from the page, so
+   every figure, filter and button stays; only the prose steps back.
+   ===================================================================== */
+html:not([data-guide="on"]) .page-head .grow > p,
+html:not([data-guide="on"]) .card-head .desc,
+html:not([data-guide="on"]) .field .hint,
+html:not([data-guide="on"]) .stat .meta.guide,
+html:not([data-guide="on"]) .guide-only,
+html:not([data-guide="on"]) .card-foot:not(:has(a, button, input, select)),
+html:not([data-guide="on"]) .topbar .tagline { display: none !important; }
+
+
+/* Tighter rhythm now that the prose is gone */
+.page-head { align-items: center; margin-bottom: 14px; }
+.page-head h1 { font-size: 22px; }
+.page-head .eyebrow { margin-bottom: 4px; font-size: 10.5px; }
+.card { margin-bottom: 14px; }
+.card-head { padding: 13px 18px; align-items: center; }
+.card-body { padding: 16px 18px; }
+.grid { gap: 14px; }
+.stat { padding: 13px 16px; }
+.stat .value { font-size: 26px; margin: 4px 0 1px; }
+.stat .meta { font-size: 11.5px; }
+.rail-group { padding-top: 8px; }
+table.data { font-size: 12.5px; }
+table.data tbody td { padding: 9px 12px; }
+
+/* AI Planner: process strip and policy picker */
+.flow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11.5px; font-weight: 700;
+  letter-spacing: .6px; text-transform: uppercase; color: var(--ink-3); margin: 0 0 14px; }
+.flow span { padding: 4px 11px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); }
+.flow i { font-style: normal; color: var(--ink-4); }
+.policy .policy-body { padding: 11px 14px; border-radius: 12px; }
+.policy small { font-size: 11.5px; }
+
+
+/* =====================================================================
+   Plain panels: the account's "glass off" setting
+   <html data-glass="off"> is written by the server from the account's own
+   preferences. Panels become solid, the colour fields and dot grid go, and
+   nothing is blurred, so the interface is quieter and lighter to draw.
+   The yellow theme stays; only the frosting is removed.
+   ===================================================================== */
+html[data-glass="off"] {
+  --glass:        var(--surface);
+  --glass-strong: var(--surface);
+  --glass-line:   var(--line);
+  --glass-edge:   var(--line-2);
+  --glass-shadow: 0 1px 3px rgba(16,24,39,.10), 0 1px 2px rgba(16,24,39,.06);
+  --blur:         none;
+}
+html[data-glass="off"] body { background-image: none !important; background-color: var(--surface-2) !important; }
+html[data-glass="off"] body::before, html[data-glass="off"] body::after { display: none !important; }
+html[data-glass="off"] *, html[data-glass="off"] *::before, html[data-glass="off"] *::after {
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+html[data-glass="off"] .card::before, html[data-glass="off"] .stat::after { display: none; }
+html[data-glass="off"] .topbar, html[data-glass="off"] .rail { background: var(--surface); }
+html[data-glass="off"] .btn-ghost, html[data-glass="off"] .chip { background-color: var(--surface); }
+html[data-glass="off"] .page-head .actions, html[data-glass="off"] .card-head .tools { background: var(--surface-3); }
+
+/* ----------------------------------------------- Appearance settings */
+.pref-list { display: grid; gap: 4px; }
+.pref-row { display: flex; align-items: center; gap: 16px; padding: 14px 4px; cursor: pointer;
+  border-bottom: 1px solid var(--glass-edge); }
+.pref-row:last-child { border-bottom: 0; }
+.pref-text { flex: 1; min-width: 0; }
+.pref-text b { display: block; color: var(--ink); }
+.pref-text small { display: block; color: var(--ink-3); font-size: 12.5px; margin-top: 2px; }
+.switch { position: relative; flex: none; width: 50px; height: 28px; }
+.switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; z-index: 2; }
+.switch i { position: absolute; inset: 0; border-radius: 999px; background: var(--surface-3);
+  border: 1px solid var(--line); transition: background .25s, border-color .25s; }
+.switch i::after { content: ""; position: absolute; left: 3px; top: 3px; width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.3); transition: transform .28s cubic-bezier(.3,1.4,.5,1); }
+.switch input:checked + i { background: var(--accent); border-color: var(--accent-deep); }
+.switch input:checked + i::after { transform: translateX(22px); }
+.switch input:focus-visible + i { outline: 3px solid rgba(var(--accent-rgb),.6); outline-offset: 2px; }
+
+
+/* The one place red is used as an action: closing an account. */
+.btn-danger { background: linear-gradient(135deg, #D63A2A, #B3261A); color: #fff; font-weight: 700;
+  box-shadow: 0 6px 16px rgba(179,38,26,.30), inset 0 1px 0 rgba(255,255,255,.3); }
+.btn-danger:hover { background: linear-gradient(135deg, #B3261A, #8F1D13); color: #fff; }
+.btn-danger:disabled { opacity: .5; }
+.del-box { margin-top: 14px; padding: 16px; border-radius: 14px; border: 1px solid rgba(179,38,26,.35);
+  background: rgba(179,38,26,.07); }
+.del-box code { padding: 1px 6px; border-radius: 6px; background: var(--surface-3); font-weight: 700; }
+
+/* A note that is neither a success nor a fault: "that screen is another desk's". */
+.flash-info { border-left-color: var(--accent-deep); }
+.flash-info .flash-icon { background: rgba(var(--accent-rgb), .35); color: var(--accent-ink); }

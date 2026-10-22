@@ -12,8 +12,14 @@ require_once __DIR__ . '/Auth.php';
 require_once __DIR__ . '/Engines.php';
 require_once __DIR__ . '/ReachModel.php';
 require_once __DIR__ . '/Recommendations.php';
+require_once __DIR__ . '/AllocationPlanner.php';
+require_once __DIR__ . '/WavePlanner.php';
 require_once __DIR__ . '/Validator.php';
 require_once __DIR__ . '/Settings.php';
+require_once __DIR__ . '/Preferences.php';
+require_once __DIR__ . '/OfferSweeper.php';
+require_once __DIR__ . '/SelfAccount.php';
+require_once __DIR__ . '/ChangeFeed.php';
 require_once __DIR__ . '/VendorService.php';
 require_once __DIR__ . '/AccountService.php';
 require_once __DIR__ . '/RoleDashboard.php';
@@ -109,6 +115,11 @@ function navigation(): array
         ]],
         ['group' => 'Relocation', 'items' => [
             ['id' => 'relocation',      'file' => 'pages/relocation.php',      'label' => 'Matching',       'icon' => 'list',     'audience' => ['administrator', 'executive', 'mayor', 'planner']],
+            /* The planner places a whole batch of traders at once, so no pitch is
+               promised twice. Same audience as Matching: the roles that allocate. */
+            ['id' => 'ai-planner',      'file' => 'pages/ai_planner.php',      'label' => 'AI Planner',     'icon' => 'layers',   'audience' => ['administrator', 'executive', 'mayor', 'planner']],
+            /* Moves whole trading communities in dated waves. Same audience as the AI Planner. */
+            ['id' => 'waves',           'file' => 'pages/waves.php',           'label' => 'Waves',          'icon' => 'clock',    'audience' => ['administrator', 'executive', 'mayor', 'planner']],
             ['id' => 'recommendations', 'file' => 'pages/recommendations.php', 'label' => 'AI Forecast',    'icon' => 'chart',    'audience' => ['administrator', 'executive', 'mayor', 'planner']],
             ['id' => 'allocations',     'file' => 'pages/allocations.php',      'label' => 'Allocations',    'icon' => 'swap',     'audience' => ['administrator', 'executive', 'mayor', 'planner']],
         ]],
@@ -135,7 +146,7 @@ function navigation(): array
                it to see the tenure and contact details held for their own. */
             ['id' => 'chairmen',        'file' => 'pages/chairmen.php',        'label' => 'Chairmen',       'icon' => 'user',     'audience' => ['administrator', 'executive', 'mayor', 'chairman']],
             ['id' => 'accounts',        'file' => 'pages/users.php',           'label' => 'Accounts',       'icon' => 'people',   'audience' => ['administrator', 'executive']],
-            ['id' => 'settings',        'file' => 'pages/settings.php',        'label' => 'Settings',       'icon' => 'cog',      'audience' => ['administrator']],
+            ['id' => 'settings',        'file' => 'pages/settings.php',        'label' => 'Settings',       'icon' => 'cog',      'audience' => ['administrator', 'executive']],
             ['id' => 'portal',          'file' => 'pages/portal.php',          'label' => 'Trader Portal',  'icon' => 'user',     'audience' => ['all']],
         ]],
     ];
@@ -513,6 +524,37 @@ function syncVendorChairman(int $vendorId, int $marketId): void
  * leaving the old chairman attached would show a name against a vendor who
  * is no longer in that market.
  */
+/**
+ * Which roles may download which register.
+ *
+ * One list, read by both the Reports screen (to decide what to offer) and the
+ * export endpoint (to decide what to allow). When they were separate, the
+ * screen offered every register to every role that holds `report`, and the
+ * endpoint refused the ones that role does not operate, so a revenue officer
+ * was shown a button that ended in an error. A role is now only ever offered
+ * what it can actually download.
+ *
+ * @return array<string,string[]> report key => roles
+ */
+function exportRoles(): array
+{
+    return [
+        'zones'              => ['administrator', 'executive', 'mayor', 'planner', 'enforcement'],
+        'vendors'            => ['administrator', 'executive', 'mayor', 'planner', 'enforcement'],
+        'markets'            => ['administrator', 'executive', 'mayor', 'planner', 'enforcement', 'revenue'],
+        'pitches'            => ['administrator', 'executive', 'mayor', 'planner', 'enforcement', 'revenue'],
+        'footfall'           => ['administrator', 'executive', 'mayor', 'planner', 'enforcement', 'revenue'],
+        'restrictions'       => ['administrator', 'executive', 'mayor', 'planner', 'enforcement', 'revenue'],
+        'allocations'        => ['administrator', 'executive', 'mayor', 'planner'],
+        'recommendations'    => ['administrator', 'executive', 'mayor', 'planner'],
+        'relocation-history' => ['administrator', 'executive', 'mayor', 'planner'],
+        'stall-requests'     => ['administrator', 'executive', 'mayor', 'planner'],
+        'enforcement'        => ['administrator', 'executive', 'mayor', 'enforcement'],
+        'licensing'          => ['administrator', 'executive', 'mayor', 'revenue'],
+        'summary'            => ['administrator', 'executive', 'mayor', 'planner', 'enforcement', 'revenue'],
+    ];
+}
+
 function clearVendorChairman(int $vendorId): void
 {
     Database::run('UPDATE vendors SET chairman_id = NULL WHERE id = ?', [$vendorId]);

@@ -179,6 +179,19 @@ final class RecommendationService
             );
         }
 
+        /* Four eyes. A plan the AI Planner drew up is approved by somebody other
+           than the officer who submitted it, so one person cannot both propose a
+           batch of placements and promise the pitches. The Executive Director and
+           the System Administrator hold final authority and are exempt. */
+        if (str_starts_with((string) $rec['explanation'], '[AI plan ')
+            && (int) ($rec['generated_by'] ?? 0) === Auth::id()
+            && !in_array(Auth::role(), ['administrator', 'executive'], true)) {
+            throw new RuntimeException(
+                'You submitted this plan, so it needs a second officer to approve it. '
+                . 'Ask the Mayor, the Executive Director or another planner.'
+            );
+        }
+
         /* Does the vendor already hold a live allocation? */
         $existing = Database::one(
             "SELECT reference FROM allocations

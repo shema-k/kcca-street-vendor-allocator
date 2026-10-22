@@ -12,6 +12,9 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../lib/bootstrap.php';
 Auth::requirePermission('report');
+/* The rail offers this screen only to the roles that operate it; the page now
+   agrees, so typing the address does not open what the rail withholds. */
+Auth::requireScreen('congestion');
 
 $f    = facts();
 $city = $f['city'];
@@ -260,7 +263,9 @@ $criticalCount  = count($bandCounts['Critical'] ?? []);
         <div class="card" style="margin:16px 0 0">
           <div class="card-head">
             <div class="grow"><h3>Enforcement history</h3></div>
-            <a class="btn btn-ghost btn-sm" href="enforcement.php?zone=<?= (int) $detail['id'] ?>">Open</a>
+            <?php if (Auth::can('enforce') && Auth::screenAllows('enforcement')): ?>
+              <a class="btn btn-ghost btn-sm" href="enforcement.php?zone=<?= (int) $detail['id'] ?>">Open</a>
+            <?php endif; ?>
           </div>
           <?php if (!$dEnf): ?>
             <div class="card-body"><p class="muted small mb-0">No enforcement action recorded at this site yet.</p></div>

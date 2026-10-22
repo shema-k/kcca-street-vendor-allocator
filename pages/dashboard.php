@@ -151,6 +151,9 @@ require __DIR__ . '/../layouts/header.php';
   </div>
 </div>
 
+<!-- ===================== THE WELCOME (every account) ==================== -->
+<?php require __DIR__ . '/../partials/vendor_hero.php'; ?>
+
 <!-- ===================== HEADLINE FIGURES ==================== -->
 <div class="grid g5 mb-2">
   <?php if ($isStaff): ?>

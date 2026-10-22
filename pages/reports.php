@@ -11,6 +11,9 @@ Auth::requirePermission('report');
 
 $f = facts();
 
+/* A role is only offered the registers it is allowed to download. */
+$exportRoles = exportRoles();
+
 /* Every export the system offers, described plainly. */
 $exports = [
     [
@@ -162,10 +165,11 @@ require __DIR__ . '/../layouts/header.php';
         </thead>
         <tbody>
           <?php foreach ($exports as $x): ?>
+            <?php if (!in_array(Auth::role(), $exportRoles[$x['key']] ?? [], true)) { continue; } ?>
             <tr>
               <td><strong><?= e($x['name']) ?></strong></td>
               <td class="small muted"><?= e($x['desc']) ?></td>
-              <td class="right num"><?= num($x['count']) ?></td>
+              <td class="right num"><?= divisionLock() !== null ? '—' : num($x['count']) ?></td>
               <td class="xsmall"><?= e($x['owner']) ?></td>
               <td class="right">
                 <a class="btn btn-ghost btn-sm"

@@ -9,16 +9,24 @@ require_once __DIR__ . '/../lib/bootstrap.php';
 
 $f     = facts();
 $stats = headlineStats();
-$navPageId = currentPage();
+/* Page files use underscores (my_market.php) and navigation ids use hyphens
+   (my-market), so those two screens were never highlighted in the rail. */
+$navPageId = str_replace('_', '-', currentPage());
 $me    = Auth::check() ? Auth::user() : [];
 $meId  = Auth::check() ? Auth::id() : 0;
 /* Namespaced: a page (profile.php) already uses $myDiv for the
    division row it fetched, and this line would silently replace it
    with an integer. */
 $layoutDivisionId = (int) ($me['division_id'] ?? 0);
+/* Offers that have lapsed are expired and their pitches returned, at most every ten minutes. */
+if ($meId > 0) {
+    OfferSweeper::sweepIfDue();
+}
+/* This account's own appearance (glass, motion, guidance), applied before first paint. */
+$layoutPrefs = $meId > 0 ? Preferences::get($meId) : Preferences::DEFAULTS;
 ?>
 <!doctype html>
-<html lang="<?= e(Lang::code()) ?>">
+<html lang="<?= e(Lang::code()) ?>" data-glass="<?= e($layoutPrefs['glass']) ?>"<?= $layoutPrefs['motion'] === 'off' ? ' data-motion="off"' : '' ?><?= $layoutPrefs['guide'] === 'on' ? ' data-guide="on"' : '' ?> data-density="<?= e($layoutPrefs['density']) ?>" data-notify="<?= e($layoutPrefs['notify']) ?>">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -38,6 +46,8 @@ $layoutDivisionId = (int) ($me['division_id'] ?? 0);
 <link rel="stylesheet" href="<?= e(APP_REL) ?>assets/css/fonts.css?v=<?= e(APP_VERSION) ?>">
 <link rel="stylesheet" href="<?= e(APP_REL) ?>assets/css/kcca.css?v=<?= e(APP_VERSION) ?>">
 <link rel="stylesheet" href="<?= e(APP_REL) ?>assets/css/activities.css?v=<?= e(APP_VERSION) ?>">
+<link rel="stylesheet" href="<?= e(APP_REL) ?>assets/css/civic.css?v=<?= e(APP_VERSION) ?>">
+<link rel="stylesheet" href="<?= e(APP_REL) ?>assets/css/alive.css?v=<?= e(APP_VERSION) ?>">
 <link rel="stylesheet" href="<?= e(APP_REL) ?>assets/css/dark.css?v=<?= e(APP_VERSION) ?>">
 </head>
 <body>
@@ -58,7 +68,8 @@ if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)
     </button>
 
     <div class="brand">
-      <img src="../assets/brand/kcca-logo-light.png" alt="Kampala Capital City Authority logo">
+      <img class="logo-on-light" src="../assets/brand/kcca-logo.png" alt="Kampala Capital City Authority logo">
+      <img class="logo-on-dark" src="../assets/brand/kcca-logo-light.png" alt="" aria-hidden="true">
       <span class="sep" aria-hidden="true"></span>
       <span class="sys">
         <b>Vendor Relocation &amp; Space Allocation</b>
@@ -77,6 +88,27 @@ if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)
     <a class="icon-link" href="../pages/portal.php" title="Open the public trader portal" aria-label="Public trader portal">
       <?= KCCA_icon('user', 15) ?>
     </a>
+
+    <?php if (ChangeFeed::allowed()): ?>
+    <div class="feed" data-feed data-uid="<?= (int) $meId ?>">
+      <button type="button" class="icon-link feed-bell" data-feed-bell aria-expanded="false" aria-haspopup="true"
+              title="What colleagues have just changed" aria-label="Recent changes by colleagues">
+        <?= KCCA_icon('bell', 17) ?><span class="feed-badge" data-feed-count hidden>0</span>
+      </button>
+      <div class="feed-panel" data-feed-panel hidden role="region" aria-label="Recent changes">
+        <div class="feed-head"><b>Recent changes</b><span class="muted xsmall">by your colleagues</span></div>
+        <ul class="feed-list" data-feed-list><li class="feed-empty">Loading…</li></ul>
+        <?php if (Auth::can('audit')): ?><a class="feed-foot" href="audit.php">Open the full audit trail</a><?php endif; ?>
+      </div>
+    </div>
+    <?php endif; ?>
+    <span class="live-chip" title="The system is live. Kampala time."><i></i><b data-live-clock>--:--:--</b> EAT</span>
+    <button type="button" class="icon-link" data-glass-toggle aria-pressed="<?= $layoutPrefs['glass'] === 'on' ? 'true' : 'false' ?>"
+            title="Glass appearance on or off" aria-label="Glass appearance on or off">&#9680;</button>
+    <button type="button" class="icon-link" data-motion-toggle aria-pressed="true"
+            title="Turn animations on or off" aria-label="Turn animations on or off">&#9889;</button>
+    <button type="button" class="icon-link" data-guide-toggle aria-pressed="false"
+            title="Show or hide guidance text" aria-label="Show or hide guidance text">?</button>
 
     <button type="button" class="theme-toggle" data-theme-toggle aria-pressed="false"
             aria-label="Switch to dark mode" title="Switch to dark mode">

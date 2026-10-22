@@ -25,9 +25,7 @@ require_once __DIR__ . '/../lib/bootstrap.php';
    have no market, which is true but not what the screen is for. */
 if (!in_array(Auth::role(), ['chairman', 'vendor'], true)) {
     Auth::requirePermission('view');
-    http_response_code(403);
-    require __DIR__ . '/../layouts/forbidden.php';
-    exit;
+    Auth::refuseScreen('My Market is for market chairmen and traders. Your own screens are in the menu on the left.');
 }
 
 $mine = chairmanLock();

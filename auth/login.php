@@ -34,7 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: ../pages/dashboard.php');
             exit;
         }
-        $error = t('login.failed');
+        $error = Auth::lockedOut((string) ($_POST['username'] ?? ''))
+            ? 'Too many failed sign-ins for this username. Please wait ten minutes and try again.'
+            : t('login.failed');
     }
 }
 
@@ -77,6 +79,8 @@ foreach (Auth::roles() as $role) {
 <link rel="stylesheet" href="../assets/css/fonts.css?v=<?= e(APP_VERSION) ?>">
 <link rel="stylesheet" href="../assets/css/kcca.css">
 <link rel="stylesheet" href="../assets/css/activities.css?v=<?= e(APP_VERSION) ?>">
+<link rel="stylesheet" href="../assets/css/civic.css?v=<?= e(APP_VERSION) ?>">
+<link rel="stylesheet" href="../assets/css/alive.css?v=<?= e(APP_VERSION) ?>">
 <link rel="stylesheet" href="../assets/css/dark.css?v=<?= e(APP_VERSION) ?>">
 <script>
 /* Applied before first paint so a dark-mode reader never sees a white

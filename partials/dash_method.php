@@ -25,7 +25,9 @@ $what = [
         retuning them needs no deployment.
       </p>
     </div>
-    <a class="btn btn-ghost btn-sm" href="settings.php">Retune the weights</a>
+    <?php if (Auth::can('manage') && Auth::screenAllows('settings')): ?>
+      <a class="btn btn-ghost btn-sm" href="settings.php">Retune the weights</a>
+    <?php endif; ?>
   </div>
   <div class="card-body">
     <div class="criteria">
