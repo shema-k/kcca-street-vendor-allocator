@@ -53,9 +53,14 @@ switch ($action) {
            impossible: they are shown their record rather than a name field,
            so they send no name — and were then told a detail was missing,
            about a field the form never asked for. */
+        /* Only a signed-in vendor (or an anonymous member of the public)
+           may ask for a pitch. Staff accounts administer; they do not apply. */
+        if (Auth::check() && Auth::role() !== 'vendor') {
+            refuse('Only a registered trader may apply for a pitch.', 403);
+        }
         $signedVendorId = Auth::role() === 'vendor' ? (int) (Auth::user()['vendor_id'] ?? 0) : 0;
-        $namedVendorId  = Auth::can('allocate') ? (int) ($_POST['vendor_id'] ?? 0) : 0;
-        $identified     = $signedVendorId > 0 || $namedVendorId > 0;
+        $namedVendorId  = 0;
+        $identified     = $signedVendorId > 0;
 
         /* Validate what the trader supplied. The browser marks these
            required, but a request can reach the endpoint without the

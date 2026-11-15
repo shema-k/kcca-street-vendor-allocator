@@ -141,7 +141,7 @@ if (Auth::can('allocate')) {
 /* Who may ask for a pitch: a member of the public, an officer with authority
    to allocate, or a trader signed in as a vendor. Applying for a stall is the
    vendor's core function, so it must not sit behind a staff permission. */
-$canChoose = !Auth::check() || Auth::can('allocate') || Auth::role() === 'vendor';
+$canChoose = !Auth::check() || Auth::role() === 'vendor';
 
 /* The trader's own record, so the request form is not a blank slate asking
    them to retype what the Authority already holds.
