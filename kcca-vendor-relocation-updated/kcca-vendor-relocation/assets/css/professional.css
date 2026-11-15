@@ -90,3 +90,22 @@ input:focus, select:focus, textarea:focus { border-color: var(--kcca-red); box-s
   .rail .pill.bump { animation: none; }
   * { transition-duration: .01ms !important; }
 }
+
+/* ---- Alerts ------------------------------------------------------------- */
+.alert-item { list-style: none; padding: 10px 12px; margin: 4px 0; border-radius: 10px;
+  border: 1px solid var(--line); border-left-width: 4px; background: var(--surface); cursor: default; }
+.alert-item.tone-ok  { border-left-color: var(--ok); }
+.alert-item.tone-bad { border-left-color: var(--bad); }
+.alert-item.tone-info { border-left-color: var(--info); }
+.alert-item.unread { background: var(--surface-2); }
+.alert-item.unread .alert-title::after { content: ""; display: inline-block; width: 7px; height: 7px;
+  margin-left: 6px; border-radius: 50%; background: var(--kcca-red); vertical-align: middle; }
+.alert-title { display: block; font-size: 13px; color: var(--ink); }
+.alert-body { white-space: pre-line; font-size: 12.5px; color: var(--ink-2); margin: 4px 0 2px; line-height: 1.5; }
+.alert-item small { color: var(--ink-4); }
+.alert-actions { display: flex; gap: 6px; margin-top: 6px; }
+.alert-actions:empty { display: none; }
+.feed-bell.has-alerts { color: var(--kcca-red); }
+.stall-card .stall-chair { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding-top: 12px;
+  border-top: 1px solid var(--line-2); flex-wrap: wrap; }
+.stall-card .stall-chair .grow { flex: 1; min-width: 140px; }

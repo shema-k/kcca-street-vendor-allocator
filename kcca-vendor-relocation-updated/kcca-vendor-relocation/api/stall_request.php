@@ -103,12 +103,20 @@ switch ($action) {
             [$spaceId]
         );
         if ($already) {
+            if ($signedVendorId > 0) {
+                Alerts::pitchFailed($signedVendorId, (string) $space['space_code'],
+                    'Another request for this pitch is already being considered.', (string) $space['market_name']);
+            }
             refuse(sprintf(
                 'Somebody has already asked for %s (request %s). The Authority is considering it now.',
                 $space['space_code'], $already
             ), 409);
         }
         if ($space['status'] !== 'vacant') {
+            if ($signedVendorId > 0) {
+                Alerts::pitchFailed($signedVendorId, (string) $space['space_code'],
+                    'The pitch is already ' . $space['status'] . '.', (string) $space['market_name']);
+            }
             refuse(sprintf(
                 '%s is already %s. Pick a vacant pitch from the plan.',
                 $space['space_code'], $space['status']
@@ -161,6 +169,10 @@ switch ($action) {
                 [(int) $vendor['id']]
             );
             if ($live) {
+                if ($signedVendorId > 0) {
+                    Alerts::pitchFailed($signedVendorId, (string) $space['space_code'],
+                        'You already hold space under ' . $live . '.', (string) $space['market_name']);
+                }
                 refuse(sprintf(
                     'You are recorded as holding space under %s. If you want to move, contact the '
                     . 'market administrator first so that allocation can be closed.',
@@ -239,9 +251,13 @@ switch ($action) {
             $reference . ' — ' . $space['space_code'] . ' at ' . $space['market_name']);
 
         if ($vendor) {
+            Alerts::pitchTaken((int) $vendor['id'], (int) $spaceId, $allocReference . ' (request ' . $reference . ')',
+                'taken', date('Y-m-d', strtotime('+14 days')));
+            $chair = Alerts::chairmanOfMarket((int) $space['market_id']);
             $message = sprintf(
-                'Pitch %s at %s has been provided to you and is now occupied.',
-                $space['space_code'], $space['market_name']
+                'Success: stall %s at %s is yours.%s Details are in your alerts.',
+                $space['space_code'], $space['market_name'],
+                $chair ? ' Your chairman is ' . $chair['full_name'] . ' (' . $chair['phone'] . ').' : ''
             );
         } else {
             $message = sprintf(
@@ -414,6 +430,15 @@ switch ($action) {
             refuse('The request could not be approved. Nothing was changed.', 500);
         }
 
+        $approvedAlloc = Database::one(
+            'SELECT vendor_id, market_space_id, offer_expires FROM allocations WHERE reference = ? LIMIT 1',
+            [$result['reference']]
+        );
+        if ($approvedAlloc && !empty($approvedAlloc['market_space_id'])) {
+            Alerts::pitchTaken((int) $approvedAlloc['vendor_id'], (int) $approvedAlloc['market_space_id'],
+                (string) $result['reference'], 'approved', $approvedAlloc['offer_expires'] ?: null);
+        }
+
         jsonOut([
             'ok'      => true,
             'message' => sprintf(
@@ -460,6 +485,10 @@ switch ($action) {
 
         Auth::log('reject-stall-request', 'stall_requests', $id,
             $row['reference'] . ' rejected: ' . $reason);
+        if (!empty($row['vendor_id'])) {
+            Alerts::requestRejected((int) $row['vendor_id'], (int) $row['space_id'],
+                (string) $row['reference'], (string) $reason);
+        }
 
         jsonOut(['ok' => true, 'message' => 'Request rejected. The pitch is back in the vacancy pool.']);
     }

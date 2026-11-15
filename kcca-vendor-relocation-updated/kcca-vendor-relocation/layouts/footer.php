@@ -82,6 +82,7 @@ $a = $f['authority'];
 <script>document.addEventListener('DOMContentLoaded', function () { if (window.KCCA && KCCA.flash) { KCCA.flash(<?= json_encode($kept['message'], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>, <?= json_encode($kept['tone']) ?>); } });</script>
 <?php endif; ?>
 <script src="../assets/js/feed.js?v=<?= e(APP_VERSION) ?>"></script>
+<?php if (Auth::check() && in_array(Auth::role(), ['vendor', 'chairman'], true)): ?><script src="../assets/js/alerts.js?v=<?= e(APP_VERSION) ?>"></script><?php endif; ?>
 <?php if (Auth::check()): ?><script src="../assets/js/autolive.js?v=<?= e(APP_VERSION) ?>"></script><?php endif; ?>
 <?php /* The live-queue poller, loaded only where a page has asked for it with
          [data-live]. Pages that carry no queue cost nothing, which is the

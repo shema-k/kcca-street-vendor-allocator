@@ -37,6 +37,7 @@ $chairman  = null;
 $market    = null;
 $allocs    = [];
 $requests  = [];
+$myStalls  = [];
 $traders   = [];
 $pitches   = [];
 $spaces    = [];
@@ -88,6 +89,17 @@ if ($isTrade) {
                    LEFT JOIN markets m ON m.id = r.market_id
                    LEFT JOIN market_spaces s ON s.id = r.space_id
                   WHERE r.vendor_id = ? ORDER BY r.created_at DESC',
+                [$vendorId]
+            );
+            $myStalls = Database::all(
+                "SELECT a.reference, a.status, a.offer_expires, s.id AS space_id, s.space_code, s.section,
+                        s.size_sqm, s.monthly_rent_ugx, s.has_water, s.has_power, s.near_toilet, s.step_free,
+                        m.id AS market_id, m.name AS market_name
+                   FROM allocations a
+                   JOIN market_spaces s ON s.id = a.market_space_id
+                   JOIN markets m ON m.id = a.market_id
+                  WHERE a.vendor_id = ? AND a.status IN ('proposed','offered','accepted','occupied')
+                  ORDER BY a.created_at DESC",
                 [$vendorId]
             );
         }
@@ -237,6 +249,47 @@ require __DIR__ . '/../layouts/header.php';
 
   <div class="grid g-2-1">
     <div>
+      <!-- Your stall(s): details and a line to the chairman of that market -->
+      <?php foreach ($myStalls as $st):
+          $stChair = Alerts::chairmanOfMarket((int) $st['market_id']);
+          $stFac = Alerts::facilities($st);
+      ?>
+      <div class="card mb-2 stall-card">
+        <div class="card-head">
+          <div class="grow">
+            <h2>Your stall <?= e($st['space_code']) ?></h2>
+            <p class="desc"><?= e($st['market_name']) ?></p>
+          </div>
+          <span class="badge <?= e(statusTone((string) $st['status'])) ?>"><?= e(humanise((string) $st['status'])) ?></span>
+        </div>
+        <div class="card-body">
+          <dl class="kv">
+            <dt>Section</dt><dd><?= e($st['section'] ?: '—') ?></dd>
+            <dt>Size</dt><dd><?= e(rtrim(rtrim(number_format((float) $st['size_sqm'], 1), '0'), '.')) ?> m²</dd>
+            <dt>Rent</dt><dd>UGX <?= num((int) $st['monthly_rent_ugx']) ?> a month</dd>
+            <dt>Facilities</dt><dd><?= e($stFac) ?></dd>
+            <dt>Reference</dt><dd><?= e($st['reference']) ?></dd>
+            <?php if (!empty($st['offer_expires'])): ?>
+              <dt>Confirm by</dt><dd><?= e(fmtDate((string) $st['offer_expires'])) ?></dd>
+            <?php endif; ?>
+          </dl>
+          <div class="stall-chair">
+            <?php if ($stChair): ?>
+              <div class="grow">
+                <span class="xsmall muted">Chairman for this stall</span>
+                <div class="strong"><?= e($stChair['full_name']) ?></div>
+              </div>
+              <a class="btn btn-ghost btn-sm" href="tel:<?= e(preg_replace('/[^0-9+]/', '', (string) $stChair['phone'])) ?>"><?= e($stChair['phone']) ?></a>
+              <button type="button" class="btn btn-primary btn-sm"
+                      onclick="messageChairman(<?= (int) $st['space_id'] ?>, '<?= e($st['space_code']) ?>')">Message</button>
+            <?php else: ?>
+              <span class="xsmall muted">No chairman is recorded for this market yet.</span>
+            <?php endif; ?>
+          </div>
+        </div>
+      </div>
+      <?php endforeach; ?>
+
       <!-- Your chairman -->
       <div class="card mb-2">
         <div class="card-head">
@@ -672,6 +725,15 @@ function withdrawPitch(id) {
     .then(r=>r.json()).then(j=>{
       if (j.ok) { KCCA.flash(j.message,'ok'); setTimeout(()=>location.reload(),600); }
       else KCCA.flash(j.error||'Could not withdraw.','bad');
+    });
+}
+function messageChairman(spaceId, code) {
+  KCCA.ask('Message your chairman', 'About stall ' + code + '.', { label: 'Your message', buttonLabel: 'Send', placeholder: 'Write a short message' })
+    .then(function (text) {
+      if (text === null || text === '') return;
+      KCCA.post('<?= APP_REL ?>api/alerts.php', { action: 'message', space_id: spaceId, body: text })
+        .then(function (j) { KCCA.flash(j.message || j.error || 'Could not send.', j.ok ? 'ok' : 'bad', 6000); })
+        .catch(function () { KCCA.flash('Could not send.', 'bad', 6000); });
     });
 }
 function modifyPitch(id, trade, reason) {

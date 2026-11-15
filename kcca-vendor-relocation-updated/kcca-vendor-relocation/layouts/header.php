@@ -97,6 +97,19 @@ if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)
       </div>
     </div>
     <?php endif; ?>
+    <?php if (Auth::check() && in_array(Auth::role(), ['vendor', 'chairman'], true)): ?>
+    <div class="feed" data-alerts data-role="<?= e(Auth::role()) ?>">
+      <button type="button" class="icon-link feed-bell" data-alerts-bell aria-expanded="false" aria-haspopup="true"
+              title="Alerts" aria-label="Alerts">
+        <?= KCCA_icon('bell', 17) ?><span class="feed-badge" data-alerts-count hidden>0</span>
+      </button>
+      <div class="feed-panel" data-alerts-panel hidden role="region" aria-label="Alerts">
+        <div class="feed-head"><b>Alerts</b><span class="spacer"></span>
+          <button type="button" class="btn btn-quiet btn-sm" data-alerts-readall>Mark all read</button></div>
+        <ul class="feed-list" data-alerts-list><li class="feed-empty">Loading…</li></ul>
+      </div>
+    </div>
+    <?php endif; ?>
     <span class="live-chip" title="The system is live. Kampala time."><i></i><b data-live-clock>--:--:--</b> EAT</span>
     <button type="button" class="icon-link" data-guide-toggle aria-pressed="false"
             title="Show or hide guidance text" aria-label="Show or hide guidance text">?</button>

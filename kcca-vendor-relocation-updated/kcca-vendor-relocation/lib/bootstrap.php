@@ -20,6 +20,7 @@ require_once __DIR__ . '/Preferences.php';
 require_once __DIR__ . '/OfferSweeper.php';
 require_once __DIR__ . '/SelfAccount.php';
 require_once __DIR__ . '/ChangeFeed.php';
+require_once __DIR__ . '/Alerts.php';
 require_once __DIR__ . '/VendorService.php';
 require_once __DIR__ . '/AccountService.php';
 require_once __DIR__ . '/RoleDashboard.php';
