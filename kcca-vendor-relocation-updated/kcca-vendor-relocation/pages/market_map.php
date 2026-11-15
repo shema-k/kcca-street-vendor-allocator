@@ -17,6 +17,17 @@ $f = facts();
 /* ---------------- The market ---------------- */
 $marketId = (int) ($_GET['market'] ?? $_GET['location'] ?? 0);
 
+$chairmanLock = chairmanLock();
+if ($chairmanLock !== null) {
+    if ($marketId > 0 && $marketId !== $chairmanLock['market_id']) {
+        header('Location: market_map.php?market=' . $chairmanLock['market_id']);
+        exit;
+    }
+    if ($marketId === 0) {
+        $marketId = $chairmanLock['market_id'];
+    }
+}
+
 $market = $marketId > 0 ? Database::one(
     'SELECT m.*, d.name AS division_name, d.code AS div_code, d.mayor,
             d.population, d.area_sqkm
@@ -27,12 +38,14 @@ $market = $marketId > 0 ? Database::one(
 ) : null;
 
 /* ---------------- The market list, when no id was given ---------------- */
-$allMarkets = Database::all(
-    'SELECT m.id, m.code, m.name, m.category, m.capacity, m.vacant_spaces,
+$allMarketsSql = 'SELECT m.id, m.code, m.name, m.category, m.capacity, m.vacant_spaces,
             m.registered_vendors, d.name AS division_name, m.status
-       FROM markets m JOIN divisions d ON d.id = m.division_id
-      ORDER BY m.category = \'public\' DESC, m.name'
-);
+       FROM markets m JOIN divisions d ON d.id = m.division_id';
+if ($chairmanLock !== null) {
+    $allMarketsSql .= ' WHERE m.id = ' . (int) $chairmanLock['market_id'];
+}
+$allMarketsSql .= ' ORDER BY m.category = \'public\' DESC, m.name';
+$allMarkets = Database::all($allMarketsSql);
 
 if (!$market) {
     $pageTitle = 'Trading Locations';
