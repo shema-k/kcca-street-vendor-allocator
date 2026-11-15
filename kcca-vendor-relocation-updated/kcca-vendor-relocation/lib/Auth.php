@@ -10,7 +10,7 @@ final class Auth
     private const PERMISSIONS = [
         'administrator' => ['*'],
         'executive'     => ['view', 'allocate', 'approve', 'enforce', 'report', 'manage', 'audit'],
-        'mayor'         => ['view', 'allocate', 'enforce', 'report', 'audit'],
+        'mayor'         => ['view', 'allocate', 'enforce', 'report', 'audit', 'manage'],
         'planner'       => ['view', 'allocate', 'report'],
         'enforcement'   => ['view', 'enforce', 'report'],
         'revenue'       => ['view', 'report'],

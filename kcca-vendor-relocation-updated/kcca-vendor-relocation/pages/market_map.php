@@ -549,97 +549,7 @@ require __DIR__ . '/../layouts/header.php';
   </div>
 </div>
 
-<!-- =============== THE STALL REQUEST FORM ====================== -->
-<div class="modal-back" id="request-back" hidden>
-  <div class="modal">
-    <form method="post" class="modal-form" id="request-form">
-      <input type="hidden" name="csrf" value="<?= e(Auth::csrfToken()) ?>">
-      <input type="hidden" name="action" value="request">
-      <input type="hidden" name="space_id" id="req-space-id" value="">
-      <?php if ($meVendor): ?>
-        <input type="hidden" name="vendor_id" id="req-vendor-id" value="<?= (int) $meVendor['id'] ?>">
-      <?php endif; ?>
-      <div class="modal-head">
-        <h3 id="req-title">Request this pitch</h3>
-        <button type="button" class="close" data-modal-close aria-label="Close">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="alert alert-info" id="req-summary"></div>
-
-        <?php if ($meVendor && !$meVendorCanSeek): ?>
-          <div class="alert alert-warn">
-            You are recorded as holding space already. If you want to move, speak to the market
-            administrator first so the current allocation can be closed.
-          </div>
-        <?php endif; ?>
-
-        <?php if ($meVendor): ?>
-          <?php /* Already supplied at registration, so they are shown as a
-                   record rather than asked for again. */ ?>
-          <div class="kv">
-            <div class="row-tight"><span class="cl">Requesting as</span>
-              <span class="strong"><?= e($meVendor['full_name']) ?></span></div>
-            <div class="row-tight"><span class="cl">Vendor code</span>
-              <span><?= e($meVendor['vendor_code']) ?></span></div>
-            <div class="row-tight"><span class="cl">Telephone</span>
-              <span><?= e($meVendor['phone']) ?></span></div>
-            <div class="row-tight"><span class="cl">On the register</span>
-              <span><?= e($meVendor['national_id'] ?: 'not recorded') ?></span></div>
-          </div>
-          <p class="xsmall muted">
-            These are the details you gave when you registered. If any of them are wrong,
-            <a href="profile.php">correct them on your record</a> before you send this.
-          </p>
-        <?php endif; ?>
-
-        <div class="grid g2">
-          <?php if (!$meVendor): ?>
-            <div class="field">
-              <label for="req-name">Full name <span class="req">*</span></label>
-              <input type="text" id="req-name" name="full_name" required maxlength="140">
-            </div>
-            <div class="field">
-              <label for="req-phone">Telephone <span class="req">*</span></label>
-              <input type="text" id="req-phone" name="phone" required placeholder="07…">
-              <span class="hint">We will only use this to tell you about your request.</span>
-            </div>
-            <div class="field">
-              <label for="req-nid">National ID number</label>
-              <input type="text" id="req-nid" name="national_id" maxlength="20">
-              <span class="hint">Optional. We use it to match you to your record.</span>
-            </div>
-            <div class="field">
-              <label for="req-trade">What do you sell?</label>
-              <select id="req-trade" name="business_category">
-                <option value="">Choose a trade</option>
-                <?php foreach (Database::all('SELECT code, name FROM trade_categories ORDER BY demand_index DESC') as $c): ?>
-                  <option value="<?= e($c['code']) ?>"><?= e($c['name']) ?></option>
-                <?php endforeach; ?>
-              </select>
-            </div>
-          <?php endif; ?>
-          <div class="field" style="grid-column:1/-1">
-            <label for="req-detail">Describe your goods</label>
-            <input type="text" id="req-detail" name="trade_detail" maxlength="200"
-                   placeholder="e.g. tomatoes, onions, dodo">
-          </div>
-          <div class="field" style="grid-column:1/-1">
-            <label for="req-reason">Why this pitch?</label>
-            <textarea id="req-reason" name="reason" rows="3" maxlength="500"
-              placeholder="e.g. I trade near the main gate, I need a step-free pitch, I have traded in Section B for nine years."></textarea>
-          </div>
-        </div>
-      </div>
-      <div class="modal-foot">
-        <button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>
-        <button type="submit" class="btn btn-primary"
-          <?= $meVendor && !$meVendorCanSeek ? 'disabled title="You already hold space"' : '' ?>>
-          Send request
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
+<!-- stall request form removed: pitches are viewed only -->
 
 
 /* Rendered by the footer, after kcca.js and stall-map.js have loaded, so
@@ -730,9 +640,7 @@ $pageScripts = <<<HTML
         '<dt>Position</dt><dd class="xsmall mono">' + s.lat.toFixed(5) + ', ' + s.lng.toFixed(5) + '</dd>' +
       '</dl>' +
       (s.status === 'vacant' && {$canChooseJs}
-        ? '<button type="button" class="btn btn-primary btn-block mt-1" id="take-this">Take this pitch</button>'
-           + '<span class="xsmall muted" style="display:block;margin-top:8px">Sending a request does not reserve the pitch. '
-           + 'The Authority checks it against your record and confirms.</span>'
+        ? '<p class="xsmall muted" style="margin-bottom:0">Pitch details are shown above. Contact the market office to reserve.</p>'
         : '') +
       (s.status !== 'vacant'
         ? '<p class="small muted" style="margin-bottom:0">This pitch is ' + label(s.status).toLowerCase()
@@ -750,84 +658,6 @@ $pageScripts = <<<HTML
     return String(t === null || t === undefined ? '' : t)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
-
-  /* ---- request form ---- */
-  document.getElementById('stall-detail-body').addEventListener('click', function (e) {
-    if (e.target.id !== 'take-this') return;
-    var s = state.selected;
-    if (!s) return;
-    document.getElementById('req-space-id').value = s.id;
-    document.getElementById('req-title').textContent = 'Request ' + s.space_code;
-    document.getElementById('req-summary').innerHTML =
-      '<strong>' + esc(s.space_code) + '</strong> — ' + esc(s.section)
-      + ' · ' + s.size_sqm.toFixed(1) + ' m²'
-      + (s.has_water ? ' · water' : '') + (s.step_free ? ' · step free' : '')
-      + '. At ' + esc(state.market.name) + ', ' + esc(state.market.division) + ' Division.';
-    var back = document.getElementById('request-back');
-    back.hidden = false;
-    document.body.style.overflow = 'hidden';
-  });
-
-  document.querySelectorAll('#request-back [data-modal-close]').forEach(function (b) {
-    b.addEventListener('click', function () {
-      document.getElementById('request-back').hidden = true;
-      document.body.style.overflow = '';
-    });
-  });
-
-  document.getElementById('request-form').addEventListener('submit', function (e) {
-    e.preventDefault();
-    var btn = this.querySelector('[type=submit]');
-    btn.disabled = true; btn.textContent = 'Sending…';
-
-    /* Read the form through a helper that returns '' for a field the form
-       does not have. A signed-in trader is shown their record instead of
-       the identity inputs, so those ids do not exist — and reading .value
-       off a missing id throws, which takes the whole submit with it and
-       leaves the button spinning with nothing sent. That is exactly the
-       "some details are missing" a trader meets when the form has silently
-       sent none of them. */
-    var val = function (id) {
-      var el = document.getElementById(id);
-      return el ? el.value : '';
-    };
-
-    KCCA.post(KCCA.api('api/stall_request.php'), {
-      action: 'request',
-      space_id: val('req-space-id'),
-      /* Only sent when the form actually asks for it. A vendor's identity
-         travels as vendor_id, so the request is matched to their existing
-         record rather than to a phone number just typed by hand. */
-      vendor_id: val('req-vendor-id'),
-      full_name: val('req-name'),
-      phone: val('req-phone'),
-      national_id: val('req-nid'),
-      business_category: val('req-trade'),
-      trade_detail: val('req-detail'),
-      reason: val('req-reason')
-    }).then(function (res) {
-      btn.disabled = false; btn.textContent = 'Send request';
-      if (res && res.ok) {
-        document.getElementById('request-back').hidden = true;
-        document.body.style.overflow = '';
-        KCCA.flash(res.message, 'ok', 9000);
-        loadStalls();
-      } else if (res && res.errors) {
-        /* Name the field, not just "details are missing". A trader told
-           which line to look at can fix it; one told a category cannot. */
-        var list = Object.keys(res.errors).map(function (k) {
-          return res.errors[k];
-        });
-        KCCA.flash(res.error + ' ' + list.join(' '), 'bad', 9000);
-        Object.keys(res.errors).forEach(function (k) {
-          var el = document.querySelector('[name=' + k + ']');
-          if (el) el.classList.add('invalid');
-        });
-      } else {
-        KCCA.flash((res && res.error) || 'The request could not be sent.', 'bad', 9000);
-      }
-    });
-  });
 
   /* ---- filters ---- */
   document.querySelectorAll('[data-stall-filter]').forEach(function (el) {
