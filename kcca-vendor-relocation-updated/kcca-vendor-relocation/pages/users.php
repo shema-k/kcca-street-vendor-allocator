@@ -39,7 +39,8 @@ foreach ($all as $u) {
         $mine = $u;
         continue;
     }
-    if ($canEdit && Auth::rank() > Auth::rank((string) $u['role'])) {
+    if ($canEdit && ((in_array(Auth::role(), ['administrator', 'executive'], true) && (int) $u['id'] !== Auth::id())
+            || Auth::rank() > Auth::rank((string) $u['role']))) {
         $editable[] = $u;
     }
 }

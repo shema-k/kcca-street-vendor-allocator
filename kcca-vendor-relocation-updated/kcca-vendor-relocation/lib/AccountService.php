@@ -171,6 +171,21 @@ final class AccountService
         return $errors;
     }
 
+
+    /**
+     * Whether the signed-in officer may manage this account.
+     */
+    private static function canManageAccount(array $row): bool
+    {
+        if ((int) $row['id'] === Auth::id()) {
+            return false;
+        }
+        if (in_array(Auth::role(), ['administrator', 'executive'], true)) {
+            return true;
+        }
+        return Auth::rank() > Auth::rank((string) $row['role']);
+    }
+
     /**
      * Change an existing account. A blank password leaves it alone.
      *
@@ -189,10 +204,9 @@ final class AccountService
                     'error' => 'You cannot edit your own account here. Use your profile instead.',
                     'errors' => []];
         }
-        if (Auth::rank() <= Auth::rank((string) $row['role'])) {
+        if (!self::canManageAccount($row)) {
             return ['ok' => false,
-                    'error' => sprintf('You cannot change %s’s account — they hold the same '
-                                     . 'or a higher level of authority.', $row['full_name']),
+                    'error' => sprintf('You cannot change %s’s account.', $row['full_name']),
                     'errors' => []];
         }
 
@@ -224,8 +238,10 @@ final class AccountService
             return ['ok' => false, 'errors' => $linkErrors];
         }
 
-        /* Nobody is appointed to their own level or above. */
-        if ($data['role'] !== 'administrator'
+        /* An administrator or executive may appoint any role. Others may not
+           appoint at or above their own level. */
+        if (!in_array(Auth::role(), ['administrator', 'executive'], true)
+            && $data['role'] !== 'administrator'
             && Auth::rank() <= Auth::rank($data['role'])
             && (string) $row['role'] !== $data['role']) {
             return ['ok' => false, 'errors' => ['role' => sprintf(
@@ -259,9 +275,9 @@ final class AccountService
         if ((int) $row['id'] === Auth::id()) {
             return ['ok' => false, 'error' => 'Use your profile to change your own password.'];
         }
-        if (Auth::rank() <= Auth::rank((string) $row['role'])) {
+        if (!self::canManageAccount($row)) {
             return ['ok' => false, 'error' => sprintf(
-                'You cannot reset %s’s password — they hold the same or a higher level of authority.',
+                'You cannot reset %s’s password.',
                 $row['full_name'])];
         }
 
@@ -290,9 +306,9 @@ final class AccountService
         if ((int) $row['id'] === Auth::id()) {
             return ['ok' => false, 'error' => 'You cannot remove your own account.'];
         }
-        if (Auth::rank() <= Auth::rank((string) $row['role'])) {
+        if (!self::canManageAccount($row)) {
             return ['ok' => false, 'error' => sprintf(
-                'You cannot remove %s’s account — they hold the same or a higher level of authority.',
+                'You cannot remove %s’s account.',
                 $row['full_name'])];
         }
 
