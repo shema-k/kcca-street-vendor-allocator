@@ -1,0 +1,92 @@
+/* =====================================================================
+   KCCA VRSP - professional layer
+   Loaded last. Refines spacing, type, surfaces and states; it changes no
+   colours of the Authority's brand and removes no controls.
+   ===================================================================== */
+
+:root {
+  --ease: cubic-bezier(.2, .7, .2, 1);
+  --ring: 0 0 0 3px rgba(220, 53, 29, .18);
+}
+
+body { font-size: 13.5px; letter-spacing: .005em; -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { letter-spacing: -.01em; }
+
+/* ---- Top bar: quiet, one line ------------------------------------- */
+.topbar { box-shadow: 0 1px 0 var(--line); gap: 6px; }
+.topbar .brand .sys span { display: none; }              /* subtitle */
+.topbar .brand .sys b { font-size: 14px; font-weight: 700; }
+
+/* ---- Navigation rail: clear groups, strong active state ------------ */
+.rail { padding-top: 10px; }
+.rail-group { margin-bottom: 6px; }
+.rail-group h4 {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .09em; color: var(--ink-4); margin: 12px 14px 4px;
+}
+.rail a {
+  position: relative; border-radius: 8px; margin: 1px 8px; padding: 8px 10px;
+  transition: background .15s var(--ease), color .15s var(--ease);
+}
+.rail a:hover { background: var(--surface-3); }
+.rail a.active { background: var(--kcca-red-soft); color: var(--kcca-red-dark); font-weight: 600; }
+.rail a.active::before {
+  content: ""; position: absolute; left: -8px; top: 8px; bottom: 8px; width: 3px;
+  border-radius: 0 3px 3px 0; background: var(--kcca-red);
+}
+.rail .pill { transition: transform .2s var(--ease); }
+.rail .pill.bump { animation: pillBump .45s var(--ease); }
+@keyframes pillBump { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
+
+/* ---- Page header --------------------------------------------------- */
+.page-head { border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 16px; }
+.page-head h1 { font-size: 21px; font-weight: 700; }
+.breadcrumb { font-size: 11.5px; color: var(--ink-4); }
+
+/* ---- Cards and tables ---------------------------------------------- */
+.card {
+  border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-1);
+  transition: box-shadow .2s var(--ease), border-color .2s var(--ease);
+}
+.card:hover { box-shadow: var(--shadow-2); }
+.card-head { border-bottom: 1px solid var(--line-2); }
+table { border-collapse: separate; border-spacing: 0; }
+table thead th {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--ink-3); background: var(--surface-2); font-weight: 700;
+}
+table tbody tr { transition: background .12s var(--ease); }
+table tbody tr:hover { background: var(--surface-2); }
+table tbody td { border-top: 1px solid var(--line-2); }
+
+/* ---- Buttons and fields: obvious, responsive, accessible ------------ */
+.btn {
+  border-radius: 8px; font-weight: 600;
+  transition: background .15s var(--ease), box-shadow .15s var(--ease), transform .08s var(--ease);
+}
+.btn:hover { box-shadow: var(--shadow-1); }
+.btn:focus-visible, a:focus-visible, button:focus-visible,
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: none; box-shadow: var(--ring);
+}
+.btn[disabled], .btn.is-busy { opacity: .6; cursor: progress; }
+input, select, textarea { border-radius: 8px; transition: border-color .15s var(--ease), box-shadow .15s var(--ease); }
+input:focus, select:focus, textarea:focus { border-color: var(--kcca-red); box-shadow: var(--ring); }
+
+/* ---- Badges ---------------------------------------------------------- */
+.badge { border-radius: 999px; font-weight: 600; font-size: 11px; padding: 2px 9px; }
+
+/* ---- Live chip: now a working on/off control -------------------------- */
+.live-chip { cursor: pointer; user-select: none; border-radius: 999px; transition: background .15s var(--ease), opacity .15s; }
+.live-chip:hover { background: var(--surface-3); }
+.live-chip.is-paused { opacity: .6; }
+.live-chip.is-paused i { background: var(--ink-4); animation: none; }
+
+/* ---- "Updated" bar --------------------------------------------------- */
+.live-bar { border-radius: 999px; box-shadow: var(--shadow-3); }
+
+/* ---- Motion that respects the reader --------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .rail .pill.bump { animation: none; }
+  * { transition-duration: .01ms !important; }
+}

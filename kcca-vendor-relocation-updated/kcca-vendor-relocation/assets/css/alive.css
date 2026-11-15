@@ -1,0 +1,276 @@
+/* =====================================================================
+   KCCA VRSP - "Alive" motion layer
+
+   Loaded after civic.css, before dark.css. Everything here is motion or
+   the shape of controls; colour comes from the tokens in civic.css.
+
+   Rules the motion follows:
+   - It explains, it does not decorate: things enter in reading order,
+     figures count up to their value, bars grow to their length.
+   - Nothing blocks. No animation delays an action; a click is always
+     handled at once.
+   - It is optional. The "Motion" switch in the top bar, or the visitor's
+     reduced-motion setting, turns all of it off, and the page is complete
+     without it.
+   ===================================================================== */
+
+/* ---------------------------------------------------------- Keyframes */
+@keyframes aliveRise   { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes aliveSlide  { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: none; } }
+@keyframes aliveGrow   { from { width: 0; } }
+@keyframes alivePop    { 0% { transform: scale(.6); opacity: 0; } 70% { transform: scale(1.08); } 100% { transform: none; opacity: 1; } }
+@keyframes alivePulse  { 0% { box-shadow: 0 0 0 0 rgba(10,99,57,.55); } 70% { box-shadow: 0 0 0 9px rgba(10,99,57,0); } 100% { box-shadow: 0 0 0 0 rgba(10,99,57,0); } }
+@keyframes aliveGlow   { 0%,100% { box-shadow: 0 6px 16px rgba(var(--accent-rgb),.40), inset 0 1px 0 rgba(255,255,255,.45); }
+                         50%     { box-shadow: 0 8px 28px rgba(var(--accent-rgb),.70), inset 0 1px 0 rgba(255,255,255,.45); } }
+@keyframes aliveDrift  { from { transform: translate3d(-2%, 1%, 0) scale(1); } to { transform: translate3d(3%, -3%, 0) scale(1.08); } }
+@keyframes aliveRipple { to { transform: scale(2.6); opacity: 0; } }
+@keyframes aliveBob    { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes aliveMarquee{ from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes aliveKen    { from { transform: scale(1.02) translate(0, 0); } to { transform: scale(1.14) translate(-1.6%, -1.2%); } }
+@keyframes aliveCaption{ from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes aliveFill   { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes aliveBeat   { 0%,100% { transform: scale(1); } 14% { transform: scale(1.22); } 28% { transform: scale(1); } 42% { transform: scale(1.16); } }
+
+/* A living background: the colour fields drift slowly behind the glass. */
+body::after {
+  content: ""; position: fixed; inset: -18%; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(closest-side, rgba(var(--accent-rgb),.34), transparent) 18% 28% / 38% 38% no-repeat,
+    radial-gradient(closest-side, rgba(255,224,102,.30), transparent) 82% 18% / 42% 42% no-repeat,
+    radial-gradient(closest-side, rgba(10,99,57,.22), transparent) 72% 86% / 40% 40% no-repeat;
+  animation: aliveDrift 28s ease-in-out infinite alternate;
+}
+
+/* ----------------------------------------------------------- Entrances */
+.content > * { animation: aliveRise .65s cubic-bezier(.2,.7,.2,1) backwards; animation-delay: calc(var(--i, 0) * 70ms); }
+.content > *:nth-child(1) { --i: 0; } .content > *:nth-child(2) { --i: 1; } .content > *:nth-child(3) { --i: 2; }
+.content > *:nth-child(4) { --i: 3; } .content > *:nth-child(5) { --i: 4; } .content > *:nth-child(6) { --i: 5; }
+.content > *:nth-child(n+7) { --i: 6; }
+.grid > .stat { animation: aliveRise .6s cubic-bezier(.2,.7,.2,1) backwards; animation-delay: calc(.12s + var(--k, 0) * 70ms); }
+.grid > .stat:nth-child(1) { --k: 0; } .grid > .stat:nth-child(2) { --k: 1; } .grid > .stat:nth-child(3) { --k: 2; }
+.grid > .stat:nth-child(4) { --k: 3; } .grid > .stat:nth-child(5) { --k: 4; } .grid > .stat:nth-child(n+6) { --k: 5; }
+table.data tbody tr { animation: aliveSlide .45s cubic-bezier(.2,.7,.2,1) backwards; animation-delay: calc(.2s + var(--r, 0) * 28ms); }
+.meter .fill { animation: aliveGrow 1.1s .25s cubic-bezier(.2,.7,.2,1) backwards; }
+.badge, .rank { animation: alivePop .45s cubic-bezier(.3,1.4,.5,1) backwards; animation-delay: .3s; }
+
+/* Reveal as it scrolls into view (JS marks only what starts below the fold). */
+.js-reveal { opacity: 0; transform: translateY(22px); transition: opacity .6s ease, transform .6s cubic-bezier(.2,.7,.2,1); }
+.js-reveal.in { opacity: 1; transform: none; }
+
+/* Leaving a page */
+html.leaving .main { opacity: 0; transform: translateY(8px); transition: opacity .16s ease, transform .16s ease; }
+
+/* ------------------------------------------------- Live status in the bar */
+.live-chip {
+  display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 700; letter-spacing: .3px; color: var(--ink-2);
+  background: var(--surface-3); border: 1px solid var(--glass-edge); white-space: nowrap;
+}
+.live-chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--kcca-green); animation: alivePulse 2s infinite; }
+.live-chip b { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+@media (max-width: 720px) { .live-chip { display: none; } }
+
+/* --------------------------------------------------------- Rail motion */
+.rail a { transition: background .2s, color .2s, transform .2s, box-shadow .2s; }
+.rail a:hover { transform: translateX(4px); }
+.rail a .ico { transition: transform .25s cubic-bezier(.3,1.4,.5,1); }
+.rail a:hover .ico { transform: scale(1.18) rotate(-6deg); }
+.rail a.active { animation: aliveGlow 3.4s ease-in-out infinite; }
+.rail .pill { animation: aliveBeat 2.6s ease-in-out infinite; }
+
+/* ====================================================================
+   Controls, redesigned
+
+   Primary   a glowing gradient capsule with a sliding arrow
+   Secondary a glass capsule that floods with colour from the left
+   Groups    actions sit together in one glass dock, not as loose buttons
+   Press     every control gives a little, so a click feels received
+   ==================================================================== */
+.btn {
+  position: relative; overflow: hidden; isolation: isolate;
+  transition: transform .18s cubic-bezier(.3,1.4,.5,1), box-shadow .25s, background-size .4s ease, color .25s, border-color .25s;
+}
+.btn:hover  { transform: translateY(-2px); }
+.btn:active { transform: translateY(1px) scale(.97); }
+.btn:focus-visible { outline: 3px solid rgba(var(--accent-rgb),.75); outline-offset: 2px; }
+
+/* light sweep across the face */
+.btn::before {
+  content: ""; position: absolute; top: 0; bottom: 0; left: -80%; width: 55%; z-index: -1;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent);
+  transform: skewX(-20deg); transition: left .6s ease;
+}
+.btn:hover::before { left: 130%; }
+
+.btn-primary:not(.btn-sm):not(.btn-icon)::after {
+  content: "\203A"; margin-left: 8px; font-size: 1.25em; line-height: 1; font-weight: 800;
+  display: inline-block; transition: transform .25s cubic-bezier(.3,1.4,.5,1);
+}
+.btn-primary:not(.btn-sm):not(.btn-icon):hover::after { transform: translateX(5px); }
+.btn-primary { animation: aliveGlow 4s ease-in-out infinite; }
+.btn-primary:disabled, .btn-primary[aria-busy="true"] { animation: none; }
+
+.btn-ghost {
+  background:
+    linear-gradient(135deg, var(--accent-hi), var(--accent)) no-repeat left center / 0% 100%,
+    color-mix(in srgb, var(--surface) 55%, transparent);
+}
+.btn-ghost:hover { background-size: 100% 100%, auto; color: var(--accent-ink); border-color: var(--accent-deep); }
+.btn-ghost:hover svg { color: var(--accent-ink); }
+
+.btn .ripple {
+  position: absolute; border-radius: 50%; width: 20px; height: 20px; margin: -10px 0 0 -10px; z-index: -1;
+  background: rgba(255,255,255,.65); pointer-events: none; animation: aliveRipple .6s ease-out forwards;
+}
+
+/* Action groups become docks */
+.page-head .actions, .card-head .tools {
+  display: inline-flex; align-items: center; gap: 4px; padding: 4px; border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 50%, transparent);
+  border: 1px solid var(--glass-line);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+}
+.page-head .actions .btn, .card-head .tools .btn { box-shadow: none; animation: none; }
+
+/* Round icon buttons spin a little */
+.icon-link { transition: transform .3s cubic-bezier(.3,1.4,.5,1), background .2s; }
+.icon-link:hover { transform: rotate(12deg) scale(1.08); }
+
+/* Motion switch */
+[data-motion-toggle] { cursor: pointer; font-size: 13px; }
+html[data-motion="off"] [data-motion-toggle] { opacity: .55; text-decoration: line-through; }
+html[data-glass="off"] body::after { display: none; }
+
+/* ------------------------------------------------------- Cards and tiles */
+.card, .stat { transition: box-shadow .25s, transform .25s cubic-bezier(.2,.7,.2,1); }
+.card:hover { transform: translateY(-2px); }
+.stat { transform-style: preserve-3d; will-change: transform; }
+.stat[data-tilt] { transform: perspective(800px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateZ(0); }
+
+/* =====================================================================
+   Vendor hero: photo slider, ticker and live tiles
+   ===================================================================== */
+.vhero {
+  position: relative; border-radius: 26px; overflow: hidden; min-height: 340px; margin-bottom: 16px;
+  border: 1px solid var(--glass-line); box-shadow: var(--shadow-2); isolation: isolate; color: #fff;
+}
+.vslide { position: absolute; inset: 0; opacity: 0; transition: opacity 1.1s ease; z-index: 0; }
+.vslide.on { opacity: 1; z-index: 1; }
+.vslide picture, .vslide img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.vslide.on img { animation: aliveKen 9s ease-out forwards; }
+.vhero::before {            /* legibility veil, in the Authority's colours */
+  content: ""; position: absolute; inset: 0; z-index: 2;
+  background:
+    linear-gradient(100deg, rgba(20,12,8,.82) 0%, rgba(20,12,8,.50) 45%, rgba(20,12,8,.10) 100%),
+    linear-gradient(0deg, rgba(var(--accent-rgb),.28), transparent 45%);
+}
+.vcopy { position: relative; z-index: 3; padding: 34px 38px 96px; max-width: 640px; }
+.vcopy .hello { font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #F7C401; }
+.vcopy h2 { font-size: 34px; line-height: 1.1; margin: 8px 0 10px; color: #fff; letter-spacing: -.8px; }
+.vcopy p  { margin: 0 0 18px; color: rgba(255,255,255,.88); font-size: 15px; max-width: 48ch; }
+.vcap { animation: aliveCaption .8s cubic-bezier(.2,.7,.2,1) backwards; }
+.vcap-wrap { min-height: 128px; }
+.vcta { display: flex; gap: 10px; flex-wrap: wrap; }
+.vcta .btn-ghost { color: #fff; border-color: rgba(255,255,255,.45); background-color: rgba(255,255,255,.12); }
+.vdots { position: absolute; right: 26px; bottom: 74px; z-index: 4; display: flex; gap: 8px; }
+.vdots button { width: 10px; height: 10px; border-radius: 999px; border: 0; padding: 0; cursor: pointer;
+  background: rgba(255,255,255,.5); transition: width .35s, background .35s; }
+.vdots button.on { width: 30px; background: #F7C401; }
+.vbar { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; z-index: 5; background: rgba(255,255,255,.18); }
+.vbar i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent-deep), var(--accent), var(--accent-hi)); transform-origin: left; transform: scaleX(0); }
+.vbar i.run { animation: aliveFill var(--dur, 5500ms) linear forwards; }
+
+.vticker { position: absolute; left: 0; right: 0; bottom: 4px; z-index: 4; overflow: hidden; padding: 10px 0;
+  background: rgba(15,10,6,.55); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-top: 1px solid rgba(255,255,255,.12); }
+.vticker-track { display: inline-flex; gap: 34px; white-space: nowrap; animation: aliveMarquee 46s linear infinite; padding-left: 34px; }
+.vticker:hover .vticker-track { animation-play-state: paused; }
+.vticker span { font-size: 12.5px; color: rgba(255,255,255,.9); }
+.vticker b { color: #F7C401; font-variant-numeric: tabular-nums; }
+.vticker i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #3FD28A; margin-right: 8px; animation: alivePulse 2s infinite; }
+
+.vtiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 16px; }
+.vtile { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 20px; text-decoration: none; color: var(--ink);
+  background: var(--glass); border: 1px solid var(--glass-line); box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  transition: transform .25s cubic-bezier(.3,1.4,.5,1), box-shadow .25s; animation: aliveRise .6s cubic-bezier(.2,.7,.2,1) backwards; }
+.vtile:nth-child(2) { animation-delay: .1s; } .vtile:nth-child(3) { animation-delay: .2s; }
+.vtile:hover { transform: translateY(-4px) scale(1.01); box-shadow: var(--shadow-2); }
+.vtile .vi { flex: none; width: 48px; height: 48px; border-radius: 16px; display: grid; place-items: center; color: var(--accent-ink);
+  background: linear-gradient(135deg, var(--accent-hi), var(--accent)); animation: aliveBob 3.4s ease-in-out infinite; }
+.vtile:nth-child(2) .vi { background: linear-gradient(135deg, #0A6339, #3FA776); color: #fff; animation-delay: .5s; }
+.vtile:nth-child(3) .vi { background: linear-gradient(135deg, var(--accent), var(--accent-deep)); color: var(--accent-ink); animation-delay: 1s; }
+.vtile b { display: block; font-size: 22px; letter-spacing: -.6px; font-variant-numeric: tabular-nums; }
+.vtile span { font-size: 12px; color: var(--ink-3); }
+@media (max-width: 760px) {
+  .vcopy { padding: 22px 20px 96px; } .vcopy h2 { font-size: 26px; } .vtiles { grid-template-columns: minmax(0, 1fr); }
+  .vdots { right: 16px; }
+}
+
+/* =====================================================================
+   The bell: what colleagues have just changed
+   ===================================================================== */
+.feed { position: relative; }
+.feed-bell { position: relative; }
+.feed-badge {
+  position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
+  display: grid; place-items: center; font-size: 10.5px; font-weight: 800; line-height: 1;
+  background: var(--accent); color: var(--accent-ink); border: 2px solid var(--glass-strong); animation: alivePop .4s cubic-bezier(.3,1.4,.5,1);
+}
+.feed-badge[hidden] { display: none; }
+.feed-panel {
+  position: absolute; right: -60px; top: calc(100% + 14px); width: min(380px, 92vw); max-height: min(70vh, 520px);
+  display: flex; flex-direction: column; overflow: hidden; z-index: 90; border-radius: 18px;
+  background: var(--glass-strong); border: 1px solid var(--glass-line); box-shadow: var(--shadow-3);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); animation: aliveCaption .25s ease-out;
+}
+.feed-panel[hidden] { display: none; }
+.feed-head { display: flex; align-items: baseline; gap: 8px; padding: 14px 16px 10px; border-bottom: 1px solid var(--glass-edge); }
+.feed-head b { color: var(--ink); }
+.feed-list { list-style: none; margin: 0; padding: 6px; overflow-y: auto; }
+.feed-empty { padding: 22px 12px; text-align: center; color: var(--ink-3); font-size: 13px; }
+.feed-row { display: block; padding: 9px 11px; border-radius: 12px; text-decoration: none; color: var(--ink-2); font-size: 13px; line-height: 1.4; }
+a.feed-row:hover { background: rgba(var(--accent-rgb), .2); color: var(--ink); }
+.feed-row b { color: var(--ink); }
+.feed-row em { display: block; font-style: normal; font-size: 12px; color: var(--ink-3); margin-top: 1px; }
+.feed-row small { display: block; font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+.feed-item.fresh .feed-row { background: rgba(var(--accent-rgb), .16); box-shadow: inset 3px 0 0 var(--accent-deep); }
+.feed-item.mine .feed-row { opacity: .75; }
+.feed-foot { display: block; text-align: center; padding: 11px; border-top: 1px solid var(--glass-edge); font-size: 12.5px; font-weight: 700; color: var(--accent-text); text-decoration: none; }
+.feed-foot:hover { background: rgba(var(--accent-rgb), .2); }
+.feed-toasts { position: fixed; right: 18px; bottom: 18px; z-index: 120; display: grid; gap: 8px; }
+.feed-toast {
+  display: block; max-width: 340px; text-align: left; cursor: pointer; padding: 11px 15px; border-radius: 14px;
+  background: var(--glass-strong); color: var(--ink-2); font: inherit; font-size: 13px;
+  border: 1px solid var(--glass-line); border-left: 4px solid var(--accent); box-shadow: var(--shadow-3);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); animation: aliveCaption .35s cubic-bezier(.2,.7,.2,1);
+}
+.feed-toast b { color: var(--ink); }
+@media (max-width: 720px) { .feed-panel { right: -120px; } }
+
+/* =====================================================================
+   Compact density: the account's "Compact layout" setting
+   ===================================================================== */
+html[data-density="compact"] .content { padding-top: 8px; }
+html[data-density="compact"] .card-head { padding: 9px 14px; }
+html[data-density="compact"] .card-body { padding: 11px 14px; }
+html[data-density="compact"] .card { margin-bottom: 10px; }
+html[data-density="compact"] .grid { gap: 10px; }
+html[data-density="compact"] .stat { padding: 9px 13px; }
+html[data-density="compact"] .stat .value { font-size: 22px; }
+html[data-density="compact"] table.data tbody td { padding: 5px 10px; }
+html[data-density="compact"] table.data thead th { padding: 7px 10px; }
+html[data-density="compact"] .rail a { padding: 5px 12px; }
+html[data-density="compact"] h1 { font-size: 20px; }
+html[data-density="compact"] .page-head { margin-bottom: 8px; }
+
+/* ---------------------------------------------------------- Switched off */
+html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="off"] *::after {
+  animation: none !important; transition: none !important; scroll-behavior: auto !important;
+}
+html[data-motion="off"] .js-reveal { opacity: 1; transform: none; }
+html[data-motion="off"] .vslide.on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  .js-reveal { opacity: 1; transform: none; }
+}
+@media print { body::after { display: none; } .live-chip, .vticker, .feed, .feed-toasts { display: none; } * { animation: none !important; } .js-reveal { opacity: 1 !important; transform: none !important; } }

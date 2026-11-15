@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=KCCA VRSP
+GenericName=Vendor Relocation System
+Comment=KCCA Vendor Relocation & Space Allocation System
+Exec=/bin/bash /home/shema/Desktop/PROJECTS/kcca-vendor-relocation/kcca-vendor-relocation-v4/kcca-vendor-relocation/run-bg.sh
+TryExec=/bin/bash
+Path=/home/shema/Desktop/PROJECTS/kcca-vendor-relocation/kcca-vendor-relocation-v4/kcca-vendor-relocation
+Terminal=false
+Icon=applications-office
+Categories=Office;Database;
+StartupNotify=true

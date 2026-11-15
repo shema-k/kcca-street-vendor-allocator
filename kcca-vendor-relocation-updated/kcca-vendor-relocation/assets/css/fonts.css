@@ -1,0 +1,28 @@
+/* Open Sans, self-hosted.
+ *
+ * The Authority's own site sets its body and its forms in Open Sans, and this
+ * is the Authority's system, so it is set in Open Sans too.
+ *
+ * Self-hosted rather than linked from Google Fonts for two reasons: the app
+ * has to run on a district office connection with no outside route, and one
+ * subsetted file costs less than the round trip a linked font makes on every
+ * cold load.
+ *
+ * One file, not three. Open Sans ships as a variable font, so a single Latin
+ * subset covers every weight from 300 to 800 — declaring 400, 600 and 700
+ * separately would download the same 47 KB three times over. The Latin subset
+ * only: Cyrillic, Greek, Vietnamese and Central European are weight this app
+ * never draws.
+ */
+@font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 300 800;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url('../fonts/open-sans-latin-var.woff2') format('woff2-variations'),
+       url('../fonts/open-sans-latin-var.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}

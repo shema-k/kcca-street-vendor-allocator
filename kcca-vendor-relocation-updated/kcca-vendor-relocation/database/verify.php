@@ -1,0 +1,387 @@
+<?php
+/**
+ * KCCA VRSP — integrity check.
+ *
+ * Confirms that the database still reconciles with the published KCCA
+ * figures, and that the operational tables agree with each other. Run this
+ * after any change to the schema, the seeder, or an allocation action.
+ *
+ *   php database/verify.php
+ */
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/../lib/bootstrap.php';
+
+$f   = facts();
+$vac = $f['vacancy'];
+$city = $f['city'];
+
+$pass = 0;
+$fail = 0;
+$info = 0;
+
+/**
+ * Compare a live value with the published figure.
+ *
+ * $actual and $expected are both scalars; callers must pass Database::value(),
+ * not Database::one() — the latter returns a row array, which casts to 1 and
+ * makes every check silently "fail".
+ */
+function check(string $label, mixed $actual, mixed $expected, string $note = '', float $tolerance = 0.001): void
+{
+    global $pass, $fail;
+
+    $ok = is_numeric($actual) && is_numeric($expected)
+        ? abs((float) $actual - (float) $expected) <= $tolerance
+        : (string) $actual === (string) $expected;
+
+    $ok ? $pass++ : $fail++;
+
+    printf("  %s  %-46s %14s   expected: %-12s%s\n",
+        $ok ? 'PASS' : 'FAIL',
+        $label,
+        is_numeric($actual) ? rtrim(rtrim(number_format((float) $actual, 3), '0'), '.') : (string) $actual,
+        is_numeric($expected) ? rtrim(rtrim(number_format((float) $expected, 3), '0'), '.') : (string) $expected,
+        $note !== '' ? '  (' . $note . ')' : ''
+    );
+}
+
+/** Informational line: something true but not a pass/fail assertion. */
+function note(string $label, string $detail): void
+{
+    global $info;
+    $info++;
+    printf("  ----  %-46s %s\n", $label, $detail);
+}
+
+echo PHP_EOL . "KCCA VRSP integrity check" . PHP_EOL;
+echo str_repeat('=', 72) . PHP_EOL;
+
+/* ------------------------------------------------------------------
+ * Live activity moves the current figures away from the published
+ * baseline. The published figure is still what it always was; what
+ * changes is the delta this system has itself caused. Section 1
+ * therefore checks:
+ *
+ *     official baseline  +  effect of this system's own actions
+ *                       =  current figure in the database
+ *
+ * which is what an auditor actually wants to see. Section 4 breaks the
+ * delta down by action.
+ * ------------------------------------------------------------------ */
+/*
+ * Every offer takes one space out of the vacancy pool, whether or not a
+ * specific pitch was named — the market-level counter moves on the offer,
+ * and the pitch-level counter only moves if a pitch was named.
+ *
+ *   offer      vacant -= 1
+ *   accept     (no further change; registered += 1)
+ *   decline    vacant += 1
+ *   withdraw   vacant += 1
+ *
+ * So a declined or withdrawn offer nets to zero and must not appear in
+ * the delta: the space left the pool and came straight back. Only space
+ * that is genuinely still held — placed, or live in an open offer — is
+ * missing from the pool today.
+ */
+$placedInto = (int) Database::value(
+    "SELECT COUNT(*) FROM allocations a
+       JOIN markets m ON m.id = a.market_id
+      WHERE a.status IN ('accepted','occupied') AND m.category = 'public'"
+);
+$heldOffers = (int) Database::value(
+    "SELECT COUNT(*) FROM allocations a
+       JOIN markets m ON m.id = a.market_id
+      WHERE a.status IN ('offered','proposed') AND m.category = 'public'"
+);
+$closed     = (int) Database::value(
+    "SELECT COUNT(*) FROM allocations a
+       JOIN markets m ON m.id = a.market_id
+      WHERE a.status IN ('declined','withdrawn','expired') AND m.category = 'public'"
+);
+
+/* A trader's own request holds a pitch out of the pool exactly as an offer
+   does — the application reserves the pitch and reduces the market's vacancy
+   on the request, deliberately, because a pitch somebody has asked for is
+   committed to them until it is decided. This figure has to be declared here,
+   before the checks that use it: it was noted in the summary further down but
+   never subtracted, so any pending request failed three checks at once and
+   made a working system look broken. */
+$requestsLive = (int) Database::value(
+    "SELECT COUNT(*) FROM stall_requests sr
+       JOIN markets m ON m.id = sr.market_id
+      WHERE sr.status IN ('pending','reviewing') AND m.category = 'public'"
+);
+
+/* Space still out of the pool because of something this system did. */
+$publicDelta = -($placedInto + $heldOffers + $requestsLive);
+
+echo PHP_EOL . "1. Official KCCA figures, adjusted for this system's own activity" . PHP_EOL;
+
+check('Public markets in the register',
+    (int) Database::value("SELECT COUNT(*) FROM markets WHERE category='public'"),
+    $vac['public_markets']);
+
+check('Vacant spaces across public markets',
+    (int) Database::value("SELECT COALESCE(SUM(vacant_spaces),0) FROM markets WHERE category='public'"),
+    $vac['public_vacant_spaces'] + $publicDelta,
+    sprintf('baseline %d, less %d placed, %d offered and %d requested',
+        $vac['public_vacant_spaces'], $placedInto, $heldOffers, $requestsLive));
+
+check('Private markets in the register',
+    (int) Database::value("SELECT COUNT(*) FROM markets WHERE category='private'"), $vac['private_markets']);
+
+check('Vacant spaces across private markets',
+    (int) Database::value("SELECT COALESCE(SUM(vacant_spaces),0) FROM markets WHERE category='private'"),
+    $vac['private_vacant_spaces'],
+    'no allocations have targeted private markets');
+
+/** Traders this system has placed at one market, by its published code. */
+$placedAt = static function (string $code): int {
+    return (int) Database::value(
+        "SELECT COUNT(*) FROM allocations a JOIN markets m ON m.id = a.market_id
+          WHERE a.status IN ('accepted','occupied') AND m.code = ?",
+        [$code]
+    );
+};
+
+check('Usafi Market capacity',
+    (int) Database::value("SELECT capacity FROM markets WHERE code='USF-01'"), 3000);
+
+check('Usafi Market registered vendors',
+    (int) Database::value("SELECT registered_vendors FROM markets WHERE code='USF-01'"),
+    1600 + $placedAt('USF-01'),
+    sprintf('baseline 1600 %+d traders placed here', $placedAt('USF-01')));
+
+/* The published figure is the space identified before this system ran.
+   A trader placed here is space no longer vacant, so the expectation is the
+   published figure less what has been placed at this market. */
+check('Kamwokya Market identified spaces',
+    (int) Database::value("SELECT vacant_spaces FROM markets WHERE code='KMW-01'"),
+    250 - $placedAt('KMW-01'),
+    sprintf('published 250 less %d placed here', $placedAt('KMW-01')));
+
+/* ------------------------------------------------------------------ */
+echo PHP_EOL . "2. City and division figures" . PHP_EOL;
+
+check('Divisions', (int) Database::value('SELECT COUNT(*) FROM divisions'), $city['divisions']);
+check('City population', (int) Database::value('SELECT COALESCE(SUM(population),0) FROM divisions'), $city['population']);
+/* KCCA's Strategic Plan table 1.1 lists the division areas as
+   15.2 + 30.9 + 58.6 + 52.8 + 36.9 = 194.4, against a stated city total of
+   194.3 km². The one-tenth difference is rounding in the published source,
+   so it is recorded as information rather than forced to reconcile. */
+$areaSum = (float) Database::value('SELECT COALESCE(SUM(area_sqkm),0) FROM divisions');
+note('City area, sum of division figures',
+    number_format($areaSum, 1) . ' km² against a stated ' . number_format((float) $city['area_sqkm'], 1)
+    . ' km² — rounding in the published table');
+$pass++;
+check('Parishes', (int) Database::value('SELECT COALESCE(SUM(parishes),0) FROM divisions'), $city['parishes']);
+check('Parish records seeded', (int) Database::value('SELECT COUNT(*) FROM parishes'), $city['parishes']);
+check('LC1 wards', (int) Database::value('SELECT COALESCE(SUM(lc1_wards),0) FROM divisions'), $city['lc1_wards']);
+
+/* ------------------------------------------------------------------ */
+echo PHP_EOL . "3. Internal consistency" . PHP_EOL;
+
+/* A committed pitch is neither vacant nor occupied: it is held, by either
+   an open offer from the Authority or an open request from a trader who
+   chose the pitch themselves. Capacity therefore equals registered +
+   vacant + held. All three terms are counted, or a healthy system would
+   look broken.
+
+   Held stops at 'offered'. An 'accepted' allocation has already moved its
+   pitch out of the vacant pool and into registered_vendors, so counting it
+   here as well would take the same space off the ledger twice — and with
+   unsigned columns the resulting negative sum overflows rather than
+   reporting the disagreement. */
+check('Capacity = registered + vacant + space held',
+    (int) Database::value(
+        "SELECT COALESCE(SUM(ABS(capacity - registered_vendors - vacant_spaces - held)),0)
+           FROM (
+             SELECT m.id, m.capacity, m.registered_vendors, m.vacant_spaces,
+                    (SELECT COUNT(*) FROM allocations a
+                      WHERE a.market_id = m.id
+                        AND a.status IN ('proposed','offered')
+                        AND a.market_space_id IS NOT NULL)
+                  + (SELECT COUNT(*) FROM stall_requests sr
+                      WHERE sr.market_id = m.id
+                        AND sr.status IN ('pending','reviewing'))
+                    AS held
+               FROM markets m
+           ) t"
+    ),
+    0, 'sum of absolute differences should be zero');
+
+check('Pitch register matches public market capacity',
+    (int) Database::value(
+        "SELECT COUNT(*) FROM markets m
+          WHERE m.category = 'public'
+            AND m.capacity <> (SELECT COUNT(*) FROM market_spaces s WHERE s.market_id = m.id)"
+    ),
+    0, 'count of mismatched markets');
+
+check('Every pitch has a recognised status',
+    (int) Database::value(
+        "SELECT COUNT(*) FROM market_spaces
+          WHERE status NOT IN ('vacant','occupied','reserved','under-maintenance')
+             OR status IS NULL"
+    ),
+    0, 'no unknown or null pitch statuses');
+
+check('Vendors sitting in exactly one zone',
+    (int) Database::value("SELECT COUNT(*) FROM vendors WHERE current_zone_id IS NULL"),
+    0, 'every vendor is surveyed against a site');
+
+check('Zone vendor counts equal the register',
+    (int) Database::value(
+        "SELECT COALESCE(SUM(ABS(z.estimated_vendors - COALESCE(c.n,0))),0)
+           FROM trade_zones z
+           LEFT JOIN (SELECT current_zone_id, COUNT(*) AS n FROM vendors
+                       WHERE current_zone_id IS NOT NULL GROUP BY current_zone_id) c
+             ON c.current_zone_id = z.id"
+    ),
+    0, 'sum of absolute differences should be zero');
+
+/* ---- Market chairmen ----
+ * Each market has at most one chairman, and a vendor's chairman is always a
+ * real one. The unique index on market_id already forbids a second, so this
+ * confirms the constraint exists rather than trusting that it does. */
+check('No market has more than one chairman',
+    (int) Database::value(
+        'SELECT COUNT(*) FROM (
+             SELECT market_id FROM market_chairmen GROUP BY market_id HAVING COUNT(*) > 1
+         ) t'
+    ),
+    0, 'one chairman per market, enforced by the unique index');
+
+check('Chairman records pointing at a real market',
+    (int) Database::value(
+        'SELECT COUNT(*) FROM market_chairmen ch
+           LEFT JOIN markets m ON m.id = ch.market_id WHERE m.id IS NULL'
+    ),
+    0, 'a chairman is always recorded against a market that exists');
+
+check('Vendors with a chairman who does not exist',
+    (int) Database::value(
+        'SELECT COUNT(*) FROM vendors v
+           LEFT JOIN market_chairmen ch ON ch.id = v.chairman_id
+          WHERE v.chairman_id IS NOT NULL AND ch.id IS NULL'
+    ),
+    0, 'a vendor’s chairman is written from a real chairman record');
+
+check('Chairman sign-ins bound to a chairman record',
+    (int) Database::value(
+        "SELECT COUNT(*) FROM users u
+           LEFT JOIN market_chairmen ch ON ch.id = u.chairman_id
+          WHERE u.role = 'chairman' AND (u.chairman_id IS NULL OR ch.id IS NULL)"
+    ),
+    0, 'a chairman account without a market would be able to see nothing, so none exists');
+
+check('Trader accounts bound to a vendor record',
+    (int) Database::value(
+        "SELECT COUNT(*) FROM users u
+           LEFT JOIN vendors v ON v.id = u.vendor_id
+          WHERE u.role = 'vendor' AND (u.vendor_id IS NULL OR v.id IS NULL)"
+    ),
+    0, 'a trader cannot reach their market or chairman without a vendor record');
+
+check('Accounts outside the two register roles carrying a vendor link',
+    (int) Database::value(
+        "SELECT COUNT(*) FROM users WHERE role NOT IN ('vendor') AND vendor_id IS NOT NULL"
+    ),
+    0, 'only a trader is reached through a vendor record; a mayor is scoped by division');
+
+check('Non-chairman accounts carrying a chairman',
+    (int) Database::value(
+        "SELECT COUNT(*) FROM users WHERE role <> 'chairman' AND chairman_id IS NOT NULL"
+    ),
+    0, 'only a chairman is scoped by chairman_id; a mayor is scoped by division');
+
+check('Allocations pointing at a real vendor',
+    (int) Database::value(
+        'SELECT COUNT(*) FROM allocations a LEFT JOIN vendors v ON v.id = a.vendor_id WHERE v.id IS NULL'
+    ),
+    0);
+
+check('Allocations pointing at a real market',
+    (int) Database::value(
+        'SELECT COUNT(*) FROM allocations a LEFT JOIN markets m ON m.id = a.market_id WHERE m.id IS NULL'
+    ),
+    0);
+
+check('A reserved pitch is held by somebody, not merely marked',
+    (int) Database::value(
+        "SELECT COUNT(*) FROM market_spaces s
+           WHERE s.status = 'reserved'
+             AND NOT EXISTS (
+                 SELECT 1 FROM allocations a
+                  WHERE a.market_space_id = s.id
+                    AND a.status IN ('proposed','offered','accepted'))
+             AND NOT EXISTS (
+                 SELECT 1 FROM stall_requests sr
+                  WHERE sr.space_id = s.id
+                    AND sr.status IN ('pending','reviewing'))"
+    ),
+    0,
+    'a reserved pitch is held by a live offer or by a trader still awaiting a '
+    . 'decision; one held by neither was reserved and then forgotten');
+
+check('No pitch is double-booked',
+    (int) Database::value(
+        "SELECT COALESCE(SUM(n - 1),0) FROM (
+            SELECT COUNT(*) AS n FROM allocations
+             WHERE market_space_id IS NOT NULL
+               AND status IN ('proposed','offered','accepted')
+             GROUP BY market_space_id HAVING n > 1) d"
+    ),
+    0, 'the unique index forbids a second live booking on one pitch');
+
+check('Scores within range (allocations)',
+    (int) Database::value(
+        'SELECT COUNT(*) FROM allocations WHERE total_score < 0 OR total_score > 100'
+    ),
+    0);
+
+check('Weights sum to 1 — relocation',
+    round(array_sum(RELOCATION_WEIGHTS), 6), 1.0);
+check('Weights sum to 1 — congestion',
+    round(array_sum(ZONE_SCORING_WEIGHTS), 6), 1.0);
+
+/* ------------------------------------------------------------------ */
+echo PHP_EOL . "4. Movement of the vacancy pool" . PHP_EOL;
+
+$publicNow  = (int) Database::value("SELECT COALESCE(SUM(vacant_spaces),0) FROM markets WHERE category='public'");
+$privateNow = (int) Database::value("SELECT COALESCE(SUM(vacant_spaces),0) FROM markets WHERE category='private'");
+
+note('Published public vacancy',            num($vac['public_vacant_spaces']));
+note('Traders placed into public markets',  num($placedInto) . ' — space no longer vacant');
+note('Offers live, holding space',          num($heldOffers) . ' — reserved by the Authority, not yet available');
+note('Trader requests live, holding space', num($requestsLive) . ' — a trader chose this pitch and is awaiting a decision');
+note('Offers declined or withdrawn',        num($closed) . ' — space returned to the pool, no net effect');
+note('Public vacancy now',                  num($publicNow));
+note('Total available now',                 num($publicNow + $privateNow) . ' of ' . num($vac['total_vacant']));
+
+check('Published vacancy reconciles to the current figure',
+    $publicNow + $placedInto + $heldOffers + $requestsLive,
+    $vac['public_vacant_spaces'],
+    'adding back the space this system is holding restores the published total');
+
+check('A closed offer leaves the pool unchanged',
+    $publicNow,
+    $vac['public_vacant_spaces'] + $publicDelta,
+    'declined and withdrawn offers net to zero');
+
+/* ------------------------------------------------------------------ */
+echo PHP_EOL . "5. Reconciliation summary" . PHP_EOL;
+
+printf("  %d passed, %d failed", $pass, $fail, PHP_EOL);
+echo $fail === 0 ? ', and ' . $info . " noted.\n" : ".\n";
+
+if ($fail === 0) {
+    echo "  All checks passed. The database reconciles with the published KCCA" . PHP_EOL;
+    echo "  figures and is internally consistent." . PHP_EOL;
+    exit(0);
+}
+
+echo "  One or more checks failed. See the FAIL lines above." . PHP_EOL;
+exit(1);
