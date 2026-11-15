@@ -339,7 +339,7 @@ require __DIR__ . '/../layouts/header.php';
 
 document.getElementById('notice-form')?.addEventListener('submit', function (ev) {
   ev.preventDefault();
-  KCCA.post('notice_action.php', new FormData(ev.target)).then(function (res) {
+  KCCA.post(KCCA.api('api/notice_action.php'), new FormData(ev.target)).then(function (res) {
     KCCA.flash(res.message || res.error || '', res.ok ? 'ok' : 'bad');
     if (res.ok) setTimeout(function () { location.href = 'notices.php'; }, 800);
   });
@@ -347,7 +347,7 @@ document.getElementById('notice-form')?.addEventListener('submit', function (ev)
 
 document.querySelectorAll('[data-notice-action]').forEach(function (btn) {
   btn.addEventListener('click', function () {
-    var payload = { action: btn.dataset.noticeAction, notice_id: btn.dataset.id };
+    var payload = { action: btn.dataset.noticeAction, notice_id: btn.dataset.id, csrf: (document.querySelector('meta[name="kcca-csrf"]') || {}).content || '' };
     if (btn.dataset.noticeAction === 'publish') {
       /* The note belongs to the card the button is in, not to the page — a
          page can list several notices, and publishing one must not send
@@ -356,7 +356,7 @@ document.querySelectorAll('[data-notice-action]').forEach(function (btn) {
       if (note) payload.note = note.value;
     }
     btn.disabled = true;
-    KCCA.post('notice_action.php', payload).then(function (res) {
+    KCCA.post(KCCA.api('api/notice_action.php'), payload).then(function (res) {
       KCCA.flash(res.message || res.error || '', res.ok ? 'ok' : 'bad');
       if (res.ok) { setTimeout(function () { location.reload(); }, 800); }
       else { btn.disabled = false; }
