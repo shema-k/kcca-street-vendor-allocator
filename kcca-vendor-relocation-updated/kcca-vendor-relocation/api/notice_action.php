@@ -23,10 +23,17 @@ try {
     switch ($action) {
 
         case 'send':
-            /* Sending is the Authority's alone. A chairman has no audience to
-               send to — they publish what the Authority has already written. */
-            if (!Auth::can('approve')) {
+            /* An officer may send to any audience. A chairman may send only to
+               their own market's traders, so the notice reaches exactly the
+               vendors they administer. */
+            $isChairmanSend = $isChairman
+                && (string) ($_POST['audience'] ?? '') === 'market'
+                && (int) ($_POST['market_id'] ?? 0) === (int) ($mine['market_id'] ?? 0);
+            if (!Auth::can('approve') && !$isChairmanSend) {
                 jsonOut(['ok' => false, 'error' => 'Only an officer may issue a notice.'], 403);
+            }
+            if ($isChairmanSend) {
+                $_POST['market_id'] = (int) $mine['market_id'];
             }
             $result = Notices::send([
                 'subject'        => (string) ($_POST['subject'] ?? ''),

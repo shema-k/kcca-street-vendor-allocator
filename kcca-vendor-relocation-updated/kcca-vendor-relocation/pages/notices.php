@@ -91,6 +91,35 @@ require __DIR__ . '/../layouts/header.php';
     </span>
   </div>
 
+  <section class="card">
+    <div class="card-head"><h2>Publish a notice to your traders</h2></div>
+    <div class="card-body">
+      <form id="notice-form">
+        <input type="hidden" name="action" value="send">
+        <input type="hidden" name="csrf" value="<?= e(Auth::csrfToken()) ?>">
+        <input type="hidden" name="audience" value="market">
+        <input type="hidden" name="market_id" value="<?= (int) $mine['market_id'] ?>">
+        <div class="field">
+          <label for="cn-subject">Subject</label>
+          <input type="text" name="subject" id="cn-subject" required maxlength="200">
+        </div>
+        <div class="field">
+          <label for="cn-category">Subject of</label>
+          <select name="category" id="cn-category">
+            <?php foreach (Notices::CATEGORIES as $k => $label): ?>
+              <option value="<?= e($k) ?>"><?= e($label) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="field">
+          <label for="cn-body">The notice</label>
+          <textarea name="body" id="cn-body" rows="5" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Publish to my traders</button>
+      </form>
+    </div>
+  </section>
+
   <?php if ($shown): ?>
     <?php
     /* The partial reads $notice. Naming it here is what makes the card render;
