@@ -118,10 +118,10 @@ function navigation(): array
             ['id' => 'relocation',      'file' => 'pages/relocation.php',      'label' => 'Matching',       'icon' => 'list',     'audience' => ['administrator', 'executive', 'mayor', 'planner']],
             /* The planner places a whole batch of traders at once, so no pitch is
                promised twice. Same audience as Matching: the roles that allocate. */
-            ['id' => 'ai-planner',      'file' => 'pages/ai_planner.php',      'label' => 'AI Planner',     'icon' => 'layers',   'audience' => ['administrator', 'executive', 'mayor', 'planner']],
-            /* Moves whole trading communities in dated waves. Same audience as the AI Planner. */
+            ['id' => 'ai-planner',      'file' => 'pages/ai_planner.php',      'label' => 'Planner',        'icon' => 'layers',   'audience' => ['administrator', 'executive', 'mayor', 'planner']],
+            /* Moves whole trading communities in dated waves. Same audience as the Planner. */
             ['id' => 'waves',           'file' => 'pages/waves.php',           'label' => 'Waves',          'icon' => 'clock',    'audience' => ['administrator', 'executive', 'mayor', 'planner']],
-            ['id' => 'recommendations', 'file' => 'pages/recommendations.php', 'label' => 'AI Forecast',    'icon' => 'chart',    'audience' => ['administrator', 'executive', 'mayor', 'planner']],
+            ['id' => 'recommendations', 'file' => 'pages/recommendations.php', 'label' => 'Forecast',       'icon' => 'chart',    'audience' => ['administrator', 'executive', 'mayor', 'planner']],
             ['id' => 'allocations',     'file' => 'pages/allocations.php',      'label' => 'Allocations',    'icon' => 'swap',     'audience' => ['administrator', 'executive', 'mayor', 'planner']],
         ]],
         ['group' => 'Operations', 'items' => [

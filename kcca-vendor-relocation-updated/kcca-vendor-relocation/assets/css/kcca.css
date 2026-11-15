@@ -17,11 +17,11 @@
      kcca.go.ug sets its primary red as #DC351D, its topbar icons as
      #f7c401, its link hover as #C48709 and its submit buttons as #ed1c24;
      the seal green is #0A6339. Anything else here is a shade of those. */
-  --kcca-red:        #DC351D;   /* primary, and the Authority's own */
-  --kcca-red-dark:   #A82614;   /* pressed states */
-  --kcca-red-bright: #E74339;   /* the lighter red kcca.go.ug uses on hover */
-  --kcca-red-deep:   #ca0303;   /* section headings on kcca.go.ug */
-  --kcca-red-soft:   #FDECEA;
+  --kcca-red:        #1F3864;   /* primary professional navy */
+  --kcca-red-dark:   #162A4D;   /* pressed states */
+  --kcca-red-bright: #2E5496;   /* hover */
+  --kcca-red-deep:   #0F1F3D;   /* section headings */
+  --kcca-red-soft:   #EAF0F8;
   --kcca-green:      #0A6339;   /* the seal */
   --kcca-green-soft: #E7F3EC;
   --kcca-gold:       #f7c401;   /* topbar icons on kcca.go.ug */
