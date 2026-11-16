@@ -86,7 +86,7 @@
     if (!d) return;
     d.hidden = false;
     document.body.style.overflow = 'hidden';
-    var btn = document.querySelector('[data-rail-toggle]');
+    var btn = document.querySelector('[data-roledash-toggle]');
     if (btn) btn.setAttribute('aria-expanded', 'true');
 
     if (roledashLoaded) return;
@@ -146,7 +146,7 @@
     var d = document.getElementById('roledash');
     if (d) d.hidden = true;
     document.body.style.overflow = '';
-    var btn = document.querySelector('[data-rail-toggle]');
+    var btn = document.querySelector('[data-roledash-toggle]');
     if (btn) btn.setAttribute('aria-expanded', 'false');
   };
 
@@ -156,7 +156,7 @@
   }
 
   function initRoleDash() {
-    var toggle = document.querySelector('[data-rail-toggle]');
+    var toggle = document.querySelector('[data-roledash-toggle]');
     if (toggle) {
       toggle.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -174,7 +174,14 @@
         var d = document.getElementById('roledash');
         if (d && !d.hidden) KCCA.closeRoleDash();
         var acct = document.getElementById('acct');
-        if (acct && acct.classList.contains('open')) acct.classList.remove('open');
+        if (acct && acct.classList.contains('open')) {
+          acct.classList.remove('open');
+          var accountToggle = acct.querySelector('.acct-toggle');
+          if (accountToggle) {
+            accountToggle.setAttribute('aria-expanded', 'false');
+            accountToggle.focus();
+          }
+        }
       }
     });
   }
@@ -185,15 +192,45 @@
   function initRail() {
     var rail = document.querySelector('.rail');
     if (!rail) return;
-
-    /* Closes when a link is chosen on a narrow screen, where the rail
-       covers the content. On a wide screen it stays open, which is what
-       the layout expects. */
-    rail.addEventListener('click', function (e) {
-      if (window.innerWidth <= 1024 && e.target.closest('a')) {
-        rail.classList.remove('open');
+    var toggle = document.querySelector('[data-rail-toggle]');
+    var backdrop = document.querySelector('[data-nav-dismiss]');
+    var narrow = window.matchMedia('(max-width: 1024px)');
+    function sync() {
+      var open = narrow.matches ? rail.classList.contains('open') : !document.body.classList.contains('nav-collapsed');
+      if (toggle) toggle.setAttribute('aria-expanded', String(open));
+      rail.inert = !open;
+      if (backdrop) backdrop.hidden = !(narrow.matches && open);
+    }
+    function closeDrawer() {
+      rail.classList.remove('open');
+      sync();
+    }
+    if (toggle) toggle.addEventListener('click', function () {
+      if (narrow.matches) rail.classList.toggle('open');
+      else document.body.classList.toggle('nav-collapsed');
+      sync();
+    });
+    if (backdrop) backdrop.addEventListener('click', closeDrawer);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && narrow.matches && rail.classList.contains('open')) {
+        closeDrawer();
+        if (toggle) toggle.focus();
       }
     });
+    narrow.addEventListener('change', closeDrawer);
+    rail.addEventListener('click', function (e) {
+      if (narrow.matches && e.target.closest('a')) closeDrawer();
+    });
+    rail.querySelectorAll('.nav-group-toggle').forEach(function (button) {
+      var group = button.closest('.rail-group');
+      function setExpanded(expanded) {
+        button.setAttribute('aria-expanded', String(expanded));
+        group.querySelectorAll('a[data-nav]').forEach(function (link) { link.hidden = !expanded; });
+      }
+      setExpanded(!!group.querySelector('[aria-current="page"]'));
+      button.addEventListener('click', function () { setExpanded(button.getAttribute('aria-expanded') !== 'true'); });
+    });
+    sync();
   }
 
   /* ---------------------------------------------------------------- */
@@ -212,13 +249,24 @@
     });
 
     document.addEventListener('click', function (e) {
-      if (!wrap.contains(e.target)) wrap.classList.remove('open');
+      if (!wrap.contains(e.target)) {
+        wrap.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+      }
     });
   }
 
-  KCCA.closeModal = function () {
-    var b = document.querySelector('.modal-back');
-    if (b) { b.remove(); document.body.style.overflow = ''; }
+  KCCA.closeModal = function (keepRequest) {
+    if (!keepRequest) modalRequest++;
+    var b = document.querySelector('body > .modal-back:not([data-ask])');
+    if (!b) return;
+    b.remove();
+    document.body.style.overflow = modalOverflow;
+    document.body.classList.remove('modal-open');
+    modalBackground.forEach(function (item) { item.element.inert = item.inert; });
+    modalBackground = [];
+    if (modalFocus && modalFocus.isConnected) modalFocus.focus();
+    modalFocus = null;
   };
 
   /* ---------------------------------------------------------------- */
@@ -344,10 +392,63 @@
     return escapeHtml(t).replace(/"/g, '&quot;');
   }
 
+  var modalFocus = null;
+  var modalOverflow = '';
+  var modalBackground = [];
+  var modalRequest = 0;
+
+  function setModalContent(host, html) {
+    var fragment = document.createElement('template');
+    fragment.innerHTML = html;
+    var dialog = fragment.content.querySelector('.modal');
+    if (!dialog || /<!doctype|<html[\s>]/i.test(html)) {
+      throw new Error('The form could not be loaded. Reload the page and try again.');
+    }
+    // Endpoints return their own backdrop. Retain just the dialog so fixed
+    // overlays and scroll containers can never be nested inside each other.
+    host.replaceChildren(dialog);
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-modal', 'true');
+    dialog.setAttribute('tabindex', '-1');
+    var heading = dialog.querySelector('.modal-head h3, .modal-head h2');
+    if (heading) {
+      heading.id = 'kcca-modal-title';
+      dialog.setAttribute('aria-labelledby', heading.id);
+    } else {
+      dialog.setAttribute('aria-label', 'Form dialog');
+    }
+    var field = dialog.querySelector('[aria-invalid="true"], .invalid') || dialog.querySelector('.modal-body input:not([type="hidden"]):not([disabled]), .modal-body select:not([disabled]), .modal-body textarea:not([disabled])') || dialog.querySelector('button');
+    (field || dialog).focus();
+  }
+
+  function mountModal(html) {
+    KCCA.closeModal(true);
+    var back = document.createElement('div');
+    back.className = 'modal-back';
+    var trigger = document.activeElement;
+    // Validate the fragment before locking the surrounding page.
+    setModalContent(back, html);
+    modalFocus = trigger;
+    modalOverflow = document.body.style.overflow;
+    Array.prototype.forEach.call(document.body.children, function (element) {
+      if (/^(SCRIPT|STYLE|LINK)$/.test(element.tagName)) return;
+      modalBackground.push({ element: element, inert: element.inert });
+      element.inert = true;
+    });
+    document.body.appendChild(back);
+    document.body.classList.add('modal-open');
+    document.body.style.overflow = 'hidden';
+    var dialog = back.querySelector('.modal');
+    var field = dialog.querySelector('.modal-body input:not([type="hidden"]):not([disabled]), .modal-body select:not([disabled]), .modal-body textarea:not([disabled])') || dialog.querySelector('button');
+    (field || dialog).focus();
+    return back;
+  }
+
   function initModals() {
     document.addEventListener('click', function (e) {
       var open = e.target.closest('[data-modal]');
       if (open) {
+        e.preventDefault();
         var url = open.getAttribute('data-modal');
         var target = document.getElementById(open.getAttribute('data-modal-target') || '');
         if (target) {
@@ -368,13 +469,25 @@
     });
 
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') KCCA.closeModal();
+      var host = document.querySelector('body > .modal-back:not([data-ask])');
+      if (!host) return;
+      if (e.key === 'Escape') { e.preventDefault(); KCCA.closeModal(); }
+      if (e.key === 'Tab') {
+        var controls = Array.prototype.filter.call(host.querySelectorAll('button, a[href], input:not([type="hidden"]), select, textarea, [tabindex="0"]'), function (el) {
+          return !el.disabled && !el.hidden && el.getClientRects().length;
+        });
+        var first = controls[0], last = controls[controls.length - 1];
+        if (!first) { e.preventDefault(); host.querySelector('.modal').focus(); }
+        else if (e.shiftKey && (document.activeElement === first || !host.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && (document.activeElement === last || !host.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
+      }
     });
   }
 
   KCCA.modalFrom = function (url, opts) {
     opts = opts || {};
-    fetch(url, { headers: { 'X-Requested-With': 'fetch' } })
+    var request = ++modalRequest;
+    return fetch(url, { headers: { 'X-Requested-With': 'fetch' } })
       .then(function (r) {
         if (!r.ok) {
           /* Say why, in the server's own words, instead of a status number. */
@@ -385,21 +498,16 @@
         return r.text();
       })
       .then(function (html) {
-        var back = document.createElement('div');
-        back.className = 'modal-back';
-        back.innerHTML = html;
-        document.body.appendChild(back);
-        document.body.style.overflow = 'hidden';
+        if (request !== modalRequest) return;
+        var back = mountModal(html);
         if (opts.onReady) opts.onReady(back);
       })
       .catch(function (err) {
-        var back = document.createElement('div');
-        back.className = 'modal-back';
-        back.innerHTML = '<div class="modal"><div class="modal-body">' +
+        if (request !== modalRequest) return;
+        mountModal('<div class="modal"><div class="modal-body">' +
           '<div class="alert alert-bad">' + KCCA.icon('alert') + ' ' + escapeHtml(err.message) + '</div>' +
           '<div class="row mt-2"><button type="button" class="btn btn-ghost" data-modal-close>Close</button></div>' +
-          '</div></div>';
-        document.body.appendChild(back);
+          '</div></div>');
       });
   };
 
@@ -601,7 +709,7 @@
           /* The endpoint sent the form back with its messages. */
           var host = form.closest('.modal-back');
           if (host && res.html && res.html.indexOf('modal') !== -1) {
-            host.innerHTML = res.html;
+            setModalContent(host, res.html);
             var bad = host.querySelector('.alert-bad, .field-error, .err');
             if (bad && bad.scrollIntoView) bad.scrollIntoView({ block: 'center', behavior: 'smooth' });
             return;

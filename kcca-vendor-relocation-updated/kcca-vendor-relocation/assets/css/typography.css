@@ -1,0 +1,81 @@
+/* One enterprise UI type scale. Local Inter fonts are declared in backoffice.css. */
+:root {
+  --text-caption: .75rem;
+  --text-small: .8125rem;
+  --text-body: .875rem;
+  --text-section: 1.125rem;
+  --text-title: 1.75rem;
+  --text-metric: 1.875rem;
+}
+html { font-size: 100%; }
+html body {
+  font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: var(--text-body); font-weight: 400; line-height: 1.6;
+  letter-spacing: 0; -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv11", "tnum"; font-optical-sizing: auto;
+}
+html :is(button,input,select,textarea) { font-family: inherit; }
+html :is(h1,h2,h3,h4,h5,h6) { font-family: inherit; font-weight: 600; text-wrap: pretty; }
+html :is(h1,.page-head h1) { font-size: var(--text-title); line-height: 1.25; letter-spacing: -.025em; }
+html h2 { font-size: var(--text-section); line-height: 1.4; letter-spacing: -.015em; }
+html h3 { font-size: 1rem; line-height: 1.4; letter-spacing: -.01em; }
+html :is(h4,h5,h6) { font-size: var(--text-body); line-height: 1.5; letter-spacing: 0; }
+html :is(strong,b) { font-weight: 600; }
+html :is(p,li,dd) { line-height: 1.6; }
+html .page-head p { font-size: var(--text-body); line-height: 1.6; }
+html :is(.breadcrumb,.small,.xsmall,small,.hint,.field .hint,.card-head .desc,.stat .meta,.login-footer) { font-size: var(--text-caption); line-height: 1.5; }
+html :is(.page-head .eyebrow,.workspace-label,.account-section-label) { font-size: var(--text-caption); font-weight: 500; letter-spacing: .045em; line-height: 1.5; }
+html .page-head .eyebrow { margin-bottom: 8px; }
+html .page-head h1 { margin-bottom: 4px; }
+html .page-head { margin-bottom: 24px; }
+html .card-head :is(h2,h3) { font-size: 1rem; font-weight: 600; line-height: 1.5; letter-spacing: -.01em; }
+html .workspace-banner h2 { font-size: var(--text-section); line-height: 1.4; }
+html .workspace-banner p { font-size: var(--text-body); line-height: 1.6; }
+html .stat .label { font-size: var(--text-small); line-height: 1.5; font-weight: 500; }
+html .stat .value { font-size: var(--text-metric); line-height: 1.2; font-weight: 600; letter-spacing: -.025em; font-variant-numeric: tabular-nums; margin: 10px 0 8px; }
+html .stat .value .unit { font-size: var(--text-body); font-weight: 500; letter-spacing: 0; }
+html .stat .meta { font-size: var(--text-caption); line-height: 1.5; }
+html table.data { font-size: var(--text-body); }
+html table.data thead th { font-size: var(--text-caption); line-height: 1.5; font-weight: 600; letter-spacing: .035em; }
+html table.data tbody td { font-size: var(--text-body); line-height: 1.55; padding-top: 13px; padding-bottom: 13px; }
+html table.data .xsmall { font-size: var(--text-caption); line-height: 1.5; }
+html table.data :is(.mono,.num,.amount) { font-variant-numeric: tabular-nums; }
+html .field label, html .field > label { font-size: var(--text-small); line-height: 1.5; font-weight: 500; letter-spacing: 0; text-transform: none; margin-bottom: 6px; }
+html :is(input,select,textarea) { font-size: var(--text-body); line-height: 1.5; }
+html input::placeholder, html textarea::placeholder { color: var(--bo-muted); opacity: 1; font-weight: 400; }
+html .btn { font-size: var(--text-body); line-height: 1.4; font-weight: 500; min-height: 38px; }
+html .btn-sm { font-size: var(--text-small); min-height: 32px; }
+html .badge { font-size: var(--text-caption); line-height: 1.5; font-weight: 500; }
+html .rail a { font-size: var(--text-small); line-height: 1.5; font-weight: 400; }
+html .rail a.active { font-weight: 600; }
+html .nav-group-toggle { font-size: var(--text-caption); line-height: 1.5; font-weight: 500; letter-spacing: 0; text-transform: none; }
+html .rail .pill { font-size: .6875rem; line-height: 1.5; font-weight: 500; }
+html .topbar .brand .sys b { font-size: var(--text-small); line-height: 1.5; font-weight: 600; }
+html .topbar .brand .sys span { font-size: var(--text-caption); line-height: 1.4; }
+html .topbar .acct-toggle .who b { font-size: var(--text-small); line-height: 1.4; font-weight: 500; }
+html .topbar .acct-toggle .who span { font-size: var(--text-caption); line-height: 1.4; }
+html .topbar .acct-menu .acct-item { font-size: var(--text-small); line-height: 1.5; }
+html .topbar .account-preferences :is(.live-chip,.langpick > summary) { font-size: var(--text-small); line-height: 1.5; }
+html .feed-head b, html .feed-row { font-size: var(--text-small); line-height: 1.5; }
+html .modal-head h3 { font-size: var(--text-section); line-height: 1.4; font-weight: 600; letter-spacing: -.015em; }
+html .modal-body :is(h3,h4) { font-size: var(--text-body); line-height: 1.5; font-weight: 600; }
+html .login-card h2 { font-size: 1.5rem; line-height: 1.3; font-weight: 600; letter-spacing: -.02em; }
+html .login-card .sub { font-size: var(--text-body); line-height: 1.6; }
+html .role-card .role-name { font-size: var(--text-small); line-height: 1.5; font-weight: 600; }
+html .role-card :is(.role-sub,.role-lvl) { font-size: var(--text-caption); line-height: 1.5; }
+html .foot { font-size: var(--text-caption); line-height: 1.6; }
+html .foot h6 { font-size: var(--text-caption); font-weight: 600; line-height: 1.5; }
+html .foot address { font-size: var(--text-caption); line-height: 1.7; }
+html svg.chart text { font-family: Inter, "Segoe UI", system-ui, sans-serif; }
+html[data-density="compact"] .stat .value { font-size: 1.625rem; }
+html[data-density="compact"] table.data tbody td { font-size: var(--text-small); line-height: 1.5; }
+html[data-density="compact"] table.data thead th { font-size: var(--text-caption); }
+html[data-density="compact"] .page-head h1 { font-size: 1.5rem; }
+@media (max-width: 620px) {
+  html .page-head h1 { font-size: 1.5rem; }
+  html .stat .value { font-size: 1.625rem; }
+  /* Readable mobile entry without automatic focus zoom. */
+  html :is(input,select,textarea) { font-size: 1rem; }
+  html .modal-head h3 { font-size: 1rem; }
+  html .page-head { margin-bottom: 20px; }
+}

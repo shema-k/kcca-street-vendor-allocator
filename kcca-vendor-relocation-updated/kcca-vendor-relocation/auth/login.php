@@ -68,13 +68,14 @@ foreach (Auth::roles() as $role) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#DC351D">
+<meta name="theme-color" content="#0a6339">
 <title><?= e(t('login.title')) ?> · <?= e(APP_SHORT) ?></title>
 <link rel="icon" type="image/png" href="../assets/brand/kcca-favicon.png">
 <!-- The text layer cannot be laid out without the face, so it is fetched
      in parallel with the stylesheets rather than discovered after they parse. -->
 <link rel="preload" as="font" type="font/woff2" crossorigin
-      href="../assets/fonts/open-sans-latin-var.woff2">
+      href="../assets/fonts/inter-400.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../assets/fonts/inter-600.woff2">
 
 <link rel="stylesheet" href="../assets/css/fonts.css?v=<?= e(APP_VERSION) ?>">
 <link rel="stylesheet" href="../assets/css/kcca.css">
@@ -82,6 +83,8 @@ foreach (Auth::roles() as $role) {
 <link rel="stylesheet" href="../assets/css/civic.css?v=<?= e(APP_VERSION) ?>">
 <link rel="stylesheet" href="../assets/css/alive.css?v=<?= e(APP_VERSION) ?>">
 <link rel="stylesheet" href="../assets/css/dark.css?v=<?= e(APP_VERSION) ?>">
+<link rel="stylesheet" href="../assets/css/backoffice.css?v=<?= filemtime(__DIR__ . '/../assets/css/backoffice.css') ?>">
+<link rel="stylesheet" href="../assets/css/typography.css?v=<?= filemtime(__DIR__ . '/../assets/css/typography.css') ?>">
 <script>
 /* Applied before first paint so a dark-mode reader never sees a white
    flash while the stylesheets settle. */
@@ -97,8 +100,8 @@ if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)
 
       <button type="button" class="login-theme" data-theme-toggle aria-pressed="false"
               aria-label="Switch to dark mode" title="Switch to dark mode">
-        <?= KCCA_icon('moon', 15) ?><span class="moon-text">Dark</span>
-        <?= KCCA_icon('sun', 15) ?><span class="sun-text">Light</span>
+        <span class="theme-icon theme-moon" aria-hidden="true"><?= KCCA_icon('moon', 18) ?></span>
+        <span class="theme-icon theme-sun" aria-hidden="true"><?= KCCA_icon('sun', 18) ?></span>
       </button>
 
       <img class="login-logo" src="../assets/brand/kcca-logo.png" alt="Kampala Capital City Authority">
@@ -162,7 +165,7 @@ if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)
   </main>
 </div>
 
-<script src="../assets/js/activities.js?v=<?= e(APP_VERSION) ?>"></script>
+<script src="../assets/js/activities.js?v=<?= filemtime(__DIR__ . '/../assets/js/activities.js') ?>"></script>
 <script>
 /* The role cards sit outside the form, so the form is found by its field
    rather than by climbing from the button. */

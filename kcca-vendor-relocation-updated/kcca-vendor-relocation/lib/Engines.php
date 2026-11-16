@@ -304,8 +304,8 @@ final class RelocationEngine
            collapses, because past that distance the relocation is
            effectively a new business.                                 */
         $dist = self::haversineKm(
-            (float) ($vendor['current_lat'] ?? $vendor['lat']),
-            (float) ($vendor['current_lng'] ?? $vendor['lng']),
+            self::vendorLat($vendor),
+            self::vendorLng($vendor),
             (float) $m['lat'], (float) $m['lng']
         );
         $proximity = $dist <= 0.4 ? 100.0

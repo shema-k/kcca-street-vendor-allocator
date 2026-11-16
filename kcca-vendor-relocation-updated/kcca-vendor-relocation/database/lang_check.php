@@ -96,7 +96,7 @@ foreach ($codes as $code) {
     /* A syntax error is caught by the linter, not by require(). */
     $lint = [];
     $rc   = 0;
-    exec('php -l ' . escapeshellarg($file) . ' 2>&1', $lint, $rc);
+    exec(escapeshellarg(PHP_BINARY) . ' -l ' . escapeshellarg($file) . ' 2>&1', $lint, $rc);
     ok("{$code}: parses", $rc === 0, $rc === 0 ? '' : trim($lint[0] ?? ''));
 
     $strings = require $file;

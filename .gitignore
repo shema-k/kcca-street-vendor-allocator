@@ -1,0 +1,19 @@
+# Downloaded release archives and local diagnostic data
+*.zip
+.ui-review/
+
+# Local configuration and runtime files
+.env
+.env.*
+!.env.example
+config.local.php
+*.log
+node_modules/
+.cache/
+.phpunit.cache/
+tmp/
+
+# Operating-system metadata
+.DS_Store
+Thumbs.db
+desktop.ini

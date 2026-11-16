@@ -152,7 +152,14 @@ require __DIR__ . '/../layouts/header.php';
 </div>
 
 <!-- ===================== THE WELCOME (every account) ==================== -->
-<?php require __DIR__ . '/../partials/vendor_hero.php'; ?>
+<?php if (!$isStaff): ?>
+  <?php require __DIR__ . '/../partials/vendor_hero.php'; ?>
+<?php else: ?>
+  <div class="workspace-banner">
+    <div><span class="workspace-label">Programme overview</span><h2>Welcome back, <?= e(explode(' ', trim((string) $me['full_name']))[0]) ?></h2><p>Track vendor relocation, review available space, and keep the programme moving.</p></div>
+    <a class="btn btn-primary" href="<?= e(Auth::screenAllows('vendors') ? 'vendors.php' : 'reports.php') ?>"><?= KCCA_icon('list', 15) ?> <?= Auth::screenAllows('vendors') ? 'Open vendor register' : 'View reports' ?></a>
+  </div>
+<?php endif; ?>
 
 <!-- ===================== HEADLINE FIGURES ==================== -->
 <div class="grid g5 mb-2">
