@@ -101,14 +101,18 @@ switch ($action) {
         }
 
         /* Re-score at the moment of offering so the record is self-justifying. */
+        if (($vendor['current_lat'] ?? $vendor['lat'] ?? null) === null
+            || ($vendor['current_lng'] ?? $vendor['lng'] ?? null) === null) {
+            badRequest('Record the vendor\'s current trading site before offering space so the distance and score can be calculated.', 422);
+        }
         $criteria = RelocationEngine::criteriaFor($vendor, $market);
         $total = 0.0; $w = 0.0;
         foreach ($criteria as $c) { $total += $c['raw'] * $c['weight']; $w += $c['weight']; }
         $total = $w > 0 ? $total / $w : 0.0;
 
         $distance = round(RelocationEngine::haversineKm(
-            (float) ($vendor['current_lat'] ?? $vendor['lat']),
-            (float) ($vendor['current_lng'] ?? $vendor['lng']),
+            RelocationEngine::vendorLat($vendor),
+            RelocationEngine::vendorLng($vendor),
             (float) $market['lat'], (float) $market['lng']
         ), 2);
 
@@ -282,8 +286,8 @@ switch ($action) {
         if (!$a) {
             badRequest('That allocation does not exist.', 404);
         }
-        if (in_array($a['status'], ['withdrawn', 'expired'], true)) {
-            badRequest('Already ' . humanise($a['status']) . '.');
+        if (!in_array($a['status'], ['proposed', 'offered', 'accepted', 'occupied'], true)) {
+            badRequest('This allocation is ' . humanise($a['status']) . ' and no longer holds space.');
         }
 
         Database::transaction(static function () use ($id, $reason, $a): void {
@@ -296,9 +300,11 @@ switch ($action) {
                 Database::run("UPDATE market_spaces SET status = 'vacant' WHERE id = ?",
                     [(int) $a['market_space_id']]);
             }
-            Database::run("UPDATE markets SET vacant_spaces = vacant_spaces + 1 WHERE id = ?",
-                [(int) $a['market_id']]);
-            Database::run("UPDATE vendors SET status = 'notified' WHERE id = ? AND status = 'offered-space'",
+            $placed = in_array($a['status'], ['accepted', 'occupied'], true);
+            Database::run("UPDATE markets SET vacant_spaces = vacant_spaces + 1,
+                            registered_vendors = GREATEST(0, registered_vendors - ?) WHERE id = ?",
+                [$placed ? 1 : 0, (int) $a['market_id']]);
+            Database::run("UPDATE vendors SET status = 'notified' WHERE id = ? AND status IN ('offered-space', 'relocated')",
                 [(int) $a['vendor_id']]);
             clearVendorChairman((int) $a['vendor_id']);
         });

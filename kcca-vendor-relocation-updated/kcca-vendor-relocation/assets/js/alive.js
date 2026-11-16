@@ -117,21 +117,7 @@
     setTimeout(function () { if (s.parentNode) { s.parentNode.removeChild(s); } }, 650);
   });
 
-  /* ---- Soft page transition ----------------------------------------- */
-  document.addEventListener('click', function (ev) {
-    if (!motionOn() || ev.defaultPrevented || ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) { return; }
-    var a = ev.target.closest && ev.target.closest('a[href]');
-    if (!a || a.target === '_blank' || a.hasAttribute('download') || a.hasAttribute('data-no-fade')) { return; }
-    var href = a.getAttribute('href');
-    if (!href || href.charAt(0) === '#' || /^(javascript:|mailto:|tel:)/i.test(href)) { return; }
-    if (a.origin !== location.origin || /format=csv|\/api\//.test(href)) { return; }
-    ev.preventDefault();
-    root.classList.add('leaving');
-    setTimeout(function () { location.href = a.href; }, 150);
-    /* If the browser does not leave (a download, a cancelled prompt), bring the page back. */
-    setTimeout(function () { root.classList.remove('leaving'); }, 3000);
-  });
-  window.addEventListener('pageshow', function () { root.classList.remove('leaving'); });
+  /* Page transitions are handled by page-loader.js without delaying links. */
 
   /* ---- Everything that needs the DOM -------------------------------- */
   function ready() {

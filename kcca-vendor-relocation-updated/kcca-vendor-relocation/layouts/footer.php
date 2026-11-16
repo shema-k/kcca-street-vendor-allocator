@@ -75,9 +75,9 @@ $a = $f['authority'];
 <?php /* kcca.js carries KCCA.api and the icons, activities.js the theme
         toggle; both are used by every page, so neither is declared. The
         rest are drawn by the pages that asked for them. */ ?>
-<script src="../assets/js/kcca.js"></script>
-<script src="../assets/js/activities.js"></script>
-<script src="../assets/js/alive.js?v=<?= e(APP_VERSION) ?>"></script>
+<script src="../assets/js/kcca.js?v=<?= filemtime(__DIR__ . '/../assets/js/kcca.js') ?>"></script>
+<script src="../assets/js/activities.js?v=<?= filemtime(__DIR__ . '/../assets/js/activities.js') ?>"></script>
+<script src="../assets/js/alive.js?v=<?= filemtime(__DIR__ . '/../assets/js/alive.js') ?>"></script>
 <?php if ($kept = flashTake()): ?>
 <script>document.addEventListener('DOMContentLoaded', function () { if (window.KCCA && KCCA.flash) { KCCA.flash(<?= json_encode($kept['message'], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>, <?= json_encode($kept['tone']) ?>); } });</script>
 <?php endif; ?>

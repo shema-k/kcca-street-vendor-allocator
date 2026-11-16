@@ -35,13 +35,14 @@ $layoutPrefs = $meId > 0 ? Preferences::get($meId) : Preferences::DEFAULTS;
 <meta name="kcca-root" content="<?= e(APP_REL) ?>">
 <meta name="description" content="KCCA Vendor Relocation and Space Allocation System — trade order, gazetted market space and vendor relocation across Kampala Capital City.">
 <meta name="author" content="Kampala Capital City Authority">
-<meta name="theme-color" content="#DC351D">
+<meta name="theme-color" content="#0a6339">
 <title><?= e($pageTitle ?? 'Dashboard') ?> · <?= e(APP_SHORT) ?></title>
 <link rel="icon" type="image/png" href="../assets/brand/kcca-favicon.png">
 <!-- The text layer cannot be laid out without the face, so it is fetched
      in parallel with the stylesheets rather than discovered after they parse. -->
 <link rel="preload" as="font" type="font/woff2" crossorigin
-      href="../assets/fonts/open-sans-latin-var.woff2">
+      href="<?= e(APP_REL) ?>assets/fonts/inter-400.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="<?= e(APP_REL) ?>assets/fonts/inter-600.woff2">
 
 <link rel="stylesheet" href="<?= e(APP_REL) ?>assets/css/fonts.css?v=<?= e(APP_VERSION) ?>">
 <link rel="stylesheet" href="<?= e(APP_REL) ?>assets/css/kcca.css?v=<?= e(APP_VERSION) ?>">
@@ -50,6 +51,17 @@ $layoutPrefs = $meId > 0 ? Preferences::get($meId) : Preferences::DEFAULTS;
 <link rel="stylesheet" href="<?= e(APP_REL) ?>assets/css/alive.css?v=<?= e(APP_VERSION) ?>">
 <link rel="stylesheet" href="<?= e(APP_REL) ?>assets/css/dark.css?v=<?= e(APP_VERSION) ?>">
 <link rel="stylesheet" href="<?= e(APP_REL) ?>assets/css/professional.css?v=<?= e(APP_VERSION) ?>">
+<link rel="stylesheet" href="<?= e(APP_REL) ?>assets/css/backoffice.css?v=<?= filemtime(__DIR__ . '/../assets/css/backoffice.css') ?>">
+<link rel="stylesheet" href="<?= e(APP_REL) ?>assets/css/typography.css?v=<?= filemtime(__DIR__ . '/../assets/css/typography.css') ?>">
+<link rel="stylesheet" href="<?= e(APP_REL) ?>assets/css/page-loader.css?v=<?= filemtime(__DIR__ . '/../assets/css/page-loader.css') ?>">
+<script>
+/* No-JavaScript readers see the real page; a failed asset also fails open. */
+document.documentElement.classList.add('page-loading');
+window.kccaLoadingFallback = setTimeout(function () {
+  document.documentElement.classList.remove('page-loading');
+}, 8000);
+</script>
+<script defer src="<?= e(APP_REL) ?>assets/js/page-loader.js?v=<?= filemtime(__DIR__ . '/../assets/js/page-loader.js') ?>"></script>
 </head>
 <body>
 <script>
@@ -64,13 +76,14 @@ if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)
 
   <!-- ============================ TOP BAR ============================ -->
   <header class="topbar">
-    <button class="icon-link rail-toggle" data-rail-toggle aria-label="Toggle navigation menu" aria-expanded="false">
+    <button type="button" class="icon-link rail-toggle" data-rail-toggle aria-label="Toggle navigation menu" aria-controls="main-navigation" aria-expanded="true">
       <?= KCCA_icon('menu', 18) ?>
     </button>
 
     <div class="brand">
-      <img class="logo-on-light" src="../assets/brand/kcca-logo.png" alt="Kampala Capital City Authority logo">
-      <img class="logo-on-dark" src="../assets/brand/kcca-logo-light.png" alt="" aria-hidden="true">
+      <span class="brand-mark">
+        <img class="kcca-brand-logo" src="../assets/brand/kcca-logo.png" alt="Kampala Capital City Authority" width="252" height="58">
+      </span>
       <span class="sep" aria-hidden="true"></span>
       <span class="sys">
         <b>Vendor Relocation &amp; Space Allocation</b>
@@ -79,10 +92,6 @@ if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)
     </div>
 
     <span class="spacer"></span>
-
-    <a class="icon-link" href="../pages/portal.php" title="Open the public trader portal" aria-label="Public trader portal">
-      <?= KCCA_icon('user', 15) ?>
-    </a>
 
     <?php if (ChangeFeed::allowed()): ?>
     <div class="feed" data-feed data-uid="<?= (int) $meId ?>">
@@ -110,17 +119,11 @@ if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)
       </div>
     </div>
     <?php endif; ?>
-    <span class="live-chip" title="The system is live. Kampala time."><i></i><b data-live-clock>--:--:--</b> EAT</span>
-    <button type="button" class="icon-link" data-guide-toggle aria-pressed="false"
-            title="Show or hide guidance text" aria-label="Show or hide guidance text">?</button>
-
     <button type="button" class="theme-toggle" data-theme-toggle aria-pressed="false"
             aria-label="Switch to dark mode" title="Switch to dark mode">
-      <?= KCCA_icon('moon', 14) ?><span class="moon-text" aria-hidden="true">Dark</span>
-      <?= KCCA_icon('sun', 14) ?><span class="sun-text" aria-hidden="true">Light</span>
+      <span class="theme-icon theme-moon" aria-hidden="true"><?= KCCA_icon('moon', 18) ?></span>
+      <span class="theme-icon theme-sun" aria-hidden="true"><?= KCCA_icon('sun', 18) ?></span>
     </button>
-
-    <?php require_once __DIR__ . '/../partials/lang_switcher.php'; ?>
 
     <?php if (Auth::check()): ?>
       <?php
@@ -178,9 +181,24 @@ if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)
           <a class="acct-item" href="profile.php" role="menuitem">
             <?= KCCA_icon('user', 15) ?> My account
           </a>
+          <button type="button" class="acct-item" data-roledash-toggle aria-controls="roledash" aria-expanded="false" role="menuitem">
+            <?= KCCA_icon('gauge', 15) ?> My role dashboard
+          </button>
+          <a class="acct-item" href="portal.php" role="menuitem">
+            <?= KCCA_icon('store', 15) ?> Trader portal
+          </a>
           <a class="acct-item" href="audit.php?actor=<?= urlencode((string) ($me['full_name'] ?? '')) ?>" role="menuitem">
             <?= KCCA_icon('log', 15) ?> My audit trail
           </a>
+
+          <div class="account-preferences">
+            <span class="account-section-label">Preferences</span>
+            <button type="button" class="acct-item" data-guide-toggle aria-pressed="false">
+              <?= KCCA_icon('info', 15) ?> Page guidance
+            </button>
+            <button type="button" class="live-chip" title="Live updates"><i></i> Live updates</button>
+            <?php require_once __DIR__ . '/../partials/lang_switcher.php'; ?>
+          </div>
 
           <form method="post" action="../auth/logout.php" class="acct-form">
             <input type="hidden" name="csrf" value="<?= e(Auth::csrfToken()) ?>">
@@ -191,7 +209,7 @@ if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)
         </div>
       </div>
     <?php else: ?>
-      <a class="btn btn-ghost btn-sm" href="../auth/login.php" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)">Sign in</a>
+      <a class="btn btn-primary btn-sm" href="../auth/login.php">Sign in</a>
     <?php endif; ?>
   </header>
 
@@ -219,35 +237,9 @@ if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)
   <?php endif; ?>
 
   <!-- ============================ RAIL ============================= -->
-  <nav class="rail" aria-label="Main navigation">
-    <?php if (Auth::check()): ?>
-      <?php
-      /* The authority level is stated at the top of the rail because it is
-         the reason the rail looks the way it does: each role sees the
-         screens its span of control covers. Stating it once answers the
-         question before it is asked. */
-      $railRole   = Auth::remit()['label'];
-      $railRank   = Auth::rank();
-      $railScope  = Auth::remit()['scope'];
-      $railScopeText = match ($railScope) {
-          'system'      => 'Whole system',
-          'citywide'    => 'All five divisions',
-          'division'    => $layoutDivisionId > 0 ? (string) Database::value('SELECT name FROM divisions WHERE id = ?', [$layoutDivisionId]) . ' Division' : 'Own division',
-          'directorate' => Auth::user()['directorate']
-                            ? humanise((string) Auth::user()['directorate'])
-                            : ucfirst(Auth::role()),
-          'vendor'      => 'Trader',
-          default       => 'Read only',
-      };
-      ?>
-      <div class="rail-level">
-        <span class="lvl" title="Level <?= $railRank ?> of 7 in the order of authority"><?= $railRank ?></span>
-        <span class="meta">
-          <b><?= e($railRole) ?></b>
-          <span><?= e($railScopeText) ?></span>
-        </span>
-      </div>
-    <?php endif; ?>
+  <button type="button" class="nav-backdrop" data-nav-dismiss aria-label="Close navigation" hidden></button>
+  <nav class="rail" id="main-navigation" aria-label="Main navigation">
+
     <?php
     /* The rail is drawn from navigationFor(): the screens this officer's
        role needs, and nothing else. A separate permission check is not
@@ -259,7 +251,7 @@ if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)
       if (!$navVisible) { continue; }
     ?>
       <div class="rail-group">
-        <h4><?= e($navGroup['group']) ?></h4>
+        <h4><button type="button" class="nav-group-toggle" aria-expanded="true"><?= e($navGroup['group']) ?><?= KCCA_icon('chevron', 12) ?></button></h4>
         <?php foreach ($navVisible as $navItem):
             $navId    = $navItem['id'];
             $navHref  = $navItem['file'];
@@ -319,4 +311,5 @@ if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)
 
   <!-- ============================ MAIN ============================= -->
   <main class="main" id="main">
+    <?php require __DIR__ . '/../partials/page_skeleton.php'; ?>
     <div class="content">
