@@ -1,0 +1,10 @@
+# Docker files must keep LF endings even when the repository is checked out
+# on Windows; a CRLF shebang breaks the container entrypoint.
+Dockerfile               text eol=lf
+.dockerignore            text eol=lf
+.env.example             text eol=lf
+DOCKER.md                text eol=lf
+docker-compose*.yml      text eol=lf
+docker/*.sh              text eol=lf
+docker/*.ini             text eol=lf
+docker/*.conf            text eol=lf

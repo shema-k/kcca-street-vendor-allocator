@@ -1,0 +1,67 @@
+# KCCA VRSP — Docker Compose stack.
+#
+#   docker compose up -d --build      build and start everything
+#   docker compose logs -f app        follow the application log
+#   docker compose down               stop (data is kept in named volumes)
+#   docker compose down -v            stop and delete the database
+#
+# The app image is built from this directory. The database is MariaDB 11.4,
+# matching the MariaDB that db.sh bundles for local use.
+#
+name: kcca-vrsp
+
+services:
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${KCCA_DB_NAME:-kcca_vendor_relocation}
+      MARIADB_USER: ${KCCA_DB_USER:-kcca}
+      MARIADB_PASSWORD: ${KCCA_DB_PASS:-kcca_dev_2026}
+      MARIADB_ROOT_PASSWORD: ${KCCA_DB_ROOT_PASS:-kcca_root_2026}
+      TZ: Africa/Kampala
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - db_data:/var/lib/mysql
+    # Only needed if you want to reach the database from the host with
+    # DBeaver, TablePlus or the mysql client.
+    # ports:
+    #   - "127.0.0.1:${KCCA_DB_FORWARD_PORT:-3307}:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: kcca-vrsp:5.0.0
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      KCCA_DB_HOST: db
+      KCCA_DB_PORT: "3306"
+      KCCA_DB_SOCKET: ""
+      KCCA_DB_NAME: ${KCCA_DB_NAME:-kcca_vendor_relocation}
+      KCCA_DB_USER: ${KCCA_DB_USER:-kcca}
+      KCCA_DB_PASS: ${KCCA_DB_PASS:-kcca_dev_2026}
+      KCCA_AUTO_SEED: ${KCCA_AUTO_SEED:-1}
+      KCCA_DEBUG: ${KCCA_DEBUG:-0}
+      TZ: Africa/Kampala
+    ports:
+      - "${APP_PORT:-8080}:80"
+    volumes:
+      - backups:/tmp/kcca-vrsp-backups
+      - sessions:/var/lib/php/sessions
+
+volumes:
+  db_data:
+  backups:
+  sessions:

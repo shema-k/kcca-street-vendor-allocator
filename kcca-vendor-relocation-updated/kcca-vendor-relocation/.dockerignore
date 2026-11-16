@@ -1,0 +1,30 @@
+# Files kept out of the image build context.
+
+# Version control and local secrets
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+
+# Build tooling for the container itself
+docker-compose*.yml
+Dockerfile
+.dockerignore
+DOCKER.md
+
+# Local runtime and release artefacts
+*.zip
+*.log
+node_modules/
+.ui-review/
+.cache/
+tmp/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Original stock photographs. The interface only ever requests the
+# optimised copies at images/pexels-*.jpg|.webp, so the 20 MB originals stay
+# out of the image.
+images/source/

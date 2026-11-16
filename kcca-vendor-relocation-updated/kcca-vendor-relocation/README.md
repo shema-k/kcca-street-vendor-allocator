@@ -12,6 +12,11 @@ kcca-vendor-relocation/
 ├── install.sh              check the environment, create and seed, verify
 ├── db.sh                   start / stop / status for the bundled database
 ├── run.sh                  the one command: start the database and serve
+├── Dockerfile              Apache + PHP 8.4 image
+├── docker-compose.yml      app + MariaDB 11.4
+├── docker-compose.dev.yml  overlay that serves the working tree
+├── docker/                 php.ini, Apache hardening, entrypoint, healthcheck
+├── DOCKER.md               Docker guide
 ├── config/
 │   ├── config.php          database, weights, paths
 │   └── kcca_facts.php      every official KCCA fact, with its source
@@ -68,6 +73,19 @@ One command:
 ```bash
 ./run.sh
 ```
+
+## Run it with Docker
+
+If you would rather not install PHP and MariaDB on the machine:
+
+```bash
+docker compose up -d --build
+```
+
+That builds the app image, starts MariaDB, seeds the database on first run and
+serves on **http://localhost:8080**. `docker compose down` stops it and keeps
+the data; `docker compose down -v` deletes it. See [`DOCKER.md`](DOCKER.md) for
+volumes, backups, the development overlay, configuration and troubleshooting.
 
 ## Run it without a terminal
 

@@ -1,0 +1,13 @@
+# Development overlay: serve the working tree instead of the copied image.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+#
+# PHP edits are picked up on the next request (opcache revalidates every
+# 2 seconds). Rebuild the image only when docker/ or the Dockerfile changes.
+#
+services:
+  app:
+    volumes:
+      - .:/var/www/html
+    environment:
+      KCCA_DEBUG: "1"

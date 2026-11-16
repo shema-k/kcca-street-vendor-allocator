@@ -1,0 +1,170 @@
+name: Docker
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APP_PORT: "8080"
+
+jobs:
+  compose:
+    name: Build, seed and smoke-test the stack
+    # The application lives in a subdirectory of the repository.
+    defaults:
+      run:
+        working-directory: kcca-vendor-relocation-updated/kcca-vendor-relocation
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Versions
+        run: |
+          docker version
+          docker compose version
+
+      # The entrypoint waits for MariaDB itself, so there is no separate
+      # readiness step: docker/entrypoint.sh is as much under test as the
+      # application is.
+      - name: Build and start
+        run: docker compose up -d --build
+
+      - name: Wait for the app to report healthy
+        run: |
+          set -euo pipefail
+          cid="$(docker compose ps -q app)"
+          for _ in $(seq 1 90); do
+            status="$(docker inspect -f '{{.State.Health.Status}}' "$cid" 2>/dev/null || echo missing)"
+            echo "health: ${status}"
+            case "$status" in
+              healthy) exit 0 ;;
+              unhealthy) break ;;
+            esac
+            sleep 2
+          done
+          echo "::error::the app container did not become healthy"
+          docker compose ps
+          docker compose logs --no-color --tail=200 app db
+          exit 1
+
+      - name: First start seeds the database
+        run: |
+          set -euo pipefail
+          logs="$(docker compose logs --no-color app)"
+          printf '%s\n' "$logs"
+          printf '%s\n' "$logs" | grep -q "empty database — applying schema and seeding" \
+            || { echo "::error::the first start did not seed the database"; exit 1; }
+
+      - name: Reconciliation and language catalogues
+        run: |
+          set -euo pipefail
+          docker compose exec -T app php database/verify.php
+          docker compose exec -T app php database/lang_check.php
+
+      - name: HTTP surface
+        run: |
+          set -euo pipefail
+          base="http://127.0.0.1:${APP_PORT}"
+
+          expect() { # path expected-status label
+            local code
+            code="$(curl -s -o /dev/null --max-time 10 -w '%{http_code}' "${base}$1")"
+            printf '%-42s %s (expected %s)\n' "$1" "$code" "$2"
+            if [ "$code" != "$2" ]; then
+              echo "::error::$3 returned $code, expected $2"
+              exit 1
+            fi
+          }
+
+          # Answers without a session.
+          expect /pages/portal.php 200 "the portal"
+          expect /auth/login.php   200 "the sign-in page"
+          expect /                 302 "the root redirect"
+
+          # The seeder drops every table, and the schema dump exposes the
+          # layout. Neither may be reachable over HTTP.
+          expect /database/seed.php    403 "the seeder"
+          expect /database/schema.sql  403 "the schema dump"
+          expect /database/verify.php  403 "the verifier"
+
+          # Container plumbing and release files.
+          expect /docker/entrypoint.sh 403 "the entrypoint"
+          expect /README.md            403 "the README"
+          expect /.env.example         403 "a dotfile"
+
+          # Files excluded by .dockerignore are simply absent.
+          expect /docker-compose.yml     404 "the compose file"
+          expect /docker-compose.dev.yml 404 "the dev overlay"
+          expect /Dockerfile             404 "the Dockerfile"
+
+          # The interface still needs its images.
+          expect /images/pexels-ana-kenk-2159501753-36470055.jpg 200 "a stock image"
+
+      - name: Security headers
+        run: |
+          set -euo pipefail
+          headers="$(curl -sS -D - -o /dev/null "http://127.0.0.1:${APP_PORT}/pages/portal.php")"
+          for header in 'x-content-type-options: nosniff' 'x-frame-options: SAMEORIGIN' 'referrer-policy:'; do
+            printf '%s\n' "$headers" | grep -qi "^${header}" \
+              || { echo "::error::missing header ${header}"; exit 1; }
+          done
+
+      - name: Image contains no secrets or dead weight
+        run: |
+          set -euo pipefail
+          docker compose exec -T app test ! -e /var/www/html/.env
+          docker compose exec -T app test ! -e /var/www/html/docker-compose.yml
+          docker compose exec -T app test ! -e /var/www/html/Dockerfile
+          docker compose exec -T app test ! -d /var/www/html/images/source
+          docker compose exec -T app php -m | grep -qix 'pdo_mysql'
+
+      # A second start that reseeded would silently reset the Authority's
+      # records in production.
+      - name: Restart does not reseed
+        run: |
+          set -euo pipefail
+          before="$(docker compose logs --no-color app | wc -l)"
+
+          docker compose restart app
+
+          cid="$(docker compose ps -q app)"
+          status=starting
+          for _ in $(seq 1 60); do
+            status="$(docker inspect -f '{{.State.Health.Status}}' "$cid" 2>/dev/null || echo missing)"
+            [ "$status" = "healthy" ] && break
+            sleep 2
+          done
+          if [ "$status" != "healthy" ]; then
+            echo "::error::the app did not come back healthy after a restart"
+            docker compose logs --no-color --tail=100 app
+            exit 1
+          fi
+
+          new_logs="$(docker compose logs --no-color app | tail -n +$((before + 1)))"
+          printf '%s\n' "$new_logs"
+          printf '%s\n' "$new_logs" | grep -q "database already seeded" \
+            || { echo "::error::the restart reseeded the database"; exit 1; }
+
+      - name: Stack status
+        if: always()
+        run: docker compose ps
+
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs --no-color --tail=300 app db
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v --remove-orphans
