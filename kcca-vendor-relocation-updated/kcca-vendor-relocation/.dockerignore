@@ -16,6 +16,7 @@ DOCKER.md
 # Local runtime and release artefacts
 *.zip
 *.log
+deploy/
 node_modules/
 .ui-review/
 .cache/

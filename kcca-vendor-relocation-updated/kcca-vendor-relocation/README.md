@@ -16,12 +16,17 @@ kcca-vendor-relocation/
 ├── docker-compose.yml      app + MariaDB 11.4
 ├── docker-compose.dev.yml  overlay that serves the working tree
 ├── docker/                 php.ini, Apache hardening, entrypoint, healthcheck
+├── deploy/                 shared-hosting package builder, SQL dump, HOSTING.md
+├── .htaccess               Apache rules for shared hosting
 ├── DOCKER.md               Docker guide
 ├── config/
 │   ├── config.php          database, weights, paths
+│   ├── config.local.php.example  credentials for shared hosting
 │   └── kcca_facts.php      every official KCCA fact, with its source
 ├── database/
-│   ├── schema.sql          22 tables
+│   ├── schema.sql          22 core tables
+│   ├── trader_support.sql  support, notices and complaints tables
+│   ├── trader_support_seed.sql  attire and support catalogue
 │   ├── seed.php            loads the real figures, generates the survey layer
 │   └── verify.php          proves the totals reconcile
 ├── lib/
@@ -86,6 +91,21 @@ That builds the app image, starts MariaDB, seeds the database on first run and
 serves on **http://localhost:8080**. `docker compose down` stops it and keeps
 the data; `docker compose down -v` deletes it. See [`DOCKER.md`](DOCKER.md) for
 volumes, backups, the development overlay, configuration and troubleshooting.
+
+## Host it on shared hosting
+
+There is a package for free PHP + MySQL hosting (InfinityFree, HelioHost) and a
+matching database dump:
+
+```bash
+deploy/build-shared-hosting.sh   # → deploy/dist/kcca-vrsp-shared-hosting.zip
+deploy/make-db-dump.sh           # → deploy/dist/kcca-database.sql.gz
+```
+
+[`deploy/HOSTING.md`](deploy/HOSTING.md) walks through creating the account,
+importing the dump in phpMyAdmin, uploading the ZIP, and creating the one
+config file the host needs. The package leaves out Docker, CI, the stock
+originals and every local credential.
 
 ## Run it without a terminal
 

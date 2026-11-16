@@ -32,12 +32,24 @@ echo str_repeat('=', 64) . PHP_EOL;
 echo "[1/13] Applying schema … ";
 $sql = file_get_contents(__DIR__ . '/schema.sql');
 $pdo->exec($sql);
+
+/* Trader support, notices and complaints live in their own file so they
+   can be re-applied to an existing database without touching city data.
+   Foreign-key checks are off because the file drops parent tables before
+   the tables that reference them. */
+$pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+$pdo->exec(file_get_contents(__DIR__ . '/trader_support.sql'));
+$pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
 echo "done\n";
 
 if ($schemaOnly) {
     echo "Schema only. Stopping.\n";
     exit(0);
 }
+
+echo "       Seeding trader support catalogue … ";
+$pdo->exec(file_get_contents(__DIR__ . '/trader_support_seed.sql'));
+echo "done\n";
 
 /* ---------------------------------------------------------------------
  * 2. Divisions — KCCA Strategic Plan FY2025/26-29/30, Table 1.1

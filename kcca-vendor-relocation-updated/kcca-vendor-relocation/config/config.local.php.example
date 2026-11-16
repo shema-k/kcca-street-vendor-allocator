@@ -1,0 +1,25 @@
+<?php
+/**
+ * KCCA VRSP — deployment settings.
+ *
+ * Copy this file to config.local.php (same folder) and fill in the values
+ * your host gives you. config.local.php is git-ignored, so credentials are
+ * never committed.
+ *
+ * Shared hosting almost never provides environment variables, so these
+ * constants take precedence over KCCA_DB_* in config.php.
+ *
+ * The example values below are InfinityFree's naming pattern. On HelioHost
+ * or cPanel hosting the host is usually "localhost" and the names are the
+ * ones you created in the panel.
+ */
+
+declare(strict_types=1);
+
+define('DB_HOST', 'sqlXXX.infinityfree.com');   // not "localhost" on InfinityFree
+define('DB_PORT', '3306');
+define('DB_SOCKET', '');                        // no Unix socket on shared hosting
+
+define('DB_NAME', 'if0_XXXXXXXX_kcca');         // the database name from the panel
+define('DB_USER', 'if0_XXXXXXXX');              // the database user from the panel
+define('DB_PASS', 'replace-with-the-db-password');

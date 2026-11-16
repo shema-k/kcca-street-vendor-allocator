@@ -13,6 +13,9 @@ node_modules/
 .phpunit.cache/
 tmp/
 
+# Shared-hosting build output (ZIP and database dump)
+**/deploy/dist/
+
 # Operating-system metadata
 .DS_Store
 Thumbs.db

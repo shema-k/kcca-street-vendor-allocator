@@ -1,0 +1,39 @@
+# KCCA VRSP — Apache rules for shared hosting.
+#
+# Copy this file with the application. It assumes Apache 2.4 with .htaccess
+# allowed (InfinityFree, HelioHost, cPanel hosting all qualify).
+
+Options -Indexes
+DirectoryIndex index.php
+
+# ---------------------------------------------------------------------------
+# Never serve the seeder, schema dumps, this deployment's notes, or the
+# container files. `database/.htaccess` blocks that folder as a whole; this
+# list is the second line of defence.
+# ---------------------------------------------------------------------------
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.(sql|md|sh|bat|ps1|vbs|zip|gz|tgz|bz2|log|ini|example|yml|yaml|dist)$">
+        Require all denied
+    </FilesMatch>
+
+    <FilesMatch "^\.(env(\..*)?|gitignore|gitattributes|dockerignore|DS_Store)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+    <FilesMatch "\.(sql|md|sh|bat|ps1|vbs|zip|gz|tgz|bz2|log|ini|example|yml|yaml|dist)$">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# Basic response hardening. Wrapped in IfModule because some free hosts do
+# not compile mod_headers.
+# ---------------------------------------------------------------------------
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
